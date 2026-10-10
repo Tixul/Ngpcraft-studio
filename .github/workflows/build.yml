@@ -1,6 +1,8 @@
 # NgpCraft Studio: test, then build the editor for Windows, Linux and macOS
 # on every push. Builds are kept as workflow artifacts (Actions tab, about 90
-# days). Replaces GB Studio's own workflows (main.yml, chores.yml, web.yml).
+# days) and published as GitHub releases: the "nightly" pre-release for the
+# ngpcraft branch, a versioned release for each pushed tag v* (job release).
+# Replaces GB Studio's own workflows (main.yml, chores.yml, web.yml).
 #
 # The packaged application carries the NgpCraft V3 compiler, the ngpcraft-v3
 # folder of this repository (prePackage hook src/lib/forge/hooks/bundle-v3.js).
@@ -129,3 +131,49 @@ jobs:
           name: ngpcraft-studio-${{ matrix.name }}-${{ github.sha }}
           path: out/keep/**
           if-no-files-found: error
+
+  # GitHub release, right after the builds:
+  # - a push to the ngpcraft branch replaces the "nightly" pre-release;
+  # - a pushed tag v* (e.g. v0.1.0) creates the release of that version.
+  # Assets: Windows zip + Setup.exe, Linux deb / rpm / AppImage, macOS zips.
+  release:
+    needs: build
+    if: >-
+      github.event_name == 'push' &&
+      (github.ref == 'refs/heads/ngpcraft' || startsWith(github.ref, 'refs/tags/v'))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: ngpcraft-studio-*-${{ github.sha }}
+          path: artifacts
+
+      - name: Collect the release files
+        run: |
+          mkdir -p release
+          find artifacts -type f \( -name '*.zip' -o -name '*.deb' -o -name '*.rpm' \
+            -o -name '*.AppImage' -o -name '*Setup.exe' \) -exec cp {} release/ \;
+          ls -l release
+          test -n "$(ls release)"
+
+      - name: Nightly pre-release (ngpcraft branch)
+        if: github.ref == 'refs/heads/ngpcraft'
+        run: |
+          gh release delete nightly --cleanup-tag --yes || true
+          gh release create nightly release/* \
+            --prerelease \
+            --target "$GITHUB_SHA" \
+            --title "NgpCraft Studio (nightly)" \
+            --notes "Automatic build of the ngpcraft branch, commit $GITHUB_SHA. Unsigned; the Toshiba TLCS-900 toolchain is not included (Preferences → NgpCraft)."
+
+      - name: Versioned release (tag v*)
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          gh release create "$GITHUB_REF_NAME" release/* \
+            --title "NgpCraft Studio $GITHUB_REF_NAME" \
+            --generate-notes
