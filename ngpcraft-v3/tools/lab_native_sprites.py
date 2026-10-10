@@ -34,7 +34,16 @@ QUARTERS = (((0xF0, 0x20, 0x20), (0x20, 0xF0, 0x20), (0x20, 0x20, 0xF0)),
             ((0x80, 0x80, 0x80), (0xF0, 0x90, 0xC0), (0x90, 0xF0, 0x20)))
 
 
-def frame16():
+def recolour(colour, variant):
+    """Variant v of a colour: each 4-bit channel XOR (5v + 3); variant 0 is the
+    colour itself. Distinct per channel, so a variant's 4 palettes differ from
+    every other variant's (no sharing: each sheet adds 4 palettes)."""
+    if not variant:
+        return colour
+    return tuple((((c >> 4) ^ (5 * variant + 3)) & 15) * 17 for c in colour)
+
+
+def frame16(variant=0):
     """16x16 RGBA rows: quarter q = (x >= 8) + 2 (y >= 8); colour by (x + y) % 3;
     the outer ring transparent."""
     rows = []
@@ -44,12 +53,12 @@ def frame16():
             if x in (0, 15) or y in (0, 15):
                 row.append(None)
             else:
-                row.append(QUARTERS[(x >= 8) + 2 * (y >= 8)][(x + y) % 3])
+                row.append(recolour(QUARTERS[(x >= 8) + 2 * (y >= 8)][(x + y) % 3], variant))
         rows.append(row)
     return rows
 
 
-def project_case(root, native=True):
+def project_case(root, native=True, extra=0):
     derive(GBS2, root / "project", "cave", (9, 12), fade=False)
     project = root / "project"
     path = next((project / "project/scenes").rglob("scene.gbsres"))
@@ -67,8 +76,31 @@ def project_case(root, native=True):
     scene["playerSpriteSheetId"] = sheet["id"]
     scene["script"] = []
     write_json(path, scene)
+    ids = [sheet["id"]]
+    # Extra actors, each with its own recoloured copy of the sheet: 4 more
+    # palettes each (2 extras = 12 native palettes, past K2GE 8..15).
+    for i in range(1, extra + 1):
+        name = f"cat_native_{i}"
+        variant = frame16(i)
+        _write_rgba(project / f"assets/sprites/{name}.png",
+                    [[(0, 0, 0, 0) if variant[y % 16][x % 16] is None else variant[y % 16][x % 16] + (255,)
+                      for x in range(width)] for y in range(height)])
+        sid = f"ngpc-native-sheet-{i}"
+        write_json(project / f"assets/sprites/{name}.png.gbsres",
+                   {**sheet, "id": sid, "name": name, "symbol": f"sprite_{name}", "filename": f"{name}.png"})
+        (path.parent / "actors").mkdir(exist_ok=True)
+        write_json(path.parent / "actors" / f"native_{i}.gbsres", {
+            "_resourceType": "actor", "id": f"ngpc-native-actor-{i}", "_index": i - 1,
+            "symbol": f"actor_native_{i}", "prefabId": "", "name": f"Native {i}",
+            "coordinateType": "tiles", "x": 2 + 5 * i, "y": 5, "frame": 0, "animate": False,
+            "spriteSheetId": sid, "paletteId": "", "direction": "down", "moveSpeed": 1,
+            "animSpeed": 15, "isPinned": False, "persistent": False, "collisionGroup": "",
+            "collisionExtraFlags": [], "prefabScriptOverrides": {}, "script": [], "startScript": [],
+            "updateScript": [], "hit1Script": [], "hit2Script": [], "hit3Script": []})
+        ids.append(sid)
     if native:
-        write_json(project / SIDECAR, {"schema": SCHEMA, "resources": {sheet["id"]: {"ngpc_color": "native"}}})
+        write_json(project / SIDECAR, {"schema": SCHEMA,
+                                       "resources": {i: {"ngpc_color": "native"} for i in ids}})
     return project, sheet["id"]
 
 
@@ -84,9 +116,9 @@ def _write_rgba(path, rows):
                      + chunk(b"IDAT", zlib.compress(raw)) + chunk(b"IEND", b""))
 
 
-def find_block(shown):
+def find_block(shown, variant=0):
     """(x, y) of the top-left of the 16x16 picture on the 160x152 screen, or None."""
-    block = frame16()
+    block = frame16(variant)
     want = [(x, y, (c[0] >> 4) | (c[1] >> 4) << 4 | (c[2] >> 4) << 8)
             for y, row in enumerate(block) for x, c in enumerate(row) if c is not None]
     for oy in range(152 - 15):
@@ -96,12 +128,12 @@ def find_block(shown):
     return None
 
 
-def run(out, toolchain, emulator, bios, frames=20, witness=False):
+def run(out, toolchain, emulator, bios, frames=20, witness=False, extra=0):
     out = Path(out)
     if out.exists():
         raise ValueError("output must be new")
     out.mkdir(parents=True)
-    project, sheet_id = project_case(out, native=not witness)
+    project, sheet_id = project_case(out, native=not witness, extra=extra)
     manifest = export_project(project, out / "export")
     build = build_rom(out / "export", Path(toolchain))
     rom = (out / "export/rom/game.ngc").read_bytes()
@@ -119,14 +151,16 @@ def run(out, toolchain, emulator, bios, frames=20, witness=False):
         if stop.stop_status != 40:
             raise ValueError(f"tick {k} not reached")
         if k >= 5:
-            found.append(find_block([v & 4095 for v in m.framebuffer()]))
+            shown = [v & 4095 for v in m.framebuffer()]
+            found.append(tuple(find_block(shown, variant) for variant in range(extra + 1)))
         m.set_breakpoints([])
         m.run(1, record=False)
         m.set_breakpoints([tick])
     write_frame(out / "frame.ppm", m.framebuffer())
-    report = {"witness": witness, "frames_compared": len(found),
-              "frames_matched": sum(f is not None for f in found), "positions": sorted({f for f in found if f}),
-              "passed": all(f is not None for f in found) and bool(found),
+    report = {"witness": witness, "frames_compared": len(found), "pictures": extra + 1,
+              "frames_matched": sum(all(p is not None for p in f) for f in found),
+              "positions": sorted({p for f in found for p in f if p}),
+              "passed": bool(found) and all(all(p is not None for p in f) for f in found),
               "rom_sha256": hashlib.sha256(rom).hexdigest(), "features": manifest["features"]}
     write_json(out / "comparison.json", report)
     return report
@@ -137,8 +171,9 @@ def main():
     for name in ("out", "toolchain", "emulator", "bios"):
         p.add_argument("--" + name, type=Path, required=True)
     p.add_argument("--witness", action="store_true")
+    p.add_argument("--extra", type=int, default=0, help="extra actors with their own native sheet (4 palettes each)")
     a = p.parse_args()
-    r = run(a.out, a.toolchain, a.emulator, a.bios, witness=a.witness)
+    r = run(a.out, a.toolchain, a.emulator, a.bios, witness=a.witness, extra=a.extra)
     print(json.dumps(r, indent=2))
     return int(r["passed"] == a.witness)
 

@@ -93,7 +93,7 @@ def engine_blocker(project, scene):
 
 
 def build_engine_scene(project, scene, default_mode=None, sprite_switches=(), emotes=(), projectiles=(), projectile_capacity=5,
-                       replace_ops=(), palette_slots=frozenset()):
+                       replace_ops=(), palette_slots=frozenset(), sprite_palette_slots=frozenset()):
     where = f"scene {scene['name']}"
     logo = scene["type"] == "LOGO"
     if logo and (scene["actors"] or scene["triggers"]):
@@ -213,9 +213,12 @@ def build_engine_scene(project, scene, default_mode=None, sprite_switches=(), em
         raw = {s["id"]: s for _, s in project.by_type["sprite"]}
         loaded.update({sid: (raw[sid], None) for sid in sheet_ids if sid not in loaded})
         boxes.update({sid: sheet_bounds(raw[sid], f"{where}, sprite {raw[sid]['name']}") for sid in sheet_ids})
-    # Native sheets (docs/M7_NATIVE_COLOR.md): their palettes go to K2GE 8..15.
+    # Native sheets (docs/M7_NATIVE_COLOR.md): their palettes take the K2GE
+    # sprite slots GB Studio's palettes leave free (8..15 first). Emotes draw
+    # with GB slot 7; scripts may rewrite GB sprite slots (VM_LOAD_PALETTE).
     from .sprites import place_native_palettes
-    sheets, native_palettes = place_native_palettes(sheets, where)
+    sheets, native_palettes = place_native_palettes(
+        sheets, where, frozenset(sprite_palette_slots) | ({7} if emotes else frozenset()))
     emote_sheets, emote_frames, origins = (), (), ()
     if emotes:
         from .emotes import compile_emotes
@@ -264,7 +267,10 @@ def build_engine_scene(project, scene, default_mode=None, sprite_switches=(), em
         second = (allocation, config["scroll_x"], config["scroll_y"])
     palettes = sprite_palettes(project, scene)
     if native_palettes:
-        palettes = palettes + native_palettes + ((0, 0, 0),) * (8 - len(native_palettes))
+        table = list(palettes) + [(0, 0, 0)] * 8
+        for slot, palette in native_palettes:
+            table[slot] = palette
+        palettes = tuple(table)
     return EngineScene(scene["name"], background, sheets, sheet_ids, palettes,
                        tuple(engine), ("player",) + tuple(a["name"] or a["id"] for a in actors),
                        tuple(boxes[sheet_ids[a["sheet"]]] for a in engine),

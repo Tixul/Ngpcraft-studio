@@ -181,6 +181,11 @@ refusé. Contrat et preuve : [M4_CAMERA_CONTROL](M4_CAMERA_CONTROL.md).
   *Automatique* est compilé comme NGPC natif. Les couleurs natives marchent
   sur les **deux plans** : décor principal et second décor (transparent là
   où il a sa couleur de fond).
+- **Palettes de sprites** (2026-10-10) : les 16 palettes de sprites de la
+  console servent d'abord aux 8 palettes de sprites de GB Studio que la scène
+  utilise vraiment (acteurs, projectiles, émotes, changements de palette par
+  script) ; les sprites en couleurs NGPC natives prennent toutes les autres,
+  jusqu'à **16 dans une scène entièrement native**.
 
 ## 5. La « fenêtre » (overlay) de GB Studio devient un plan de texte — ✅
 

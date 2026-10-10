@@ -44,6 +44,20 @@ def changed_slots(texts, where):
     return frozenset(slots)
 
 
+def changed_sprite_slots(texts, where):
+    """Sprite palette slots (0..7) the VM_LOAD_PALETTE of these scripts write:
+    native sprite palettes must not be placed there."""
+    slots = set()
+    for match in LOAD.finditer("\n".join(texts)):
+        mask, options = match[1].strip(), match[2].strip()
+        if ".PALETTE_SPRITE" not in options:
+            continue
+        if not re.fullmatch(r"\d+", mask):
+            raise CompileError(f"{where}: VM_LOAD_PALETTE {mask}, {options}: only constant masks are delivered")
+        slots |= {i for i in range(8) if int(mask) >> i & 1}
+    return frozenset(slots)
+
+
 def symbolic_pixels(source, slots_rgb, dynamic):
     """background_source pixels with the dynamic slots' colours as symbols."""
     columns = source.width // 8

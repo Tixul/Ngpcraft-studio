@@ -46,7 +46,7 @@ from ..scene_engine import AFTER_SCRIPTS, COMMIT, DECLARATIONS, FEATURES, engine
 from ..scene_graph import scene_graph
 from ..scene_link import link_scenes
 from ..project_music import music_options, select_music, attach_music
-from ..palette_load import changed_slots
+from ..palette_load import changed_slots, changed_sprite_slots
 from ..projectile_runtime import SLOT_BASE
 
 RUNTIME = Path(__file__).resolve().parents[1] / "runtime" / "gbvm_runtime.json"
@@ -2362,6 +2362,7 @@ def generate_project(project, inits, variables_lookup):
     engine_c, engine_report = ({}, {"built": False, "reason": blocker}) if blocker else \
         engine_files(build_engine_scene(project, resources[start_id], sprite_switches=sprite_assets(texts, shared["sprites"]), emotes=emote_assets(texts, shared["emotes"]),
                                         replace_ops=replace_ops(texts), palette_slots=palette_slots,
+                                        sprite_palette_slots=changed_sprite_slots(texts, f"scene {resources[start_id]['name']}"),
                                         projectiles=projectiles[0] if projectiles else ()), moves, actor_updates, cancel, topdown,
                      actor_interactions, trigger_data, hit_data, text=prints,
                      projectile_groups=projectiles[1] if projectiles else None,
@@ -2805,6 +2806,7 @@ def generate_scenes(project, inits, graph, resources, variables, model, shared, 
         palette_slots = changed_slots(scene_texts, f"scene {scene['name']}")
         files, report = engine_files(build_engine_scene(project, scene, sprite_switches=sprite_assets(scene_texts, shared["sprites"]), emotes=emote_assets(scene_texts, shared["emotes"]),
                                                         replace_ops=replace_ops(scene_texts), palette_slots=palette_slots,
+                                                        sprite_palette_slots=changed_sprite_slots(scene_texts, f"scene {scene['name']}"),
                                                         projectiles=projectiles[0] if projectiles else ()), moves, actor_updates, cancel, topdown,
                                      actor_interactions, trigger_data, hit_data, shadow=True, text=text, track_front=second,
                                      parallax_export=parallax_export,

@@ -49,7 +49,7 @@ def native_index(r, g, b, a):
     return NATIVE_BASE + ((r >> 4) | (g >> 4) << 4 | (b >> 4) << 8)
 
 
-def native_palettes(tiles, where, palette_limit=8):
+def native_palettes(tiles, where, palette_limit=16):
     """8x8 colour tiles -> (palettes, slot per tile, tiles as indices 0..3).
     At most 3 colours per tile; tiles grouped by background.pack_palettes."""
     from .background import pack_palettes
@@ -64,7 +64,7 @@ def native_palettes(tiles, where, palette_limit=8):
     palettes = pack_palettes([r for r in required if r])
     if len(palettes) > palette_limit:
         raise CompileError(f"{where}: native colours need {len(palettes)} sprite palettes, "
-                           f"{palette_limit} at most per scene (K2GE sprite palettes 8..15)")
+                           f"{palette_limit} at most (the 16 K2GE sprite palettes)")
     slots, encoded = [], []
     for tile, req in zip(tiles, required):
         slot = next(i for i, p in enumerate(palettes) if set(req) <= set(p)) if req else 0
@@ -335,7 +335,8 @@ class NgpcSheet:
     # GB Studio state names, in sheet order (8 animation_offsets each; "" = default).
     state_names: tuple = ("",)
     # ngpc_color "native": the sheet's own palettes (3 RGB444 colours each);
-    # HardwareSprite.palette indexes them until the scene places them (8..15).
+    # HardwareSprite.palette indexes them until the scene places them
+    # (place_native_palettes: the K2GE slots GB Studio's palettes leave free).
     palettes: tuple = ()
 
     def max_sprites(self):
@@ -382,13 +383,23 @@ def ngpc_sheet(sheet, image, default_mode="8x16", where=None, *, mono=False, nat
                      palettes)
 
 
-NATIVE_SPRITE_SLOT = 8          # first K2GE sprite palette of native sheets
+NATIVE_SPRITE_SLOT = 8          # first K2GE sprite palette given to native sheets
 
 
-def place_native_palettes(sheets, where):
-    """A scene's native sheets -> (sheets with K2GE palettes 8..15, palettes).
-    Identical palettes are shared; GB Studio's 8 keep palettes 0..7."""
+def place_native_palettes(sheets, where, reserved=frozenset()):
+    """A scene's native sheets -> (sheets with K2GE palettes, ((slot, palette), ...)).
+
+    The 16 K2GE sprite palettes: GB Studio's 8 are slots 0..7. A slot stays
+    GB Studio's when a GB sheet of the scene draws with it, or it is in
+    `reserved` (emotes: 7; a script's sprite palette change). Native sheets
+    take 8..15 first, then the GB slots left free. Identical palettes are
+    shared."""
     from dataclasses import replace
+    used = set(reserved)
+    for sheet in sheets:
+        if not sheet.palettes:
+            used |= {s.palette for frame in sheet.frames for s in frame}
+    free = list(range(NATIVE_SPRITE_SLOT, 16)) + [s for s in range(NATIVE_SPRITE_SLOT) if s not in used]
     table, out = [], []
     for sheet in sheets:
         if not sheet.palettes:
@@ -398,14 +409,16 @@ def place_native_palettes(sheets, where):
         for palette in sheet.palettes:
             if palette not in table:
                 table.append(palette)
-            mapping.append(NATIVE_SPRITE_SLOT + table.index(palette))
+            index = table.index(palette)
+            mapping.append(free[index] if index < len(free) else -1)
         frames = tuple(tuple(replace(s, palette=mapping[s.palette]) for s in frame) for frame in sheet.frames)
         out.append(replace(sheet, frames=frames, palettes=()))
-    if len(table) > 16 - NATIVE_SPRITE_SLOT:
-        raise CompileError(f"{where}: native sprite sheets need {len(table)} palettes, "
-                           f"{16 - NATIVE_SPRITE_SLOT} at most per scene (K2GE sprite palettes "
-                           f"{NATIVE_SPRITE_SLOT}..15; GB Studio's 8 use 0..7)")
-    return tuple(out), tuple(table)
+    if len(table) > len(free):
+        taken = sorted(used & set(range(NATIVE_SPRITE_SLOT)))
+        raise CompileError(f"{where}: native sprite sheets need {len(table)} palettes, {len(free)} at most "
+                           f"in this scene (16 K2GE sprite palettes; GB Studio sprite palettes "
+                           f"{', '.join(map(str, taken)) or 'none'} in use)")
+    return tuple(out), tuple(zip(free, table))
 
 
 def editor_frame_origin(sheet, sx, sy):

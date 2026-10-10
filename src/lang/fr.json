@@ -844,7 +844,7 @@
   "FIELD_NGPC_SPRITE_COLORS": "Couleurs",
   "FIELD_NGPC_SPRITE_COLORS_GBS": "Palettes GB Studio",
   "FIELD_NGPC_SPRITE_COLORS_NATIVE": "NGPC natif",
-  "FIELD_NGPC_SPRITE_COLORS_INFO": "NGPC natif : les couleurs de l'image elle-même, 3 par tuile 8x8 plus la transparence ; les palettes de la feuille prennent les palettes de sprites 8 à 15 de la scène (8 au plus par scène).",
+  "FIELD_NGPC_SPRITE_COLORS_INFO": "NGPC natif : les couleurs de l'image elle-même, 3 par tuile 8x8 plus la transparence ; les palettes de la feuille prennent, sur les 16 palettes de sprites de la scène, celles que les palettes GB Studio utilisées laissent libres (16 si la scène est entièrement native).",
   "FIELD_NGPC_SPRITE_PALETTES": "Palettes NGPC : {count} / {limit}",
   "FIELD_NGPC_SPRITE_TILE_ERROR": "{count} tuile(s) de plus de 3 couleurs (première : tuile {tile})",
   "FIELD_NGPC_SPRITE_LIMIT_ERROR": "{palettes} palettes nécessaires, {limit} au plus",

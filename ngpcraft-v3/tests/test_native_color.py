@@ -152,7 +152,7 @@ if __name__ == "__main__":
 
 
 class NativeSpriteTests(unittest.TestCase):
-    """Phase 2: native sprite sheets, palettes placed in K2GE 8..15."""
+    """Phase 2: native sprite sheets, palettes placed in the free K2GE slots (8..15 first)."""
 
     def test_palettes_per_tile_and_refusal(self):
         from ngpcraft.sprites import NATIVE_BASE, native_palettes
@@ -165,6 +165,15 @@ class NativeSpriteTests(unittest.TestCase):
         with self.assertRaisesRegex(CompileError, "tile 0: 4 opaque colours"):
             native_palettes([[NATIVE_BASE + c for c in (1, 2, 3, 4)] * 16], "t")
 
+    def test_script_sprite_palette_changes_reserve_their_slots(self):
+        # A script rewriting GB sprite palettes keeps those slots from native sheets.
+        from ngpcraft.palette_load import changed_sprite_slots
+        self.assertEqual(changed_sprite_slots(
+            ['        VM_LOAD_PALETTE         5, ^/(.PALETTE_SPRITE | .PALETTE_COMMIT)/',
+             '        VM_LOAD_PALETTE         255, ^/(.PALETTE_BKG | .PALETTE_COMMIT)/'], 's'), {0, 2})
+        with self.assertRaisesRegex(CompileError, "only constant masks"):
+            changed_sprite_slots(['        VM_LOAD_PALETTE         .MASK, ^/(.PALETTE_SPRITE)/'], 's')
+
     def test_scene_places_and_shares_palettes(self):
         from ngpcraft.sprites import HardwareSprite, NgpcSheet, place_native_palettes
         spr = lambda p: HardwareSprite(0, 0, 0, False, False, p)
@@ -172,13 +181,24 @@ class NativeSpriteTests(unittest.TestCase):
         one = NgpcSheet("one", "8x16", (), ((spr(0), spr(1)),), (0,), (), palettes=((1, 2, 3), (4, 5, 6)))
         two = NgpcSheet("two", "8x16", (), ((spr(0),),), (0,), (), palettes=((4, 5, 6),))
         sheets, table = place_native_palettes((gb, one, two), "t")
-        self.assertEqual(table, ((1, 2, 3), (4, 5, 6)))
+        self.assertEqual(table, ((8, (1, 2, 3)), (9, (4, 5, 6))))
         self.assertEqual([s.palette for s in sheets[0].frames[0]], [3])          # GB Studio slot kept
         self.assertEqual([s.palette for s in sheets[1].frames[0]], [8, 9])
         self.assertEqual([s.palette for s in sheets[2].frames[0]], [9])           # shared
-        many = NgpcSheet("m", "8x16", (), ((spr(0),),), (0,), (), palettes=tuple((i, i, i) for i in range(9)))
-        with self.assertRaisesRegex(CompileError, "9 palettes, 8 at most"):
-            place_native_palettes((many,), "t")
+        # Up to 16: after 8..15, the GB slots no GB sheet, emote or script uses.
+        def many(n):
+            return NgpcSheet("m", "8x16", (), (tuple(spr(i) for i in range(n)),), (0,), (),
+                             palettes=tuple((i, i, i) for i in range(n)))
+        sheets, table = place_native_palettes((gb, many(14)), "t", reserved=frozenset({7}))
+        slots = [s.palette for s in sheets[1].frames[0]]
+        self.assertEqual(slots, [8, 9, 10, 11, 12, 13, 14, 15, 0, 1, 2, 4, 5, 6])
+        self.assertNotIn(3, slots)                                               # the GB sheet's slot
+        self.assertNotIn(7, slots)                                               # reserved (emotes)
+        self.assertEqual(len(place_native_palettes((many(16),), "t")[1]), 16)    # whole native scene
+        with self.assertRaisesRegex(CompileError, "15 palettes, 14 at most.*palettes 3, 7 in use"):
+            place_native_palettes((gb, many(15)), "t", reserved=frozenset({7}))
+        with self.assertRaisesRegex(CompileError, "17 palettes, 16 at most"):
+            place_native_palettes((many(17),), "t")
 
     def test_sprite_plan_cli(self):
         from tools.lab_native_sprites import project_case as sprite_case
@@ -189,7 +209,7 @@ class NativeSpriteTests(unittest.TestCase):
                                   env={**os.environ, "PYTHONIOENCODING": "utf-8"})
         self.assertEqual(done.returncode, 0, done.stderr)
         plan = json.loads(done.stdout)
-        self.assertEqual((len(plan["palettes"]), plan["errors"], plan["palette_limit"]), (4, [], 8))
+        self.assertEqual((len(plan["palettes"]), plan["errors"], plan["palette_limit"]), (4, [], 16))
 
 
 ROM_ENV = [os.environ.get(k) for k in ("NGC_TEST_TOSHIBA", "NGC_TEST_EMULATOR", "NGC_TEST_BIOS")]
@@ -205,3 +225,16 @@ class NativeColorRomTests(unittest.TestCase):
             self.assertTrue(background_run(Path(tmp) / "bgw", *ROM_ENV, witness=True)["wrong_frames"])
             self.assertTrue(sprite_run(Path(tmp) / "spr", *ROM_ENV)["passed"])
             self.assertFalse(sprite_run(Path(tmp) / "sprw", *ROM_ENV, witness=True)["passed"])
+
+    def test_twelve_native_sprite_palettes_use_the_free_gb_slots(self):
+        # 3 native sheets x 4 palettes: K2GE 8..15, then GB slots 0..3 (no GB
+        # sheet in the scene uses them). Every picture exact on every frame.
+        from tools.lab_native_sprites import run as sprite_run
+        with tempfile.TemporaryDirectory() as tmp:
+            result = sprite_run(Path(tmp) / "spr", *ROM_ENV, extra=2)
+            self.assertTrue(result["passed"], result)
+            self.assertEqual(len(result["positions"]), 3)
+            table = (Path(tmp) / "spr/export/src").glob("*.c")
+            source = "\n".join(f.read_text(encoding="utf-8") for f in table)
+            self.assertIn("spr_pal[64]", source)
+            self.assertFalse(sprite_run(Path(tmp) / "sprw", *ROM_ENV, witness=True, extra=2)["passed"])

@@ -149,7 +149,7 @@ def native_source(project, rel, width, height, rgba, attrs, where):
     return pixels, indices, bytes(len(attrs)), backdrop
 
 
-SPRITE_PALETTE_LIMIT = 8        # K2GE sprite palettes 8..15 (sprites.place_native_palettes)
+SPRITE_PALETTE_LIMIT = 16       # K2GE sprite palettes; a scene's GB Studio ones take some (sprites.place_native_palettes)
 
 
 def _resource(root, kind, resource_id):

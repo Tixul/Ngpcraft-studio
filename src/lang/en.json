@@ -872,7 +872,7 @@
   "FIELD_NGPC_SPRITE_COLORS": "Colours",
   "FIELD_NGPC_SPRITE_COLORS_GBS": "GB Studio palettes",
   "FIELD_NGPC_SPRITE_COLORS_NATIVE": "NGPC native",
-  "FIELD_NGPC_SPRITE_COLORS_INFO": "NGPC native: the colours of the image itself, 3 per 8x8 tile plus transparency; the sheet's palettes use the scene's sprite palettes 8 to 15 (8 at most per scene).",
+  "FIELD_NGPC_SPRITE_COLORS_INFO": "NGPC native: the colours of the image itself, 3 per 8x8 tile plus transparency; the sheet's palettes take, among the scene's 16 sprite palettes, those the GB Studio palettes in use leave free (16 when the scene is all native).",
   "FIELD_NGPC_SPRITE_PALETTES": "NGPC palettes: {count} / {limit}",
   "FIELD_NGPC_SPRITE_TILE_ERROR": "{count} tile(s) with more than 3 colours (first: tile {tile})",
   "FIELD_NGPC_SPRITE_LIMIT_ERROR": "{palettes} palettes needed, {limit} at most",
