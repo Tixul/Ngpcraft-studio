@@ -30,7 +30,10 @@ import {
   encodeNgpcExtension,
   NGPC_EXTENSION_FILENAME,
 } from "lib/ngpcraft/projectExtension";
-import type { NgpcProjectExtension } from "shared/lib/ngpcraft/projectExtension";
+import {
+  NgpcProjectExtension,
+  withoutOrphanResources,
+} from "shared/lib/ngpcraft/projectExtension";
 import type { NgpcSceneBudget } from "shared/lib/ngpcraft/sceneBudget";
 import {
   getPython,
@@ -170,6 +173,7 @@ const writeSnapshot = async (
   projectRoot: string,
   snapshotRoot: string,
   ngpcraftExtension: NgpcProjectExtension | null | undefined,
+  warn: (message: string) => void,
 ) => {
   await ensureDir(snapshotRoot);
   for (const entry of await readdir(projectRoot)) {
@@ -194,11 +198,46 @@ const writeSnapshot = async (
     encodeResource("project", project.metadata),
   );
   if (ngpcraftExtension) {
+    // Settings left by a deleted scene or asset: not sent (the V3 refuses
+    // unknown ids), and reported.
+    const { extension, removed } = withoutOrphanResources(
+      ngpcraftExtension,
+      projectResourceIds(project),
+    );
+    for (const id of removed) {
+      warn(
+        `NgpCraft: ngpcraft.json has settings for ${id}, which is no longer in the project (deleted or recreated); they are ignored.`,
+      );
+    }
     await outputFile(
       Path.join(snapshotRoot, NGPC_EXTENSION_FILENAME),
-      encodeNgpcExtension(ngpcraftExtension),
+      encodeNgpcExtension(extension),
     );
   }
+};
+
+// Every resource id of the project, the same set the V3 checks
+// (ngpcraft.json resources.<id>): top-level resources, scene actors/triggers.
+const projectResourceIds = (project: ProjectResources): Set<string> => {
+  const ids = new Set<string>();
+  const add = (item: unknown) => {
+    if (item && typeof item === "object" && "id" in item) {
+      const id = (item as { id: unknown }).id;
+      if (typeof id === "string") {
+        ids.add(id);
+      }
+    }
+  };
+  for (const value of Object.values(project)) {
+    if (Array.isArray(value)) {
+      value.forEach(add);
+    }
+  }
+  for (const scene of project.scenes) {
+    scene.actors.forEach(add);
+    scene.triggers.forEach(add);
+  }
+  return ids;
 };
 
 const runV3 = async (
@@ -302,6 +341,7 @@ export const buildWithV3 = async (
     projectRoot,
     snapshotRoot,
     options.ngpcraftExtension,
+    options.warnings,
   );
 
   let warningCount = 0;

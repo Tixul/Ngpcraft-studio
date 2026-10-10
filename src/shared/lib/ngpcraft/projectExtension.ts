@@ -47,6 +47,27 @@ export const getNgpcProjectSettings = (
   return isRecord(ngpc) ? (ngpc as NgpcProjectSettings) : {};
 };
 
+// The extension without the resources.<id> entries of resources the project
+// no longer has (a scene or asset deleted after an NGPC setting was given to
+// it): the V3 refuses unknown ids. `removed` lists them, to be reported.
+export const withoutOrphanResources = (
+  extension: NgpcProjectExtension,
+  ids: ReadonlySet<string>,
+): { extension: NgpcProjectExtension; removed: string[] } => {
+  const resources = extension.resources;
+  if (!isRecord(resources)) {
+    return { extension, removed: [] };
+  }
+  const removed = Object.keys(resources).filter((id) => !ids.has(id));
+  if (removed.length === 0) {
+    return { extension, removed };
+  }
+  const kept = Object.fromEntries(
+    Object.entries(resources).filter(([id]) => ids.has(id)),
+  );
+  return { extension: { ...extension, resources: kept }, removed };
+};
+
 // The V3 rule (native_color.is_native): a background or sprite sheet is in
 // native colours if its own ngpc_color says "native", or says nothing and the
 // project default (ngpc.default_color) is "native".
