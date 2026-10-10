@@ -47,6 +47,7 @@ import { useAppDispatch, useAppSelector } from "store/hooks";
 import API from "renderer/lib/api";
 import clipboardActions from "store/features/clipboard/clipboardActions";
 import { SongContextBar } from "components/music/toolbar/SongContextBar";
+import { APP_NAME } from "consts";
 
 const sectionAccelerators = {
   world: "CommandOrControl+1",
@@ -221,7 +222,7 @@ const AppToolbar: FC = () => {
   }
 
   useEffect(() => {
-    document.title = `GB Studio - ${appTitle}`;
+    document.title = `${APP_NAME} - ${appTitle}`;
   }, [appTitle]);
 
   if (!loaded) {
@@ -297,14 +298,7 @@ const AppToolbar: FC = () => {
             {l10n("TOOLBAR_EXPORT_ROM")}{" "}
             <MenuAccelerator accelerator="CommandOrControl+Shift+B" />
           </MenuItem>
-          <MenuItem onClick={onBuild("web")}>
-            {l10n("TOOLBAR_EXPORT_WEB")}{" "}
-            <MenuAccelerator accelerator="CommandOrControl+Shift+N" />
-          </MenuItem>
-          <MenuItem onClick={onBuild("pocket")}>
-            {l10n("TOOLBAR_EXPORT_POCKET")}
-            <MenuAccelerator accelerator="CommandOrControl+Shift+M" />
-          </MenuItem>
+          {/* NgpCraft: web and Analogue Pocket exports removed. */}
         </DropdownButton>
         <FixedSpacer width={10} />
         {cancelling ? (

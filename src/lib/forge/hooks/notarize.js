@@ -17,10 +17,10 @@ module.exports = (_config, { outputPaths }) => {
     return Promise.resolve();
   }
 
-  const buildOutput = Path.join(outputPaths[0], "GB Studio.app");
+  const buildOutput = Path.join(outputPaths[0], "NgpCraft Studio.app");
 
   return notarize({
-    appBundleId: "dev.gbstudio.gbstudio",
+    appBundleId: "io.github.tixul.ngpcraftstudio",
     appPath: buildOutput,
     appleId: process.env.APPLE_ID,
     appleIdPassword: process.env.APPLE_ID_PASSWORD,

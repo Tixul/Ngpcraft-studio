@@ -1,0 +1,12 @@
+GB Studio gbs2 released 4.3.2; original scenes and scripts preserved.
+Native audio adaptation for NGPC testing, with all source assets retained.
+UGE: held-score profile; detailed loss-report.json and policy.json per song.
+Tonal channels are transposed by octaves only when outside native dividers.
+Fixed initial APU register profile comes from the previous GBVM Intro probe.
+SFX: FX Hammer source rows and durations, converted from 256 Hz ISR to 60 Hz.
+FX Hammer pulse -> native channel 1, noise -> native noise channel.
+Pulse duty, hardware envelope and stereo are not reproduced.
+Noise frequencies/width are replaced by declared white-noise preset 4.
+Crash -> 30 frames of that white-noise preset. Relative amplitude -> 2 dB steps.
+One global SFX slot: lower priority rejected, equal/higher replaces current.
+Listening and console qualification remain pending; this is a test adaptation.

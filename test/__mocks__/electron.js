@@ -11,6 +11,11 @@ module.exports = {
   BrowserWindow: jest.fn(),
   dialog: {
     showMessageBoxSync: jest.fn().mockReturnValue(0),
+    // NgpCraft: async forms used by the first run question (lib/ngpcraft/firstRun.ts).
+    showMessageBox: jest.fn().mockResolvedValue({ response: 1 }),
+    showOpenDialog: jest
+      .fn()
+      .mockResolvedValue({ canceled: true, filePaths: [] }),
     showOpenDialogSync: jest.fn().mockReturnValue(["/path/to/project.gbsproj"]),
     showErrorBox: jest.fn(),
     showSaveDialogSync: jest

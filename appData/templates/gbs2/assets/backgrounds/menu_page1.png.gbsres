@@ -3,11 +3,11 @@
   "id": "93d8839f-c19c-4eb2-a386-b0bb77068521",
   "name": "menu_page1",
   "symbol": "bg_menu_page1",
-  "tileColors": "",
+  "tileColors": "0017c+",
   "filename": "menu_page1.png",
   "width": 20,
-  "height": 18,
+  "height": 19,
   "imageWidth": 160,
-  "imageHeight": 144,
+  "imageHeight": 152,
   "autoColor": false
 }

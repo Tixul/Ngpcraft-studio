@@ -1,5 +1,6 @@
 import { TILE_SIZE } from "consts";
-import { hex2GBCrgb } from "shared/lib/helpers/color";
+// NgpCraft: NGPC colours (4 bits per channel, no GBC colour correction).
+import { hex2NgpcRgb } from "shared/lib/ngpcraft/color";
 
 // eslint-disable-next-line no-restricted-globals
 const workerCtx: Worker = self as unknown as Worker;
@@ -36,7 +37,7 @@ workerCtx.onmessage = async (evt) => {
   const tileIndex = evt.data.tileIndex ?? 0;
   const tileSize = evt.data.tileSize === "16px" ? TILE_SIZE * 2 : TILE_SIZE;
   const palette = evt.data.palette;
-  const colorCorrectionFn = hex2GBCrgb(evt.data.colorCorrection);
+  const colorCorrectionFn = hex2NgpcRgb;
   const paletteRGB = palette.map(colorCorrectionFn);
 
   let canvas: OffscreenCanvas;

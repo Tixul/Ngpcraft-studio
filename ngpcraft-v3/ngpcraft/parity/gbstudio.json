@@ -1,0 +1,1556 @@
+{
+ "engine_fields": {
+  "ADVENTURE_BLANK_ANIM": {
+   "group": "GAMETYPE_ADVENTURE",
+   "preuve": "tools/lab_engine_fields.py adv-blank/anim",
+   "sceneType": "ADVENTURE",
+   "status": "identique"
+  },
+  "ADVENTURE_DASH_ANIM": {
+   "group": "GAMETYPE_ADVENTURE",
+   "preuve": "tools/lab_engine_fields.py adv-dash/anim",
+   "sceneType": "ADVENTURE",
+   "status": "identique"
+  },
+  "ADVENTURE_KNOCKBACK_ANIM": {
+   "group": "GAMETYPE_ADVENTURE",
+   "preuve": "tools/lab_engine_fields.py adv-knockback/anim",
+   "sceneType": "ADVENTURE",
+   "status": "identique"
+  },
+  "ADVENTURE_PUSH_ANIM": {
+   "group": "GAMETYPE_ADVENTURE",
+   "preuve": "tools/lab_engine_fields.py adv-push/anim",
+   "sceneType": "ADVENTURE",
+   "status": "identique"
+  },
+  "ADVENTURE_RUN_ANIM": {
+   "group": "GAMETYPE_ADVENTURE",
+   "preuve": "tools/lab_engine_fields.py adv-run/anim",
+   "sceneType": "ADVENTURE",
+   "status": "identique"
+  },
+  "FEAT_ADVENTURE_BLANK": {
+   "group": "GAMETYPE_ADVENTURE",
+   "preuve": "tools/lab_engine_fields.py adv-blank/off",
+   "sceneType": "ADVENTURE",
+   "status": "identique"
+  },
+  "FEAT_ADVENTURE_DASH": {
+   "group": "GAMETYPE_ADVENTURE",
+   "preuve": "tools/lab_engine_fields.py adv-dash/off",
+   "sceneType": "ADVENTURE",
+   "status": "identique"
+  },
+  "FEAT_ADVENTURE_KNOCKBACK": {
+   "group": "GAMETYPE_ADVENTURE",
+   "preuve": "tools/lab_engine_fields.py adv-knockback/off",
+   "sceneType": "ADVENTURE",
+   "status": "identique"
+  },
+  "FEAT_ADVENTURE_PUSH": {
+   "group": "GAMETYPE_ADVENTURE",
+   "preuve": "tools/lab_engine_fields.py adv-push/off",
+   "sceneType": "ADVENTURE",
+   "status": "identique"
+  },
+  "FEAT_ADVENTURE_RUN": {
+   "group": "GAMETYPE_ADVENTURE",
+   "preuve": "tools/lab_engine_fields.py adv-run/off",
+   "sceneType": "ADVENTURE",
+   "status": "identique"
+  },
+  "FEAT_PLATFORM_BLANK": {
+   "group": "GAMETYPE_PLATFORMER",
+   "preuve": "tools/lab_engine_fields.py plat-states/blank_off",
+   "sceneType": "PLATFORM",
+   "status": "identique"
+  },
+  "FEAT_PLATFORM_COYOTE_TIME": {
+   "group": "GAMETYPE_PLATFORMER",
+   "preuve": "tools/lab_engine_fields.py plat-coyote/frames",
+   "sceneType": "PLATFORM",
+   "status": "identique"
+  },
+  "FEAT_PLATFORM_DASH": {
+   "group": "GAMETYPE_PLATFORMER",
+   "preuve": "tools/lab_engine_fields.py plat-dash/off",
+   "sceneType": "PLATFORM",
+   "status": "identique"
+  },
+  "FEAT_PLATFORM_DASH_USE_GRAVITY": {
+   "group": "GAMETYPE_PLATFORMER",
+   "preuve": "tools/lab_engine_fields.py plat-dash/gravity",
+   "sceneType": "PLATFORM",
+   "status": "identique"
+  },
+  "FEAT_PLATFORM_DOUBLE_JUMP": {
+   "group": "GAMETYPE_PLATFORMER",
+   "preuve": "tools/lab_engine_fields.py plat-air/double",
+   "sceneType": "PLATFORM",
+   "status": "identique"
+  },
+  "FEAT_PLATFORM_DROP_THROUGH": {
+   "group": "GAMETYPE_PLATFORMER",
+   "preuve": "tools/lab_engine_fields.py plat-drop/off",
+   "sceneType": "PLATFORM",
+   "status": "identique"
+  },
+  "FEAT_PLATFORM_FLOAT": {
+   "group": "GAMETYPE_PLATFORMER",
+   "preuve": "tools/lab_engine_fields.py plat-air/float",
+   "sceneType": "PLATFORM",
+   "status": "identique"
+  },
+  "FEAT_PLATFORM_JUMP": {
+   "group": "GAMETYPE_PLATFORMER",
+   "preuve": "tools/lab_engine_fields.py plat-move/jump_off",
+   "sceneType": "PLATFORM",
+   "status": "identique"
+  },
+  "FEAT_PLATFORM_KNOCKBACK": {
+   "group": "GAMETYPE_PLATFORMER",
+   "preuve": "tools/lab_engine_fields.py plat-states/knockback_off",
+   "sceneType": "PLATFORM",
+   "status": "identique"
+  },
+  "FEAT_PLATFORM_LADDERS": {
+   "group": "GAMETYPE_PLATFORMER",
+   "preuve": "tools/lab_engine_fields.py plat-ladder/off",
+   "sceneType": "PLATFORM",
+   "status": "identique"
+  },
+  "FEAT_PLATFORM_LADDERS_DROP": {
+   "group": "GAMETYPE_PLATFORMER",
+   "preuve": "tools/lab_engine_fields.py plat-ladder/drop",
+   "sceneType": "PLATFORM",
+   "status": "identique"
+  },
+  "FEAT_PLATFORM_LADDERS_HOP": {
+   "group": "GAMETYPE_PLATFORMER",
+   "preuve": "tools/lab_engine_fields.py plat-ladder-top/hop",
+   "sceneType": "PLATFORM",
+   "status": "identique"
+  },
+  "FEAT_PLATFORM_LADDERS_JUMP": {
+   "group": "GAMETYPE_PLATFORMER",
+   "preuve": "tools/lab_engine_fields.py plat-ladder/jump",
+   "sceneType": "PLATFORM",
+   "status": "identique"
+  },
+  "FEAT_PLATFORM_LADDERS_WALK_OFF": {
+   "group": "GAMETYPE_PLATFORMER",
+   "preuve": "tools/lab_engine_fields.py plat-ladder/walk_off",
+   "sceneType": "PLATFORM",
+   "status": "identique"
+  },
+  "FEAT_PLATFORM_RUN": {
+   "group": "GAMETYPE_PLATFORMER",
+   "preuve": "tools/lab_engine_fields.py plat-move/run_off",
+   "sceneType": "PLATFORM",
+   "status": "identique"
+  },
+  "FEAT_PLATFORM_SLOPES": {
+   "group": "GAMETYPE_PLATFORMER",
+   "preuve": "tools/lab_engine_fields.py plat-move/slopes_off",
+   "sceneType": "PLATFORM",
+   "status": "identique"
+  },
+  "FEAT_PLATFORM_WALL_JUMP": {
+   "group": "GAMETYPE_PLATFORMER",
+   "preuve": "tools/lab_engine_fields.py plat-wall/off",
+   "sceneType": "PLATFORM",
+   "status": "identique"
+  },
+  "INPUT_ADVENTURE_DASH": {
+   "group": "GAMETYPE_ADVENTURE",
+   "preuve": "tools/lab_engine_fields.py adv-dash/input_b, adv-dash/input_double_tap, adv-dash/input_interact",
+   "sceneType": "ADVENTURE",
+   "status": "identique"
+  },
+  "INPUT_ADVENTURE_DIRECTION_TYPE": {
+   "group": "GAMETYPE_ADVENTURE",
+   "preuve": "tools/lab_engine_fields.py adv-move/horizontal",
+   "sceneType": "ADVENTURE",
+   "status": "identique"
+  },
+  "INPUT_ADVENTURE_INTERACT": {
+   "group": "GAMETYPE_ADVENTURE",
+   "preuve": "tools/lab_engine_fields.py adv-dash/input_interact",
+   "sceneType": "ADVENTURE",
+   "status": "identique"
+  },
+  "INPUT_ADVENTURE_MOVE_TYPE": {
+   "group": "GAMETYPE_ADVENTURE",
+   "preuve": "tools/lab_engine_fields.py adv-move/four_way",
+   "sceneType": "ADVENTURE",
+   "status": "identique"
+  },
+  "INPUT_ADVENTURE_RUN": {
+   "group": "GAMETYPE_ADVENTURE",
+   "preuve": "tools/lab_engine_fields.py adv-run/on_a",
+   "sceneType": "ADVENTURE",
+   "status": "identique"
+  },
+  "INPUT_PLATFORM_DASH": {
+   "group": "GAMETYPE_PLATFORMER",
+   "preuve": "tools/lab_engine_fields.py plat-dash/input_a, plat-dash/input_down_jump, plat-dash/input_double_tap, plat-dash/input_interact",
+   "sceneType": "PLATFORM",
+   "status": "identique"
+  },
+  "INPUT_PLATFORM_DROP_THROUGH": {
+   "group": "GAMETYPE_PLATFORMER",
+   "preuve": "tools/lab_engine_fields.py plat-drop/down_hold, plat-drop/down_tap, plat-drop-held/jump_hold",
+   "sceneType": "PLATFORM",
+   "status": "identique"
+  },
+  "INPUT_PLATFORM_FLOAT": {
+   "group": "GAMETYPE_PLATFORMER",
+   "preuve": "tools/lab_engine_fields.py plat-air/float_up",
+   "sceneType": "PLATFORM",
+   "status": "identique"
+  },
+  "INPUT_PLATFORM_FORCE_TRIGGER": {
+   "group": "GAMETYPE_PLATFORMER",
+   "preuve": "tools/lab_engine_fields.py plat-inputs/force_none, plat-inputs/force_a, plat-inputs/force_b",
+   "sceneType": "PLATFORM",
+   "status": "identique"
+  },
+  "INPUT_PLATFORM_INTERACT": {
+   "group": "GAMETYPE_PLATFORMER",
+   "preuve": "tools/lab_engine_fields.py plat-dash/input_interact, plat-inputs/interact_b, plat-inputs/interact_up",
+   "sceneType": "PLATFORM",
+   "status": "identique"
+  },
+  "INPUT_PLATFORM_JUMP": {
+   "group": "GAMETYPE_PLATFORMER",
+   "preuve": "tools/lab_engine_fields.py plat-move/jump_on_b",
+   "sceneType": "PLATFORM",
+   "status": "identique"
+  },
+  "INPUT_PLATFORM_RUN": {
+   "group": "GAMETYPE_PLATFORMER",
+   "preuve": "tools/lab_engine_fields.py plat-move/run_on_a",
+   "sceneType": "PLATFORM",
+   "status": "identique"
+  },
+  "INPUT_TOPDOWN_INTERACT": {
+   "group": "GAMETYPE_TOP_DOWN",
+   "preuve": "tests/test_topdown.py: A and B, native ROM against the topdown.c model",
+   "sceneType": "TOPDOWN",
+   "status": "identique"
+  },
+  "PLATFORM_BLANK_ANIM": {
+   "group": "GAMETYPE_PLATFORMER",
+   "preuve": "tools/lab_engine_fields.py plat-states/blank_anim",
+   "sceneType": "PLATFORM",
+   "status": "identique"
+  },
+  "PLATFORM_DASH_ANIM": {
+   "group": "GAMETYPE_PLATFORMER",
+   "preuve": "tools/lab_engine_fields.py plat-dash/anim",
+   "sceneType": "PLATFORM",
+   "status": "identique"
+  },
+  "PLATFORM_FALL_ANIM": {
+   "group": "GAMETYPE_PLATFORMER",
+   "preuve": "tools/lab_engine_fields.py plat-air/fall_anim",
+   "sceneType": "PLATFORM",
+   "status": "identique"
+  },
+  "PLATFORM_FLOAT_ANIM": {
+   "group": "GAMETYPE_PLATFORMER",
+   "preuve": "tools/lab_engine_fields.py plat-air/float_anim",
+   "sceneType": "PLATFORM",
+   "status": "identique"
+  },
+  "PLATFORM_JUMP_ANIM": {
+   "group": "GAMETYPE_PLATFORMER",
+   "preuve": "tools/lab_engine_fields.py plat-air/jump_anim",
+   "sceneType": "PLATFORM",
+   "status": "identique"
+  },
+  "PLATFORM_KNOCKBACK_ANIM": {
+   "group": "GAMETYPE_PLATFORMER",
+   "preuve": "tools/lab_engine_fields.py plat-states/knockback_anim",
+   "sceneType": "PLATFORM",
+   "status": "identique"
+  },
+  "PLATFORM_LADDERS_ANIM": {
+   "group": "GAMETYPE_PLATFORMER",
+   "preuve": "tools/lab_engine_fields.py plat-ladder/anim",
+   "sceneType": "PLATFORM",
+   "status": "identique"
+  },
+  "PLATFORM_RUN_ANIM": {
+   "group": "GAMETYPE_PLATFORMER",
+   "preuve": "tools/lab_engine_fields.py plat-air/run_anim",
+   "sceneType": "PLATFORM",
+   "status": "identique"
+  },
+  "PLATFORM_RUN_STYLE": {
+   "group": "GAMETYPE_PLATFORMER",
+   "preuve": "tools/lab_engine_fields.py plat-move/run_smooth, plat-move/run_instant",
+   "sceneType": "PLATFORM",
+   "status": "identique"
+  },
+  "PLATFORM_WALL_SLIDE_ANIM": {
+   "group": "GAMETYPE_PLATFORMER",
+   "preuve": "tools/lab_engine_fields.py plat-wall/slide_anim",
+   "sceneType": "PLATFORM",
+   "status": "identique"
+  },
+  "PROJECTILES_COLLISION_SPREAD": {
+   "group": "SETTINGS_PROJECTILES",
+   "preuve": "tools/lab_engine_fields.py projectile-spread/spread_2, projectile-spread/every_frame",
+   "sceneType": "",
+   "status": "identique"
+  },
+  "SHOOTER_MOVEMENT_TYPE": {
+   "group": "GAMETYPE_SHMUP",
+   "preuve": "tools/lab_engine_fields.py shmup-move/locked",
+   "sceneType": "SHMUP",
+   "status": "identique"
+  },
+  "SHOOTER_TRIGGER_ACTIVATION": {
+   "group": "GAMETYPE_SHMUP",
+   "preuve": "tools/lab_engine_fields.py shmup-triggers/screen",
+   "sceneType": "SHMUP",
+   "status": "identique"
+  },
+  "SHOOTER_WALL_COLLISION_GROUP": {
+   "group": "GAMETYPE_SHMUP",
+   "preuve": "tools/lab_engine_fields.py shmup-wall/group_2",
+   "sceneType": "SHMUP",
+   "status": "identique"
+  },
+  "adv_dash_active": {
+   "ecart": "§16",
+   "group": "GAMETYPE_ADVENTURE",
+   "preuve": "tools/lab_engine_fields.py adv-dash/inactive",
+   "sceneType": "ADVENTURE",
+   "status": "adapte"
+  },
+  "adv_dash_deadzone": {
+   "ecart": "§16",
+   "group": "GAMETYPE_ADVENTURE",
+   "preuve": "tools/lab_engine_fields.py adv-dash/deadzone",
+   "sceneType": "ADVENTURE",
+   "status": "adapte"
+  },
+  "adv_dash_dist": {
+   "group": "GAMETYPE_ADVENTURE",
+   "preuve": "tools/lab_engine_fields.py adv-dash/dist",
+   "sceneType": "ADVENTURE",
+   "status": "identique"
+  },
+  "adv_dash_frames": {
+   "ecart": "§16",
+   "group": "GAMETYPE_ADVENTURE",
+   "preuve": "tools/lab_engine_fields.py adv-dash/frames",
+   "sceneType": "ADVENTURE",
+   "status": "adapte"
+  },
+  "adv_dash_mask": {
+   "ecart": "§16",
+   "group": "GAMETYPE_ADVENTURE",
+   "preuve": "tools/lab_engine_fields.py adv-dash-wall/through_walls, adv-dash-trigger/through_triggers, adv-dash-solid/through_actors",
+   "sceneType": "ADVENTURE",
+   "status": "adapte"
+  },
+  "adv_dash_ready_frames": {
+   "ecart": "§16",
+   "group": "GAMETYPE_ADVENTURE",
+   "preuve": "tools/lab_engine_fields.py adv-dash/ready",
+   "sceneType": "ADVENTURE",
+   "status": "adapte"
+  },
+  "adv_dec": {
+   "group": "GAMETYPE_ADVENTURE",
+   "preuve": "tools/lab_engine_fields.py adv-move/dec",
+   "sceneType": "ADVENTURE",
+   "status": "identique"
+  },
+  "adv_knockback_frames": {
+   "ecart": "§16",
+   "group": "GAMETYPE_ADVENTURE",
+   "preuve": "tools/lab_engine_fields.py adv-knockback/frames",
+   "sceneType": "ADVENTURE",
+   "status": "adapte"
+  },
+  "adv_knockback_vel_x": {
+   "group": "GAMETYPE_ADVENTURE",
+   "preuve": "tools/lab_engine_fields.py adv-knockback/vel_x",
+   "sceneType": "ADVENTURE",
+   "status": "identique"
+  },
+  "adv_knockback_vel_y": {
+   "group": "GAMETYPE_ADVENTURE",
+   "preuve": "tools/lab_engine_fields.py adv-knockback-diagonal/vel_y",
+   "sceneType": "ADVENTURE",
+   "status": "identique"
+  },
+  "adv_next_state": {
+   "ecart": "§16",
+   "group": "GAMETYPE_ADVENTURE",
+   "preuve": "tools/lab_engine_fields.py adv-move/state_next",
+   "sceneType": "ADVENTURE",
+   "status": "adapte"
+  },
+  "adv_push_delay_frames": {
+   "ecart": "§16",
+   "group": "GAMETYPE_ADVENTURE",
+   "preuve": "tools/lab_engine_fields.py adv-push/delay",
+   "sceneType": "ADVENTURE",
+   "status": "adapte"
+  },
+  "adv_run_acc": {
+   "group": "GAMETYPE_ADVENTURE",
+   "preuve": "tools/lab_engine_fields.py adv-run/acc",
+   "sceneType": "ADVENTURE",
+   "status": "identique"
+  },
+  "adv_run_vel": {
+   "group": "GAMETYPE_ADVENTURE",
+   "preuve": "tools/lab_engine_fields.py adv-run/vel",
+   "sceneType": "ADVENTURE",
+   "status": "identique"
+  },
+  "adv_turn_acc": {
+   "group": "GAMETYPE_ADVENTURE",
+   "preuve": "tools/lab_engine_fields.py adv-move/turn_acc",
+   "sceneType": "ADVENTURE",
+   "status": "identique"
+  },
+  "adv_vel_x": {
+   "group": "GAMETYPE_ADVENTURE",
+   "preuve": "tools/lab_engine_fields.py adv-move/state_vel_x",
+   "sceneType": "ADVENTURE",
+   "status": "identique"
+  },
+  "adv_vel_y": {
+   "group": "GAMETYPE_ADVENTURE",
+   "preuve": "tools/lab_engine_fields.py adv-move/state_vel_y",
+   "sceneType": "ADVENTURE",
+   "status": "identique"
+  },
+  "adv_walk_acc": {
+   "group": "GAMETYPE_ADVENTURE",
+   "preuve": "tools/lab_engine_fields.py adv-move/walk_acc",
+   "sceneType": "ADVENTURE",
+   "status": "identique"
+  },
+  "adv_walk_vel": {
+   "group": "GAMETYPE_ADVENTURE",
+   "preuve": "tools/lab_engine_fields.py adv-move/walk_vel",
+   "sceneType": "ADVENTURE",
+   "status": "identique"
+  },
+  "fade_style": {
+   "ecart": "§13",
+   "group": "SETTINGS_FADE",
+   "partiel": "pose au demarrage apres fade_init (script_engine_init) ; le fondu vers le noir n'est visible qu'avec des palettes de scene (M2)",
+   "sceneType": "",
+   "status": "adapte"
+  },
+  "plat_air_control": {
+   "ecart": "§16",
+   "group": "GAMETYPE_PLATFORMER",
+   "preuve": "tools/lab_engine_fields.py plat-move/air_control",
+   "sceneType": "PLATFORM",
+   "status": "adapte"
+  },
+  "plat_air_dec": {
+   "group": "GAMETYPE_PLATFORMER",
+   "preuve": "tools/lab_engine_fields.py plat-move/air_dec",
+   "sceneType": "PLATFORM",
+   "status": "identique"
+  },
+  "plat_blank_grav": {
+   "group": "GAMETYPE_PLATFORMER",
+   "preuve": "tools/lab_engine_fields.py plat-states/blank_grav",
+   "sceneType": "PLATFORM",
+   "status": "identique"
+  },
+  "plat_camera_block": {
+   "ecart": "§16",
+   "group": "GAMETYPE_PLATFORMER",
+   "preuve": "tools/lab_engine_fields.py plat-camera-right/right, plat-camera-right/both, plat-camera-left/left",
+   "sceneType": "PLATFORM",
+   "status": "adapte"
+  },
+  "plat_climb_vel": {
+   "group": "GAMETYPE_PLATFORMER",
+   "preuve": "tools/lab_engine_fields.py plat-ladder/climb_vel",
+   "sceneType": "PLATFORM",
+   "status": "identique"
+  },
+  "plat_coyote_frames": {
+   "ecart": "§16",
+   "group": "GAMETYPE_PLATFORMER",
+   "preuve": "tools/lab_engine_fields.py plat-coyote/frames",
+   "sceneType": "PLATFORM",
+   "status": "adapte"
+  },
+  "plat_dash_active": {
+   "ecart": "§16",
+   "group": "GAMETYPE_PLATFORMER",
+   "preuve": "tools/lab_engine_fields.py plat-dash/inactive",
+   "sceneType": "PLATFORM",
+   "status": "adapte"
+  },
+  "plat_dash_deadzone": {
+   "ecart": "§16",
+   "group": "GAMETYPE_PLATFORMER",
+   "preuve": "tools/lab_engine_fields.py plat-dash/deadzone",
+   "sceneType": "PLATFORM",
+   "status": "adapte"
+  },
+  "plat_dash_dist": {
+   "group": "GAMETYPE_PLATFORMER",
+   "preuve": "tools/lab_engine_fields.py plat-dash/dist",
+   "sceneType": "PLATFORM",
+   "status": "identique"
+  },
+  "plat_dash_frames": {
+   "ecart": "§16",
+   "group": "GAMETYPE_PLATFORMER",
+   "preuve": "tools/lab_engine_fields.py plat-dash/frames",
+   "sceneType": "PLATFORM",
+   "status": "adapte"
+  },
+  "plat_dash_from": {
+   "ecart": "§16",
+   "group": "GAMETYPE_PLATFORMER",
+   "preuve": "tools/lab_engine_fields.py plat-ladder-dash/from_ladder, plat-dash/from_ground, plat-dash/from_air",
+   "sceneType": "PLATFORM",
+   "status": "adapte"
+  },
+  "plat_dash_jump_from": {
+   "ecart": "§16",
+   "group": "GAMETYPE_PLATFORMER",
+   "preuve": "tools/lab_engine_fields.py plat-dash/jump_from_none, plat-dash/jump_from_air",
+   "sceneType": "PLATFORM",
+   "status": "adapte"
+  },
+  "plat_dash_mask": {
+   "ecart": "§16",
+   "group": "GAMETYPE_PLATFORMER",
+   "preuve": "tools/lab_engine_fields.py plat-dash/through_walls, plat-dash-solid/through_actors, plat-dash-trigger/through_triggers",
+   "sceneType": "PLATFORM",
+   "status": "adapte"
+  },
+  "plat_dash_ready_frames": {
+   "ecart": "§16",
+   "group": "GAMETYPE_PLATFORMER",
+   "preuve": "tools/lab_engine_fields.py plat-dash/ready",
+   "sceneType": "PLATFORM",
+   "status": "adapte"
+  },
+  "plat_dec": {
+   "group": "GAMETYPE_PLATFORMER",
+   "preuve": "tools/lab_engine_fields.py plat-move/dec",
+   "sceneType": "PLATFORM",
+   "status": "identique"
+  },
+  "plat_drop_through_active": {
+   "ecart": "§16",
+   "group": "GAMETYPE_PLATFORMER",
+   "preuve": "tools/lab_engine_fields.py plat-drop/inactive",
+   "sceneType": "PLATFORM",
+   "status": "adapte"
+  },
+  "plat_extra_jumps": {
+   "ecart": "§16",
+   "group": "GAMETYPE_PLATFORMER",
+   "preuve": "tools/lab_engine_fields.py plat-air/extra_jumps",
+   "sceneType": "PLATFORM",
+   "status": "adapte"
+  },
+  "plat_extra_jumps_counter": {
+   "ecart": "§16",
+   "group": "GAMETYPE_PLATFORMER",
+   "preuve": "tools/lab_engine_fields.py plat-move/state_plat_extra_jumps_counter",
+   "sceneType": "PLATFORM",
+   "status": "adapte"
+  },
+  "plat_float_active": {
+   "ecart": "§16",
+   "group": "GAMETYPE_PLATFORMER",
+   "preuve": "tools/lab_engine_fields.py plat-air/float_inactive",
+   "sceneType": "PLATFORM",
+   "status": "adapte"
+  },
+  "plat_float_vel": {
+   "group": "GAMETYPE_PLATFORMER",
+   "preuve": "tools/lab_engine_fields.py plat-air/float_vel",
+   "sceneType": "PLATFORM",
+   "status": "identique"
+  },
+  "plat_grav": {
+   "group": "GAMETYPE_PLATFORMER",
+   "preuve": "tools/lab_engine_fields.py plat-move/grav",
+   "sceneType": "PLATFORM",
+   "status": "identique"
+  },
+  "plat_grounded": {
+   "ecart": "§16",
+   "group": "GAMETYPE_PLATFORMER",
+   "preuve": "tools/lab_engine_fields.py plat-move/state_plat_grounded",
+   "sceneType": "PLATFORM",
+   "status": "adapte"
+  },
+  "plat_hold_grav": {
+   "group": "GAMETYPE_PLATFORMER",
+   "preuve": "tools/lab_engine_fields.py plat-move/hold_grav",
+   "sceneType": "PLATFORM",
+   "status": "identique"
+  },
+  "plat_is_actor_attached": {
+   "ecart": "§16",
+   "group": "GAMETYPE_PLATFORMER",
+   "preuve": "tools/lab_engine_fields.py plat-move/state_plat_is_actor_attached",
+   "sceneType": "PLATFORM",
+   "status": "adapte"
+  },
+  "plat_jump_buffer_frames": {
+   "ecart": "§16",
+   "group": "GAMETYPE_PLATFORMER",
+   "preuve": "tools/lab_engine_fields.py plat-buffer/frames",
+   "sceneType": "PLATFORM",
+   "status": "adapte"
+  },
+  "plat_jump_hold_frames": {
+   "ecart": "§16",
+   "group": "GAMETYPE_PLATFORMER",
+   "preuve": "tools/lab_engine_fields.py plat-move/jump_hold",
+   "sceneType": "PLATFORM",
+   "status": "adapte"
+  },
+  "plat_jump_hold_vel": {
+   "group": "GAMETYPE_PLATFORMER",
+   "preuve": "tools/lab_engine_fields.py plat-move/jump_hold",
+   "sceneType": "PLATFORM",
+   "status": "identique"
+  },
+  "plat_jump_reduction": {
+   "group": "GAMETYPE_PLATFORMER",
+   "preuve": "tools/lab_engine_fields.py plat-air/reduction",
+   "sceneType": "PLATFORM",
+   "status": "identique"
+  },
+  "plat_jump_type": {
+   "ecart": "§16",
+   "group": "GAMETYPE_PLATFORMER",
+   "preuve": "tools/lab_engine_fields.py plat-move/state_plat_jump_type",
+   "sceneType": "PLATFORM",
+   "status": "adapte"
+  },
+  "plat_jump_vel": {
+   "group": "GAMETYPE_PLATFORMER",
+   "preuve": "tools/lab_engine_fields.py plat-move/jump_vel",
+   "sceneType": "PLATFORM",
+   "status": "identique"
+  },
+  "plat_knockback_frames": {
+   "ecart": "§16",
+   "group": "GAMETYPE_PLATFORMER",
+   "preuve": "tools/lab_engine_fields.py plat-states/knockback_frames",
+   "sceneType": "PLATFORM",
+   "status": "adapte"
+  },
+  "plat_knockback_vel_x": {
+   "group": "GAMETYPE_PLATFORMER",
+   "preuve": "tools/lab_engine_fields.py plat-states/knockback_vel_x",
+   "sceneType": "PLATFORM",
+   "status": "identique"
+  },
+  "plat_knockback_vel_y": {
+   "group": "GAMETYPE_PLATFORMER",
+   "preuve": "tools/lab_engine_fields.py plat-states/knockback_vel_y",
+   "sceneType": "PLATFORM",
+   "status": "identique"
+  },
+  "plat_max_fall_vel": {
+   "group": "GAMETYPE_PLATFORMER",
+   "preuve": "tools/lab_engine_fields.py plat-move/max_fall_vel",
+   "sceneType": "PLATFORM",
+   "status": "identique"
+  },
+  "plat_min_vel": {
+   "group": "GAMETYPE_PLATFORMER",
+   "preuve": "tools/lab_engine_fields.py plat-move/min_vel",
+   "sceneType": "PLATFORM",
+   "status": "identique"
+  },
+  "plat_next_state": {
+   "ecart": "§16",
+   "group": "GAMETYPE_PLATFORMER",
+   "preuve": "tools/lab_engine_fields.py plat-move/state_plat_next_state",
+   "sceneType": "PLATFORM",
+   "status": "adapte"
+  },
+  "plat_run_acc": {
+   "group": "GAMETYPE_PLATFORMER",
+   "preuve": "tools/lab_engine_fields.py plat-move/run_acc",
+   "sceneType": "PLATFORM",
+   "status": "identique"
+  },
+  "plat_run_boost": {
+   "group": "GAMETYPE_PLATFORMER",
+   "preuve": "tools/lab_engine_fields.py plat-move/run_boost",
+   "sceneType": "PLATFORM",
+   "status": "identique"
+  },
+  "plat_run_stage": {
+   "ecart": "§16",
+   "group": "GAMETYPE_PLATFORMER",
+   "preuve": "tools/lab_engine_fields.py plat-move/state_plat_run_stage",
+   "sceneType": "PLATFORM",
+   "status": "adapte"
+  },
+  "plat_run_vel": {
+   "group": "GAMETYPE_PLATFORMER",
+   "preuve": "tools/lab_engine_fields.py plat-move/run_vel",
+   "sceneType": "PLATFORM",
+   "status": "identique"
+  },
+  "plat_turn_acc": {
+   "group": "GAMETYPE_PLATFORMER",
+   "preuve": "tools/lab_engine_fields.py plat-move/turn_acc",
+   "sceneType": "PLATFORM",
+   "status": "identique"
+  },
+  "plat_turn_control": {
+   "ecart": "§16",
+   "group": "GAMETYPE_PLATFORMER",
+   "preuve": "tools/lab_engine_fields.py plat-air/turn_control",
+   "sceneType": "PLATFORM",
+   "status": "adapte"
+  },
+  "plat_vel_x": {
+   "group": "GAMETYPE_PLATFORMER",
+   "preuve": "tools/lab_engine_fields.py plat-move/state_plat_vel_x",
+   "sceneType": "PLATFORM",
+   "status": "identique"
+  },
+  "plat_vel_y": {
+   "group": "GAMETYPE_PLATFORMER",
+   "preuve": "tools/lab_engine_fields.py plat-move/state_plat_vel_y",
+   "sceneType": "PLATFORM",
+   "status": "identique"
+  },
+  "plat_walk_acc": {
+   "group": "GAMETYPE_PLATFORMER",
+   "preuve": "tools/lab_engine_fields.py plat-move/walk_acc",
+   "sceneType": "PLATFORM",
+   "status": "identique"
+  },
+  "plat_walk_vel": {
+   "group": "GAMETYPE_PLATFORMER",
+   "preuve": "tools/lab_engine_fields.py plat-move/walk_vel",
+   "sceneType": "PLATFORM",
+   "status": "identique"
+  },
+  "plat_wall_col": {
+   "ecart": "§16",
+   "group": "GAMETYPE_PLATFORMER",
+   "preuve": "tools/lab_engine_fields.py plat-move/state_plat_wall_col",
+   "sceneType": "PLATFORM",
+   "status": "adapte"
+  },
+  "plat_wall_jump_counter": {
+   "ecart": "§16",
+   "group": "GAMETYPE_PLATFORMER",
+   "preuve": "tools/lab_engine_fields.py plat-move/state_plat_wall_jump_counter",
+   "sceneType": "PLATFORM",
+   "status": "adapte"
+  },
+  "plat_wall_jump_max": {
+   "ecart": "§16",
+   "group": "GAMETYPE_PLATFORMER",
+   "preuve": "tools/lab_engine_fields.py plat-chimney/wall_jump_max",
+   "sceneType": "PLATFORM",
+   "status": "adapte"
+  },
+  "plat_wall_kick": {
+   "group": "GAMETYPE_PLATFORMER",
+   "preuve": "tools/lab_engine_fields.py plat-wall/kick",
+   "sceneType": "PLATFORM",
+   "status": "identique"
+  },
+  "plat_wall_slide": {
+   "ecart": "§16",
+   "group": "GAMETYPE_PLATFORMER",
+   "preuve": "tools/lab_engine_fields.py plat-wall/slide",
+   "sceneType": "PLATFORM",
+   "status": "adapte"
+  },
+  "plat_wall_slide_vel": {
+   "group": "GAMETYPE_PLATFORMER",
+   "preuve": "tools/lab_engine_fields.py plat-wall/slide_vel",
+   "sceneType": "PLATFORM",
+   "status": "identique"
+  },
+  "shooter_scroll_speed": {
+   "ecart": "§16",
+   "group": "GAMETYPE_SHMUP",
+   "preuve": "tools/lab_engine_fields.py shmup-scroll/speed",
+   "sceneType": "SHMUP",
+   "status": "adapte"
+  },
+  "topdown_grid": {
+   "group": "GAMETYPE_TOP_DOWN",
+   "preuve": "tests/test_topdown.py: 8 and 16 px grids, native ROM against the topdown.c model",
+   "sceneType": "TOPDOWN",
+   "status": "identique"
+  }
+ },
+ "events": {
+  "EVENT_ACTOR_ACTIVATE": {
+   "gbs2": true,
+   "partiel": "necessite le moteur de scene (scene de depart non LOGO)",
+   "status": "identique"
+  },
+  "EVENT_ACTOR_COLLISIONS_DISABLE": {
+   "gbs2": true,
+   "partiel": "drapeau ACTOR_FLAG_COLLISION lu par les collisions joueur/acteurs (docs/M2_PLAYER_COLLISIONS.md) ; necessite le moteur de scene (scene de depart non LOGO)",
+   "status": "identique"
+  },
+  "EVENT_ACTOR_COLLISIONS_ENABLE": {
+   "gbs2": false,
+   "partiel": "drapeau ACTOR_FLAG_COLLISION lu par les collisions joueur/acteurs (docs/M2_PLAYER_COLLISIONS.md) ; necessite le moteur de scene (scene de depart non LOGO)",
+   "status": "identique"
+  },
+  "EVENT_ACTOR_DEACTIVATE": {
+   "gbs2": true,
+   "partiel": "necessite le moteur de scene (scene de depart non LOGO)",
+   "status": "identique"
+  },
+  "EVENT_ACTOR_EFFECTS": {
+   "gbs2": false,
+   "status": "identique"
+  },
+  "EVENT_ACTOR_EMOTE": {
+   "gbs2": true,
+   "status": "identique"
+  },
+  "EVENT_ACTOR_GET_DIRECTION": {
+   "gbs2": false,
+   "status": "identique"
+  },
+  "EVENT_ACTOR_GET_POSITION": {
+   "gbs2": false,
+   "status": "identique"
+  },
+  "EVENT_ACTOR_HIDE": {
+   "gbs2": false,
+   "partiel": "necessite le moteur de scene (scene de depart non LOGO)",
+   "status": "identique"
+  },
+  "EVENT_ACTOR_INVOKE": {
+   "ecart": "§25",
+   "gbs2": false,
+   "status": "adapte"
+  },
+  "EVENT_ACTOR_MOVE_CANCEL": {
+   "gbs2": false,
+   "status": "identique"
+  },
+  "EVENT_ACTOR_MOVE_RELATIVE": {
+   "gbs2": true,
+   "partiel": "tuiles ou pixels, murs et acteurs, verrou de direction, horizontal / vertical / diagonal ; valeurs calculees livrees, position et direction d'acteur comprises (docs/M4_EXPRESSIONS.md) ; refuses : image d'acteur, proprietes de camera, champ moteur lu, abs/atan2/isqrt ; moveType ou units inconnus refuses ; necessite le moteur de scene (scene de depart non LOGO)",
+   "status": "identique"
+  },
+  "EVENT_ACTOR_MOVE_TO": {
+   "gbs2": true,
+   "partiel": "tuiles ou pixels, murs et acteurs, verrou de direction, horizontal / vertical / diagonal ; valeurs calculees livrees, position et direction d'acteur comprises (docs/M4_EXPRESSIONS.md) ; refuses : image d'acteur, proprietes de camera, champ moteur lu, abs/atan2/isqrt ; moveType ou units inconnus refuses ; necessite le moteur de scene (scene de depart non LOGO)",
+   "status": "identique"
+  },
+  "EVENT_ACTOR_MOVE_TO_VALUE": {
+   "gbs2": false,
+   "status": "identique"
+  },
+  "EVENT_ACTOR_PUSH": {
+   "gbs2": true,
+   "partiel": "acteur seulement, direction du joueur, deux tuiles ou 100 tuiles bornees par les murs ; VM_ACTOR_MOVE_TO avec etat de contexte ; collisions acteurs alignees aux bornes ; tests/test_actor_push.py",
+   "status": "identique"
+  },
+  "EVENT_ACTOR_SET_ANIMATE": {
+   "gbs2": true,
+   "partiel": "sans effet dans GB Studio 4.3.2 (obsolete) : seul Actor Set Active est compile, avec un avertissement localise",
+   "status": "identique"
+  },
+  "EVENT_ACTOR_SET_ANIMATION_SPEED": {
+   "gbs2": true,
+   "partiel": "necessite le moteur de scene (scene de depart non LOGO)",
+   "status": "identique"
+  },
+  "EVENT_ACTOR_SET_COLLISION_BOX": {
+   "gbs2": false,
+   "status": "identique"
+  },
+  "EVENT_ACTOR_SET_DIRECTION": {
+   "gbs2": true,
+   "partiel": "valeurs calculees livrees, position et direction d'acteur comprises (docs/M4_EXPRESSIONS.md) ; refuses : image d'acteur, proprietes de camera, champ moteur lu, abs/atan2/isqrt ; necessite le moteur de scene (scene de depart non LOGO)",
+   "status": "identique"
+  },
+  "EVENT_ACTOR_SET_FRAME": {
+   "gbs2": true,
+   "partiel": "valeurs calculees livrees, position et direction d'acteur comprises (docs/M4_EXPRESSIONS.md) ; refuses : image d'acteur, proprietes de camera, champ moteur lu, abs/atan2/isqrt ; acteur sans animation posee : sans effet (GBVM divise par zero) ; necessite le moteur de scene (scene de depart non LOGO)",
+   "status": "identique"
+  },
+  "EVENT_ACTOR_SET_FRAME_TO_VALUE": {
+   "gbs2": false,
+   "status": "identique"
+  },
+  "EVENT_ACTOR_SET_MOVEMENT_SPEED": {
+   "gbs2": true,
+   "partiel": "vitesse lue par les deplacements (docs/M2_ACTOR_MOVES.md) ; necessite le moteur de scene (scene de depart non LOGO)",
+   "status": "identique"
+  },
+  "EVENT_ACTOR_SET_POSITION": {
+   "gbs2": true,
+   "partiel": "tuiles ou pixels, valeurs calculees livrees, position et direction d'acteur comprises (docs/M4_EXPRESSIONS.md) ; refuses : image d'acteur, proprietes de camera, champ moteur lu, abs/atan2/isqrt ; necessite le moteur de scene (scene de depart non LOGO)",
+   "status": "identique"
+  },
+  "EVENT_ACTOR_SET_POSITION_RELATIVE": {
+   "gbs2": false,
+   "status": "identique"
+  },
+  "EVENT_ACTOR_SET_POSITION_TO_VALUE": {
+   "gbs2": false,
+   "status": "identique"
+  },
+  "EVENT_ACTOR_SET_SPRITE": {
+   "gbs2": true,
+   "status": "identique"
+  },
+  "EVENT_ACTOR_SET_STATE": {
+   "gbs2": true,
+   "status": "identique"
+  },
+  "EVENT_ACTOR_SHOW": {
+   "gbs2": false,
+   "partiel": "necessite le moteur de scene (scene de depart non LOGO)",
+   "status": "identique"
+  },
+  "EVENT_ACTOR_START_UPDATE": {
+   "gbs2": false,
+   "status": "identique"
+  },
+  "EVENT_ACTOR_STOP_UPDATE": {
+   "gbs2": true,
+   "status": "identique"
+  },
+  "EVENT_ADD_FLAGS": {
+   "gbs2": false,
+   "note": "Contrat M4_VARIABLE_FLAGS : 16 bits, arguments indirects ; indice de bit invalide refuse explicitement.",
+   "status": "identique"
+  },
+  "EVENT_ADVENTURE_STATE_SET": {
+   "gbs2": false,
+   "status": "identique"
+  },
+  "EVENT_AWAIT_INPUT": {
+   "ecart": "§2",
+   "gbs2": true,
+   "status": "adapte"
+  },
+  "EVENT_CALL_CUSTOM_EVENT": {
+   "gbs2": true,
+   "partiel": "script compile comme fonction (VM_CALL_FAR / VM_RET_FAR_N), un par scene, partage si identique ; arguments acteur et variables par valeur et par reference ; argument non renseigne compile comme GB Studio avec avertissement (A9) ; champs table de donnees et script absent refuses",
+   "status": "identique"
+  },
+  "EVENT_CAMERA_LOCK": {
+   "ecart": "§1",
+   "gbs2": false,
+   "partiel": "cameraLock et vm_camera_move_to portes ; axes et interdictions de retour. Vitesses 0 ou 1..255 sous-pixels/image ; pas nul et troncature refuses. docs/M4_CAMERA_CONTROL.md ; tools/lab_camera_control.py ; tests/test_camera_control.py. P3 observe ; console P5 en attente.",
+   "status": "adapte"
+  },
+  "EVENT_CAMERA_MOVE_TO": {
+   "ecart": "§1",
+   "gbs2": false,
+   "partiel": "cameraMoveToScriptValues : origine GB 160x144, tuiles/pixels, expressions RPN et lectures acteur ; 0 instant, sinon pas 1..255 sous-pixels/image. vm_camera.c vendorise, limites de rendu NGPC documentees. docs/M4_CAMERA_CONTROL.md ; tools/lab_camera_control.py ; tests/test_camera_control.py. P5 en attente.",
+   "status": "adapte"
+  },
+  "EVENT_CAMERA_PROPERTY_SET": {
+   "gbs2": false,
+   "status": "identique"
+  },
+  "EVENT_CAMERA_SET_BOUNDS": {
+   "ecart": "§1",
+   "gbs2": false,
+   "partiel": "refuse avec un second decor independant",
+   "status": "adapte"
+  },
+  "EVENT_CAMERA_SET_LOCK": {
+   "gbs2": false,
+   "status": "identique"
+  },
+  "EVENT_CAMERA_SET_POSITION": {
+   "gbs2": false,
+   "status": "identique"
+  },
+  "EVENT_CAMERA_SHAKE": {
+   "ecart": "§17",
+   "gbs2": true,
+   "status": "adapte"
+  },
+  "EVENT_CHOICE": {
+   "ecart": "§5",
+   "gbs2": true,
+   "partiel": "textChoice porte ; ui_run_menu et vm_choice vendorises (curseur dans la carte du plan de texte, .MENUITEM lus octet par octet) ; variable directe ou par reference ; tests/test_choice.py",
+   "status": "adapte"
+  },
+  "EVENT_CLEAR_DATA": {
+   "ecart": "§8",
+   "gbs2": false,
+   "status": "adapte"
+  },
+  "EVENT_CLEAR_FLAGS": {
+   "gbs2": false,
+   "note": "Contrat M4_VARIABLE_FLAGS : 16 bits, arguments indirects ; indice de bit invalide refuse explicitement.",
+   "status": "identique"
+  },
+  "EVENT_COMMENT": {
+   "gbs2": false,
+   "partiel": "compile = () => {}",
+   "status": "identique"
+  },
+  "EVENT_DATA_TABLE": {
+   "gbs2": false,
+   "partiel": "cellules : nombre, constante de projet ou du moteur (symbole, docs/M6_CONSTANTS.md)",
+   "status": "identique"
+  },
+  "EVENT_DEC_VALUE": {
+   "gbs2": true,
+   "status": "identique"
+  },
+  "EVENT_DEFINE_LABEL": {
+   "gbs2": false,
+   "status": "identique"
+  },
+  "EVENT_DIALOGUE_CLOSE_NONMODAL": {
+   "gbs2": false,
+   "status": "identique"
+  },
+  "EVENT_ENGINE_FIELD_SET": {
+   "ecart": "§16",
+   "gbs2": true,
+   "partiel": "reglages UBYTE/BYTE du platformer, de l'aventure et du shmup ecrits en 16 bits (§16, docs/M6_ENGINE_FIELDS.md) ; autres reglages : selon leur variable moteur",
+   "status": "adapte"
+  },
+  "EVENT_ENGINE_FIELD_STORE": {
+   "ecart": "§16",
+   "gbs2": false,
+   "partiel": "reglages UBYTE/BYTE du platformer, de l'aventure et du shmup lus en 16 bits (§16, docs/M6_ENGINE_FIELDS.md) ; autres reglages : selon leur variable moteur",
+   "status": "adapte"
+  },
+  "EVENT_FADE_IN": {
+   "ecart": "§13",
+   "gbs2": false,
+   "partiel": "fondu bloquant de GBVM porte tel quel (paliers, cadence, duree) ; couleur des paliers lineaire sur 4 bits",
+   "status": "adapte"
+  },
+  "EVENT_FADE_OUT": {
+   "ecart": "§13",
+   "gbs2": false,
+   "partiel": "fondu bloquant de GBVM porte tel quel (paliers, cadence, duree) ; couleur des paliers lineaire sur 4 bits",
+   "status": "adapte"
+  },
+  "EVENT_GBVM_SCRIPT": {
+   "ecart": "§12",
+   "gbs2": false,
+   "status": "adapte"
+  },
+  "EVENT_GOTO_LABEL": {
+   "gbs2": false,
+   "status": "identique"
+  },
+  "EVENT_GROUP": {
+   "gbs2": true,
+   "status": "identique"
+  },
+  "EVENT_HIDE_SPRITES": {
+   "ecart": "§23",
+   "gbs2": false,
+   "status": "adapte"
+  },
+  "EVENT_IDLE": {
+   "gbs2": false,
+   "note": "Contrat docs/M4_EVENT_GAPS.md ; limites ScriptValue communes ; P5 non valide.",
+   "status": "identique"
+  },
+  "EVENT_IF": {
+   "ecart": "§20",
+   "gbs2": true,
+   "partiel": "condition : valeurs livrees : nombre, vrai, faux, variable (globale, locale, temporaire), direction, constante de projet ou du moteur (docs/M6_CONSTANTS.md), et toute operation calculee (RPN) sur elles, sauf abs, atan2 et isqrt (fonctions de bibliotheque GBDK non livrees) ; position et direction d'acteur livrees ; refusees a la compilation : image d'acteur, proprietes de camera, champ moteur lu, operandes indirect/numberSymbol ; expressions texte selon docs/M4_EXPRESSIONS.md, erreurs refusees explicitement (§20)",
+   "status": "adapte"
+  },
+  "EVENT_IF_ACTOR_AT_POSITION": {
+   "gbs2": true,
+   "status": "identique"
+  },
+  "EVENT_IF_ACTOR_DIRECTION": {
+   "gbs2": false,
+   "status": "identique"
+  },
+  "EVENT_IF_ACTOR_DISTANCE_FROM_ACTOR": {
+   "gbs2": false,
+   "note": "Contrat docs/M4_EVENT_GAPS.md ; limites ScriptValue communes ; P5 non valide.",
+   "status": "identique"
+  },
+  "EVENT_IF_ACTOR_RELATIVE_TO_ACTOR": {
+   "gbs2": true,
+   "status": "identique"
+  },
+  "EVENT_IF_COLOR_SUPPORTED": {
+   "ecart": "§12",
+   "gbs2": true,
+   "partiel": "la NGPC Color prend toujours la branche couleur, comme une CGB en mode couleur",
+   "status": "identique"
+  },
+  "EVENT_IF_CURRENT_SCENE_IS": {
+   "gbs2": false,
+   "status": "identique"
+  },
+  "EVENT_IF_DEVICE_GBA": {
+   "ecart": "§12",
+   "gbs2": false,
+   "status": "adapte"
+  },
+  "EVENT_IF_DEVICE_SGB": {
+   "ecart": "§12",
+   "gbs2": false,
+   "status": "adapte"
+  },
+  "EVENT_IF_EXPRESSION": {
+   "gbs2": false,
+   "partiel": "deprecatedAPI.ifExpression ; memes refus que Evaluate Expression ; docs/M4_DEPRECATED_EVENTS.md",
+   "status": "identique"
+  },
+  "EVENT_IF_FALSE": {
+   "gbs2": false,
+   "partiel": "ifVariableTrue chemins inverses ; docs/M4_DEPRECATED_EVENTS.md",
+   "status": "identique"
+  },
+  "EVENT_IF_FLAGS_COMPARE": {
+   "gbs2": false,
+   "note": "Contrat M4_VARIABLE_FLAGS : 16 bits, arguments indirects ; indice de bit invalide refuse explicitement.",
+   "status": "identique"
+  },
+  "EVENT_IF_INPUT": {
+   "ecart": "§2",
+   "gbs2": true,
+   "status": "adapte"
+  },
+  "EVENT_IF_SAVED_DATA": {
+   "ecart": "§8",
+   "gbs2": true,
+   "partiel": "ifDataSaved porte ; VM_SAVE_PEEK lit le dernier enregistrement de ce build ; scenes multiples seulement ; tests/test_save_rom.py",
+   "status": "adapte"
+  },
+  "EVENT_IF_TRUE": {
+   "gbs2": false,
+   "partiel": "deprecatedAPI.ifVariableTrue ; docs/M4_DEPRECATED_EVENTS.md",
+   "status": "identique"
+  },
+  "EVENT_IF_VALUE": {
+   "gbs2": false,
+   "partiel": "deprecatedAPI.ifVariableValue ; operateur inconnu refuse ; docs/M4_DEPRECATED_EVENTS.md",
+   "status": "identique"
+  },
+  "EVENT_IF_VALUE_COMPARE": {
+   "gbs2": false,
+   "partiel": "ifVariableCompare ; operateur inconnu refuse ; docs/M4_DEPRECATED_EVENTS.md",
+   "status": "identique"
+  },
+  "EVENT_INC_VALUE": {
+   "gbs2": false,
+   "status": "identique"
+  },
+  "EVENT_LAUNCH_PROJECTILE": {
+   "ecart": "§9",
+   "gbs2": true,
+   "partiel": "cinq modes et raccourci source ; liste par scene dans l'ordre walkSceneScripts ; types au-dela de 5 gardes (GB Studio les tronque) ; scripts de touche acteur/joueur par poignee hscript_hit ; directionType inconnu, champ du mode absent et scripts de touche hors TOPDOWN/PLATFORM refuses ; tests/test_projectile_events.py",
+   "status": "adapte"
+  },
+  "EVENT_LAUNCH_PROJECTILE_SLOT": {
+   "ecart": "§26",
+   "gbs2": false,
+   "status": "adapte"
+  },
+  "EVENT_LINK_CLOSE": {
+   "ecart": "§12",
+   "gbs2": false,
+   "status": "adapte"
+  },
+  "EVENT_LINK_HOST": {
+   "ecart": "§12",
+   "gbs2": false,
+   "status": "adapte"
+  },
+  "EVENT_LINK_JOIN": {
+   "ecart": "§12",
+   "gbs2": false,
+   "status": "adapte"
+  },
+  "EVENT_LINK_TRANSFER": {
+   "ecart": "§12",
+   "gbs2": false,
+   "status": "adapte"
+  },
+  "EVENT_LOAD_DATA": {
+   "ecart": "§8",
+   "gbs2": true,
+   "partiel": "dataLoad porte ; EXCEPTION_LOAD : fondu sortant, restauration, scene reprise sans init (load_scene FALSE) ; scenes multiples seulement ; tests/test_save_rom.py",
+   "status": "adapte"
+  },
+  "EVENT_LOAD_PROJECTILE_SLOT": {
+   "ecart": "§26",
+   "gbs2": false,
+   "status": "adapte"
+  },
+  "EVENT_LOOP": {
+   "gbs2": true,
+   "status": "identique"
+  },
+  "EVENT_LOOP_FOR": {
+   "gbs2": false,
+   "note": "Contrat docs/M4_EVENT_GAPS.md ; limites ScriptValue communes ; P5 non valide.",
+   "status": "identique"
+  },
+  "EVENT_LOOP_WHILE": {
+   "gbs2": false,
+   "note": "Contrat docs/M4_EVENT_GAPS.md ; limites ScriptValue communes ; P5 non valide.",
+   "status": "identique"
+  },
+  "EVENT_MENU": {
+   "ecart": "§5",
+   "gbs2": false,
+   "partiel": "Disposition dialogue, 1 a 8 choix, navigation GBVM, annulations B et dernier choix, sortie directe ou indirecte. Disposition menu laterale (x = 10) livree en scene cas A, refusee en cas B (decor sur les deux plans). Contrat docs/M4_MENU.md ; tests/test_menu.py ; tools/lab_menu.py. P5 console en attente.",
+   "status": "adapte"
+  },
+  "EVENT_MUSIC_PLAY": {
+   "ecart": "§7",
+   "gbs2": true,
+   "status": "adapte"
+  },
+  "EVENT_MUSIC_STOP": {
+   "ecart": "§7",
+   "gbs2": true,
+   "status": "adapte"
+  },
+  "EVENT_MUTE_CHANNEL": {
+   "ecart": "§7",
+   "gbs2": false,
+   "status": "adapte"
+  },
+  "EVENT_OVERLAY_HIDE": {
+   "ecart": "§5",
+   "gbs2": false,
+   "status": "adapte"
+  },
+  "EVENT_OVERLAY_MOVE_TO": {
+   "ecart": "§5",
+   "gbs2": true,
+   "partiel": "overlayMoveTo porte (attente non modale de la fenetre) ; x 0..20, y 0..18 ; cas A au-dela de 13 rangees ou x != 0 = carte logique (colonnes a l'ecran seulement) ; cas B x = 0 (docs/M4_OVERLAY.md) ; tests/test_overlay.py",
+   "status": "adapte"
+  },
+  "EVENT_OVERLAY_SET_SCANLINE_CUTOFF": {
+   "ecart": "§5",
+   "gbs2": false,
+   "status": "adapte"
+  },
+  "EVENT_OVERLAY_SHOW": {
+   "ecart": "§5",
+   "gbs2": true,
+   "partiel": "overlayShow porte ; vm_overlay_show vendorise ; x 0..20 ; cas A au-dela de 13 rangees ou x != 0 = carte logique (colonnes a l'ecran seulement) ; cas B x = 0 (docs/M4_OVERLAY.md) ; tests/test_overlay.py",
+   "status": "adapte"
+  },
+  "EVENT_PALETTE_SET_BACKGROUND": {
+   "ecart": "§4",
+   "gbs2": false,
+   "partiel": "Emplacements GB reecrits regroupes par identite (emplacement, indice) dans les palettes K2GE ; couleurs RGB555 du bytecode -> RGB444 ; COMMIT immediat + copie des fondus ; tuiles prioritaires GB comprises (masque A3) ; refuse : projet mono, tuiles remplacees, second decor, sprites prioritaires ; docs/M4_PALETTES.md",
+   "status": "adapte"
+  },
+  "EVENT_PALETTE_SET_EMOTE": {
+   "ecart": "§4",
+   "gbs2": false,
+   "partiel": "paletteSetEmote = palette sprite 7 ; docs/M4_PALETTES.md",
+   "status": "identique"
+  },
+  "EVENT_PALETTE_SET_SGB": {
+   "ecart": "§12",
+   "gbs2": false,
+   "status": "refuse"
+  },
+  "EVENT_PALETTE_SET_SPRITE": {
+   "ecart": "§4",
+   "gbs2": false,
+   "partiel": "paletteSetSprite ; emplacement GB k = palette sprite K2GE k (mots 4k+1..3 = c0, c1, c3) ; COMMIT + copie des fondus ; mono refuse ; docs/M4_PALETTES.md",
+   "status": "identique"
+  },
+  "EVENT_PALETTE_SET_UI": {
+   "ecart": "§4",
+   "gbs2": false,
+   "partiel": "Emplacements GB reecrits regroupes par identite (emplacement, indice) dans les palettes K2GE ; couleurs RGB555 du bytecode -> RGB444 ; COMMIT immediat + copie des fondus ; tuiles prioritaires GB comprises (masque A3) ; refuse : projet mono, tuiles remplacees, second decor, sprites prioritaires ; docs/M4_PALETTES.md",
+   "status": "adapte"
+  },
+  "EVENT_PEEK_DATA": {
+   "ecart": "§8",
+   "gbs2": false,
+   "status": "adapte"
+  },
+  "EVENT_PLATFORMER_STATE_SET": {
+   "gbs2": true,
+   "partiel": "scenes Platformer (plat_next_state)",
+   "status": "identique"
+  },
+  "EVENT_PLAYER_BOUNCE": {
+   "gbs2": true,
+   "status": "identique"
+  },
+  "EVENT_PLAYER_SET_SPRITE": {
+   "gbs2": false,
+   "note": "Contrat docs/M4_EVENT_GAPS.md ; limites ScriptValue communes ; P5 non valide.",
+   "status": "identique"
+  },
+  "EVENT_PRINT": {
+   "ecart": "§12",
+   "gbs2": false,
+   "status": "refuse"
+  },
+  "EVENT_RATE_LIMIT": {
+   "gbs2": true,
+   "partiel": "duree en images ou en secondes, horloge VBlank 16 bits de GBDK ; duree donnee par une constante : son symbole (secondes : ^/(SYMBOLE * 60)/), docs/M6_CONSTANTS.md",
+   "status": "identique"
+  },
+  "EVENT_REMOVE_ADVENTURE_CALLBACK_SCRIPT": {
+   "gbs2": false,
+   "status": "identique"
+  },
+  "EVENT_REMOVE_INPUT_SCRIPT": {
+   "gbs2": false,
+   "partiel": "VM_INPUT_DETACH ; aucun bouton choisi = tous, avec avertissement",
+   "status": "identique"
+  },
+  "EVENT_REMOVE_PLATFORMER_CALLBACK_SCRIPT": {
+   "gbs2": false,
+   "status": "identique"
+  },
+  "EVENT_REPLACE_TILE_XY": {
+   "ecart": "§19",
+   "gbs2": false,
+   "status": "adapte"
+  },
+  "EVENT_REPLACE_TILE_XY_SEQUENCE": {
+   "ecart": "§19",
+   "gbs2": true,
+   "partiel": "Coordonnées constantes ; variantes précalculées, indice hors tileset sans écriture, refus des conflits de plans et de masque",
+   "status": "adapte"
+  },
+  "EVENT_RESET_VARIABLES": {
+   "gbs2": false,
+   "partiel": "Heap des aliases (globales, locales d'entites, temporaires), piles et arguments preserves ; docs/M4_VARIABLE_RESET.md",
+   "status": "identique"
+  },
+  "EVENT_RNG_SEED": {
+   "ecart": "§18",
+   "gbs2": true,
+   "status": "adapte"
+  },
+  "EVENT_SAVE_DATA": {
+   "ecart": "§8",
+   "gbs2": true,
+   "partiel": "dataSave porte (chemin On Load + fondu automatique) ; EXCEPTION_SAVE sur le journal flash 3 emplacements ; scenes multiples seulement (docs/M5_SAVE.md) ; tests/test_save_rom.py",
+   "status": "adapte"
+  },
+  "EVENT_SCENE_POP_ALL_STATE": {
+   "gbs2": false,
+   "partiel": "pile de 8 de data_manager.c sur le moteur de scene (scene, position et direction du joueur) ; Pop = fondu, camera verrouillee, meme changement de scene que EVENT_SWITCH_SCENE ; pile pleine/vide : rien (GBVM corrompt la memoire) ; livre avec les changements de scene seulement",
+   "status": "identique"
+  },
+  "EVENT_SCENE_POP_STATE": {
+   "gbs2": true,
+   "partiel": "pile de 8 de data_manager.c sur le moteur de scene (scene, position et direction du joueur) ; Pop = fondu, camera verrouillee, meme changement de scene que EVENT_SWITCH_SCENE ; pile pleine/vide : rien (GBVM corrompt la memoire) ; livre avec les changements de scene seulement",
+   "status": "identique"
+  },
+  "EVENT_SCENE_PUSH_STATE": {
+   "gbs2": true,
+   "partiel": "pile de 8 de data_manager.c sur le moteur de scene (scene, position et direction du joueur) ; Pop = fondu, camera verrouillee, meme changement de scene que EVENT_SWITCH_SCENE ; pile pleine/vide : rien (GBVM corrompt la memoire) ; livre avec les changements de scene seulement",
+   "status": "identique"
+  },
+  "EVENT_SCENE_RESET_STATE": {
+   "gbs2": false,
+   "partiel": "pile de 8 de data_manager.c sur le moteur de scene (scene, position et direction du joueur) ; Pop = fondu, camera verrouillee, meme changement de scene que EVENT_SWITCH_SCENE ; pile pleine/vide : rien (GBVM corrompt la memoire) ; livre avec les changements de scene seulement",
+   "status": "identique"
+  },
+  "EVENT_SCENE_UPDATE_PAUSE": {
+   "gbs2": false,
+   "status": "identique"
+  },
+  "EVENT_SCENE_UPDATE_RESUME": {
+   "gbs2": false,
+   "status": "identique"
+  },
+  "EVENT_SCRIPT_LOCK": {
+   "gbs2": false,
+   "note": "Contrat docs/M4_EVENT_GAPS.md ; limites ScriptValue communes ; P5 non valide.",
+   "status": "identique"
+  },
+  "EVENT_SCRIPT_UNLOCK": {
+   "gbs2": false,
+   "note": "Contrat docs/M4_EVENT_GAPS.md ; limites ScriptValue communes ; P5 non valide.",
+   "status": "identique"
+  },
+  "EVENT_SET_ADVENTURE_CALLBACK_SCRIPT": {
+   "gbs2": false,
+   "status": "identique"
+  },
+  "EVENT_SET_DIALOGUE_FRAME": {
+   "ecart": "§4",
+   "gbs2": false,
+   "status": "adapte"
+  },
+  "EVENT_SET_FALSE": {
+   "gbs2": false,
+   "partiel": "deprecatedAPI.variableSetToFalse ; docs/M4_DEPRECATED_EVENTS.md",
+   "status": "identique"
+  },
+  "EVENT_SET_FLAGS": {
+   "gbs2": false,
+   "note": "Contrat M4_VARIABLE_FLAGS : 16 bits, arguments indirects ; indice de bit invalide refuse explicitement.",
+   "status": "identique"
+  },
+  "EVENT_SET_FONT": {
+   "gbs2": false,
+   "status": "identique"
+  },
+  "EVENT_SET_INPUT_SCRIPT": {
+   "ecart": "§2",
+   "gbs2": true,
+   "partiel": "sous-script _compileSubScript (partage si identique), VM_CONTEXT_PREPARE + VM_INPUT_ATTACH, events_update de GBVM (remplacement de l'action par defaut compris) ; Start et Select viennent d'Option (ECARTS 2) ; aucun bouton choisi = tous les boutons, avec avertissement",
+   "status": "identique"
+  },
+  "EVENT_SET_MUSIC_ROUTINE": {
+   "ecart": "§7",
+   "gbs2": false,
+   "status": "adapte"
+  },
+  "EVENT_SET_PLATFORMER_CALLBACK_SCRIPT": {
+   "gbs2": true,
+   "status": "identique"
+  },
+  "EVENT_SET_SGB_COLOR_AREA": {
+   "ecart": "§12",
+   "gbs2": false,
+   "status": "refuse"
+  },
+  "EVENT_SET_TIMER_SCRIPT": {
+   "gbs2": true,
+   "partiel": "4 minuteries, pas de 16 images (TIMER_CYCLES), remises a zero au changement de scene comme core.c",
+   "status": "identique"
+  },
+  "EVENT_SET_TRUE": {
+   "gbs2": false,
+   "partiel": "deprecatedAPI.variableSetToTrue ; docs/M4_DEPRECATED_EVENTS.md",
+   "status": "identique"
+  },
+  "EVENT_SET_VALUE": {
+   "ecart": "§20",
+   "gbs2": true,
+   "partiel": "valeurs livrees : nombre, vrai, faux, variable (globale, locale, temporaire), direction, constante de projet ou du moteur (docs/M6_CONSTANTS.md), et toute operation calculee (RPN) sur elles, sauf abs, atan2 et isqrt (fonctions de bibliotheque GBDK non livrees) ; position et direction d'acteur livrees ; refusees a la compilation : image d'acteur, proprietes de camera, champ moteur lu, operandes indirect/numberSymbol ; expressions texte selon docs/M4_EXPRESSIONS.md, erreurs refusees explicitement (§20)",
+   "status": "adapte"
+  },
+  "EVENT_SHOW_SPRITES": {
+   "ecart": "§23",
+   "gbs2": false,
+   "status": "adapte"
+  },
+  "EVENT_SOUND_PLAY_EFFECT": {
+   "ecart": "§7",
+   "gbs2": true,
+   "status": "adapte"
+  },
+  "EVENT_STOP": {
+   "gbs2": false,
+   "partiel": "scriptEnd (VM_STOP)",
+   "status": "identique"
+  },
+  "EVENT_SWITCH": {
+   "gbs2": true,
+   "partiel": "variable globale, locale, temporaire ou argument ; cas numeriques ou constantes (symbole, docs/M6_CONSTANTS.md) ; autre type de cas refuse (GB Studio le compile en 0)",
+   "status": "identique"
+  },
+  "EVENT_SWITCH_SCENE": {
+   "gbs2": true,
+   "partiel": "position (valeurs calculees livrees comme Actor Set Position), direction, fondu de sortie ; variables conservees, fils arretes, scene rechargee, joueur conserve (core.c, load_scene) ; scene cible absente refusee (GB Studio n'emettrait rien) ; toutes les scenes atteintes doivent pouvoir utiliser le moteur de scene (LOGO sans acteurs/triggers inclus, restrictions M4_LOGO) ; projet sans aucun fondu refuse",
+   "status": "identique"
+  },
+  "EVENT_TEXT": {
+   "ecart": "§5",
+   "gbs2": true,
+   "partiel": "Plan de texte (ecart §5), docs/M2_TEXT.md ; boite en haut (docs/M6_SCANLINE_CUTOFF.md), texte non modal et police changee dans le texte livres ; refusees : polices de plus de 2 couleurs",
+   "status": "adapte"
+  },
+  "EVENT_TEXT_DRAW": {
+   "gbs2": false,
+   "status": "identique"
+  },
+  "EVENT_TEXT_SET_ANIMATION_SPEED": {
+   "gbs2": false,
+   "partiel": "textSetAnimSpeed ; sans texte affiche les octets sont ecrits et jamais lus, comme GBVM ; vitesses non numeriques refusees ; docs/M4_DEPRECATED_EVENTS.md",
+   "status": "identique"
+  },
+  "EVENT_TEXT_SET_SOUND_EFFECT": {
+   "ecart": "§7",
+   "gbs2": false,
+   "status": "adapte"
+  },
+  "EVENT_THREAD_START": {
+   "gbs2": false,
+   "status": "identique"
+  },
+  "EVENT_THREAD_STOP": {
+   "gbs2": false,
+   "status": "identique"
+  },
+  "EVENT_TIMER_DISABLE": {
+   "gbs2": false,
+   "partiel": "4 minuteries, pas de 16 images (TIMER_CYCLES), remises a zero au changement de scene comme core.c",
+   "status": "identique"
+  },
+  "EVENT_TIMER_RESTART": {
+   "gbs2": false,
+   "partiel": "4 minuteries, pas de 16 images (TIMER_CYCLES), remises a zero au changement de scene comme core.c",
+   "status": "identique"
+  },
+  "EVENT_VARIABLE_MATH": {
+   "ecart": "§18",
+   "gbs2": true,
+   "partiel": "toutes les formes (valeur, vrai, faux, variable, aleatoire ; +, -, *, /, %, bornes 0..255) ; aleatoire : meme suite que GBDK, graine de depart 0 (§18)",
+   "status": "adapte"
+  },
+  "EVENT_VARIABLE_MATH_EVALUATE": {
+   "ecart": "§20",
+   "gbs2": false,
+   "partiel": "expressions texte : nombres, variables directes/indirectes, operateurs arithmetiques/logiques/bitwise, min/max/rnd ; constantes @id@ et @engine::NOM@ (docs/M6_CONSTANTS.md) ; abs/atan2/isqrt dynamiques refuses ; neg() refuse dans Evaluate Expression (SUB binaire dans la reference), moins unaire accepte ; erreurs ScriptValue refusees au lieu du repli a zero",
+   "status": "adapte"
+  },
+  "EVENT_WAIT": {
+   "ecart": "§20",
+   "gbs2": true,
+   "partiel": "duree en secondes ou en images ; valeurs livrees : nombre, vrai, faux, variable (globale, locale, temporaire), direction, constante de projet ou du moteur (docs/M6_CONSTANTS.md), et toute operation calculee (RPN) sur elles, sauf abs, atan2 et isqrt (fonctions de bibliotheque GBDK non livrees) ; position et direction d'acteur livrees ; refusees a la compilation : image d'acteur, proprietes de camera, champ moteur lu, operandes indirect/numberSymbol ; expressions texte selon docs/M4_EXPRESSIONS.md, erreurs refusees explicitement (§20)",
+   "status": "adapte"
+  },
+  "EVENT_WEAPON_ATTACK": {
+   "ecart": "§24",
+   "gbs2": false,
+   "raison": "GB Studio 4.3.2 cannot compile it either (deprecated, no weaponAttack in its compiler); its 2.0 r14 migration replaces it by Launch Projectile: use Launch Projectile",
+   "status": "refuse"
+  }
+ },
+ "reference": "GB Studio 4.3.2 release (tag v4.3.2, gbvm bd6f41c; ../_reference/gb-studio-4.3.2)"
+}

@@ -1,0 +1,14 @@
+{
+  "source_effect_key": "crash:0.5",
+  "transpose_semitones": 0,
+  "noise_preset": 4,
+  "steps": [
+    {
+      "frames": 30,
+      "tone_divider": 0,
+      "tone_attenuation": 15,
+      "noise": 4,
+      "noise_attenuation": 0
+    }
+  ]
+}

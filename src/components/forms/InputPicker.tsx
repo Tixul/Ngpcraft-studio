@@ -3,6 +3,8 @@ import { TriangleIcon } from "ui/icons/Icons";
 import l10n from "shared/lib/lang/l10n";
 import styled from "styled-components";
 import { ToggleButtonGroup } from "ui/form/ToggleButtonGroup";
+import { useAppSelector } from "store/hooks";
+import { getNgpcProjectSettings } from "shared/lib/ngpcraft/projectExtension";
 
 type InputPickerProps = {
   id: string;
@@ -46,6 +48,13 @@ const RotateDown = styled.div`
 `;
 
 const InputPicker = ({ id, ...props }: InputPickerProps) => {
+  // NgpCraft: the NGPC has no Start / Select; the Option button plays both,
+  // by short and long press (ngpcraft.json option_long_press, ECARTS §2).
+  const longPressIsStart = useAppSelector(
+    (state) =>
+      getNgpcProjectSettings(state.ngpcraft.extension).option_long_press ===
+      "start",
+  );
   const options = useMemo(
     () =>
       [
@@ -101,16 +110,20 @@ const InputPicker = ({ id, ...props }: InputPickerProps) => {
           value: "start",
           name: "Start",
           label: "Start",
-          title: "Start",
+          title: longPressIsStart
+            ? l10n("FIELD_NGPC_START_LONG")
+            : l10n("FIELD_NGPC_START_SHORT"),
         },
         {
           value: "select",
           name: "Select",
           label: "Select",
-          title: "Select",
+          title: longPressIsStart
+            ? l10n("FIELD_NGPC_SELECT_SHORT")
+            : l10n("FIELD_NGPC_SELECT_LONG"),
         },
       ] as InputOption[],
-    [],
+    [longPressIsStart],
   );
   return <ToggleButtonGroup name={id} options={options} {...props} />;
 };

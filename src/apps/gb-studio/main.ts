@@ -27,6 +27,39 @@ import menu, {
   setMenuItemChecked,
 } from "./menu";
 import { checkForUpdate } from "lib/helpers/updateChecker";
+import { buildWithV3, cancelV3Build } from "lib/ngpcraft/v3Build";
+import { NGPC_TILE_SLOTS } from "shared/lib/ngpcraft/sceneBudget";
+import { ngpcDebuggerData } from "lib/ngpcraft/debuggerData";
+import {
+  ngpcPlaySchemePrivileges,
+  ngpcPlayUrl,
+  registerNgpcPlayProtocol,
+  setPlayRom,
+} from "lib/ngpcraft/webPlay";
+import { loadNgpcCatalogue } from "lib/ngpcraft/catalogue";
+import { checkNgpcTools } from "lib/ngpcraft/checkTools";
+import {
+  hasNativeColorSupport,
+  readPalettePlan,
+  readSpritePalettePlan,
+} from "lib/ngpcraft/palettePlan";
+import { askToolchainOnFirstRun } from "lib/ngpcraft/firstRun";
+import {
+  getPython,
+  getToolchainPath,
+  getV3Root,
+  getWine,
+  isWindows,
+} from "lib/ngpcraft/v3Paths";
+import {
+  readNgpcExtension,
+  writeNgpcExtension,
+} from "lib/ngpcraft/projectExtension";
+import { chooseNativeSong, openInSoundCreator } from "lib/ngpcraft/nativeMusic";
+import { convertUge } from "lib/ngpcraft/convertUge";
+import { convertSfx } from "lib/ngpcraft/convertSfx";
+import type { NgpcProjectExtension } from "shared/lib/ngpcraft/projectExtension";
+
 import switchLanguageDialog from "lib/electron/dialog/switchLanguageDialog";
 import installExtension, {
   REACT_DEVELOPER_TOOLS,
@@ -189,6 +222,9 @@ import {
   scriptDataTableToCSV,
 } from "shared/lib/scriptDataTable/csv";
 
+// NgpCraft: build ROMs with the V3 compiler instead of GBDK.
+const USE_NGPCRAFT_V3 = true;
+
 declare const MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY: string;
 declare const MAIN_WINDOW_WEBPACK_ENTRY: string;
 declare const SPLASH_WINDOW_PRELOAD_WEBPACK_ENTRY: string;
@@ -281,6 +317,11 @@ export const createSplash = async (forceTab?: SplashTab) => {
       if (!hasCheckedForUpdate) {
         hasCheckedForUpdate = true;
         checkForUpdate();
+        // NgpCraft: first start, ask where the Toshiba toolchain is. A failing
+        // question must never stop the editor (Preferences can set it).
+        askToolchainOnFirstRun(splashWindow).catch((e) =>
+          console.error("NgpCraft: first run toolchain question failed", e),
+        );
       }
     }, 40);
   });
@@ -294,7 +335,8 @@ export const createPreferences = async () => {
   // Create the browser window.
   preferencesWindow = new BrowserWindow({
     width: 600,
-    height: 400,
+    // NgpCraft: taller for the NgpCraft tools section.
+    height: 760,
     resizable: false,
     maximizable: false,
     fullscreenable: false,
@@ -403,7 +445,7 @@ export const createProjectWindow = async () => {
 
   projectWindow.on("page-title-updated", (e, title) => {
     documentName = title
-      .replace(/^GB Studio -/, "")
+      .replace(/^NgpCraft Studio -/, "")
       .replace(/\(modified\)$/, "")
       .trim();
   });
@@ -713,6 +755,49 @@ export const createPlay = async (
   });
 };
 
+// NgpCraft: Play window running the NgpCraft web player on the ROM given to
+// setPlayRom. 580 px = the player's maximum width (header, screen, controls).
+const createNgpcPlay = (romName: string, title: string, debug: boolean) => {
+  if (playWindow && playWindowSgb) {
+    playWindow.close();
+    playWindow = null;
+  }
+  if (!playWindow) {
+    playWindow = new BrowserWindow({
+      width: 580,
+      height: 720,
+      fullscreenable: true,
+      autoHideMenuBar: true,
+      useContentSize: true,
+      title,
+      webPreferences: {
+        contextIsolation: true,
+        nodeIntegration: false,
+        webSecurity: true,
+        // Same API as GB Studio's game window (debugger messages).
+        preload: GAME_WINDOW_PRELOAD_WEBPACK_ENTRY,
+      },
+    });
+    playWindow.setAlwaysOnTop(true);
+    playWindowSgb = false;
+    if (isDevMode) {
+      playWindow.webContents.on("console-message", (_e, level, message) => {
+        console.log(`[play ${level}] ${message}`);
+      });
+    }
+    playWindow.on("closed", () => {
+      playWindow = null;
+      sendToProjectWindow("debugger:disconnected");
+    });
+  } else {
+    playWindow.show();
+  }
+  const isMuted = settings.get(EMULATOR_MUTED_SETTING_KEY) === true;
+  playWindow.webContents.setAudioMuted(isMuted);
+  playWindow.setMenu(null);
+  playWindow.loadURL(ngpcPlayUrl(romName, title, debug));
+};
+
 export const createMusic = async (
   sfx?: string,
   initialMessage?: MusicDataPacket,
@@ -775,6 +860,7 @@ protocol.registerSchemesAsPrivileged([
       bypassCSP: true,
     },
   },
+  ngpcPlaySchemePrivileges,
 ]);
 
 // This method will be called when Electron has finished
@@ -810,6 +896,8 @@ app.on("ready", async () => {
   } else if (splashWindow === null && projectWindow === null) {
     createSplash();
   }
+
+  registerNgpcPlayProtocol();
 
   protocol.registerHttpProtocol("gbshttp", async (req, callback) => {
     const { host, pathname } = new URL(req.url);
@@ -1251,6 +1339,28 @@ ipcMain.handle("create-project", async (_event, input: CreateProjectInput) =>
   createProject(input),
 );
 
+// NgpCraft: V3 event catalogue (statuses of the GB Studio events).
+ipcMain.handle("ngpcraft:get-catalogue", () => loadNgpcCatalogue());
+
+// NgpCraft: "NGPC native" background colours (docs/ETUDE_16_PALETTES.md).
+ipcMain.handle("ngpcraft:native-color-support", () => hasNativeColorSupport());
+ipcMain.handle("ngpcraft:palette-plan", (_, backgroundId: string) =>
+  readPalettePlan(projectPath, backgroundId),
+);
+ipcMain.handle("ngpcraft:sprite-palette-plan", (_, spriteId: string) =>
+  readSpritePalettePlan(projectPath, spriteId),
+);
+
+// NgpCraft: Preferences > NgpCraft (tool paths and their check).
+ipcMain.handle("ngpcraft:check-tools", () => checkNgpcTools());
+ipcMain.handle("ngpcraft:tool-defaults", async () => ({
+  isWindows,
+  v3Path: await getV3Root(),
+  pythonPath: getPython(),
+  toolchainPath: getToolchainPath(),
+  winePath: getWine(),
+}));
+
 ipcMain.handle("build:delete-cache", async (_event) => {
   const tmpPath = getTmp();
   await clearAppCache(tmpPath);
@@ -1446,8 +1556,40 @@ ipcMain.handle(
 );
 
 ipcMain.handle("project:load", async (): Promise<LoadProjectResult> => {
-  return loadProjectData(projectPath);
+  // NgpCraft: the NGPC extensions travel with the project data.
+  const result = await loadProjectData(projectPath);
+  return {
+    ...result,
+    ngpcraftExtension: await readNgpcExtension(Path.dirname(projectPath)),
+  };
 });
+
+ipcMain.handle("ngpcraft:choose-native-song", () =>
+  chooseNativeSong(Path.dirname(projectPath), projectWindow),
+);
+
+ipcMain.handle(
+  "ngpcraft:convert-uge",
+  (_, songPath: string, modSpeedConversion?: boolean) =>
+    convertUge(Path.dirname(projectPath), songPath, modSpeedConversion),
+);
+
+ipcMain.handle(
+  "ngpcraft:convert-sfx",
+  (_, soundPath: string, effects: number) =>
+    convertSfx(Path.join(Path.dirname(projectPath), soundPath), effects),
+);
+
+ipcMain.handle("ngpcraft:open-sound-creator", (_, songPath: string) =>
+  openInSoundCreator(Path.dirname(projectPath), songPath),
+);
+
+ipcMain.handle(
+  "ngpcraft:write-extension",
+  async (_, extension: NgpcProjectExtension | null): Promise<void> => {
+    await writeNgpcExtension(Path.dirname(projectPath), extension);
+  },
+);
 
 ipcMain.handle(
   "project:save",
@@ -1541,6 +1683,76 @@ ipcMain.handle(
       buildType,
     );
     try {
+      // NgpCraft: the V3 compiler builds every ROM. The GB Studio/GBDK path
+      // below is kept unchanged but no longer reached.
+      if (USE_NGPCRAFT_V3) {
+        const result = await buildWithV3(project, {
+          projectRoot,
+          outputRoot,
+          progress,
+          warnings,
+          ngpcraftExtension: options.ngpcraftExtension,
+          debug:
+            debuggerEnabled &&
+            buildType === "web" &&
+            !exportBuild &&
+            !options.ngpcMusicPreviewId,
+          previewMusicId: options.ngpcMusicPreviewId,
+        });
+        const ngcFilename = `${romStem}.ngc`;
+        buildLog(
+          `NgpCraft V3: ROM "${result.title}" ${result.romSize} bytes, ${result.warningCount} warning(s)`,
+        );
+        for (const scene of result.scenes) {
+          buildLog(
+            `NgpCraft budget "${scene.name}": tiles ${scene.usedTiles}/${NGPC_TILE_SLOTS} (background ${scene.backgroundTiles}, sprites ${scene.spriteTiles}), background palettes ${scene.backgroundPalettes}/16, actors ${scene.actors}`,
+          );
+        }
+        // A music preview's single scene is not the project's.
+        if (!options.ngpcMusicPreviewId) {
+          sendToProjectWindow("ngpcraft:scene-budgets", result.scenes);
+        }
+        if (exportBuild) {
+          const exportPath = Path.join(
+            projectRoot,
+            "build",
+            "rom",
+            ngcFilename,
+          );
+          await copy(result.romPath, exportPath);
+          if (project.settings.openBuildFolderOnExport) {
+            shell.openPath(Path.dirname(exportPath));
+          }
+          buildLog(`-`);
+          buildLog(
+            `${l10n("COMPILER_BUILD_SUCCESS")} ${l10n(
+              "COMPILER_ROM_READY_AT",
+            )} ${Path.normalize(exportPath)}`,
+          );
+        } else {
+          buildLog(`-`);
+          buildLog(
+            `${l10n("COMPILER_BUILD_SUCCESS")} ${l10n(
+              "COMPILER_STARTING_EMULATOR",
+            )}...`,
+          );
+          if (buildType === "web") {
+            if (debuggerEnabled) {
+              const debugData = ngpcDebuggerData(result, project);
+              debuggerInitData = debugData.initData;
+              sendToProjectWindow("debugger:symbols", debugData.symbols);
+            } else {
+              debuggerInitData = null;
+            }
+            setPlayRom(result.romPath);
+            createNgpcPlay(ngcFilename, project.metadata.name, debuggerEnabled);
+          }
+        }
+        const buildTime = Date.now() - buildStartTime;
+        buildLog(`${l10n("COMPILER_BUILD_TIME")}: ${msToHumanTime(buildTime)}`);
+        return;
+      }
+
       const compiledData = await buildProject(project, {
         ...options,
         projectRoot,
@@ -1645,6 +1857,7 @@ ipcMain.handle(
 );
 
 ipcMain.handle("project:build-cancel", () => {
+  cancelV3Build();
   cancelCompileStepsInProgress();
 });
 

@@ -36,6 +36,7 @@ import {
 import { NoteField } from "ui/form/NoteField";
 import { SceneTypeSelect } from "components/forms/SceneTypeSelect";
 import { BackgroundSelectButton } from "components/forms/BackgroundSelectButton";
+import { NgpcSecondBackground } from "components/ngpcraft/NgpcSecondBackground";
 import { PaletteSelectButton } from "components/forms/PaletteSelectButton";
 import { LabelButton, LabelColor } from "ui/buttons/LabelButton";
 import { CoordinateInput } from "ui/form/CoordinateInput";
@@ -100,6 +101,17 @@ import { AutoPaletteSwatch } from "components/forms/AutoPaletteSwatch";
 import navigationActions from "store/features/navigation/navigationActions";
 import { useEnabledSceneTypeIds } from "components/settings/useEnabledSceneTypeIds";
 import { AutoTileFlipSelect } from "components/forms/AutoTileFlipSelect";
+import {
+  isNgpcNativeBackground,
+  NgpcNativePalettes,
+  useNgpcNativeColorAvailable,
+} from "components/ngpcraft/NgpcNativePalettes";
+import { NgpcSceneBudget } from "components/ngpcraft/NgpcSceneBudget";
+import { actions as ngpcraftActions } from "store/features/ngpcraft/ngpcraftState";
+import {
+  NGPC_COLOR_KEY,
+  NGPC_COLOR_NATIVE,
+} from "shared/lib/ngpcraft/palettePlan";
 import { DMGPaletteSelectButton } from "components/forms/DMGPaletteSelectButton";
 
 interface SceneEditorProps {
@@ -536,16 +548,42 @@ export const SceneEditor = ({ id }: SceneEditorProps) => {
 
   const onChangeAutoColor = useCallback(
     (value: boolean) => {
-      scene?.backgroundId &&
-        dispatch(
-          entitiesActions.editBackgroundAutoColor({
-            backgroundId: scene.backgroundId,
-            autoColor: value,
-          }),
-        );
+      if (!scene?.backgroundId) {
+        return;
+      }
+      // NgpCraft: back to a GB Studio mode, leave "NGPC native".
+      dispatch(
+        ngpcraftActions.setResourceSetting({
+          resourceId: scene.backgroundId,
+          key: NGPC_COLOR_KEY,
+          value: undefined,
+        }),
+      );
+      dispatch(
+        entitiesActions.editBackgroundAutoColor({
+          backgroundId: scene.backgroundId,
+          autoColor: value,
+        }),
+      );
     },
     [dispatch, scene?.backgroundId],
   );
+
+  // NgpCraft: "NGPC native" colours of the background (16 palettes).
+  const ngpcNativeAvailable = useNgpcNativeColorAvailable();
+  const ngpcNative = useAppSelector((state) =>
+    isNgpcNativeBackground(state.ngpcraft.extension, scene?.backgroundId),
+  );
+  const onChangeNgpcNative = useCallback(() => {
+    scene?.backgroundId &&
+      dispatch(
+        ngpcraftActions.setResourceSetting({
+          resourceId: scene.backgroundId,
+          key: NGPC_COLOR_KEY,
+          value: NGPC_COLOR_NATIVE,
+        }),
+      );
+  }, [dispatch, scene?.backgroundId]);
 
   const onExtractPalettes = useCallback(() => {
     dispatch(
@@ -1071,6 +1109,20 @@ export const SceneEditor = ({ id }: SceneEditorProps) => {
                       )}
                     </FormRow>
 
+                    {scene.type !== "LOGO" && (
+                      <NgpcSecondBackground
+                        sceneId={scene.id}
+                        mainBackgroundId={scene.backgroundId}
+                        tilesetId={scene.tilesetId}
+                        uiPaletteId={scene.paletteIds?.[7]}
+                        colorMode={
+                          scene.colorModeOverride === "none"
+                            ? projectColorMode
+                            : scene.colorModeOverride
+                        }
+                      />
+                    )}
+
                     {/* <FormDivider /> */}
                   </FormContainer>
                 </SidebarColumn>
@@ -1215,15 +1267,17 @@ export const SceneEditor = ({ id }: SceneEditorProps) => {
                                 variant="transparent"
                                 showArrow={false}
                                 label={l10n(
-                                  background?.autoColor
-                                    ? "FIELD_AUTOMATIC"
-                                    : "FIELD_MANUAL",
+                                  ngpcNative
+                                    ? "FIELD_NGPC_NATIVE_COLORS"
+                                    : background?.autoColor
+                                      ? "FIELD_AUTOMATIC"
+                                      : "FIELD_MANUAL",
                                 )}
                               >
                                 <MenuItem
                                   onClick={() => onChangeAutoColor(true)}
                                   icon={
-                                    background?.autoColor ? (
+                                    !ngpcNative && background?.autoColor ? (
                                       <CheckIcon />
                                     ) : (
                                       <BlankIcon />
@@ -1242,7 +1296,7 @@ export const SceneEditor = ({ id }: SceneEditorProps) => {
                                 <MenuItem
                                   onClick={() => onChangeAutoColor(false)}
                                   icon={
-                                    !background?.autoColor ? (
+                                    !ngpcNative && !background?.autoColor ? (
                                       <CheckIcon />
                                     ) : (
                                       <BlankIcon />
@@ -1251,12 +1305,28 @@ export const SceneEditor = ({ id }: SceneEditorProps) => {
                                 >
                                   {l10n("FIELD_MANUAL")}
                                 </MenuItem>
+                                {ngpcNativeAvailable && <MenuDivider />}
+                                {ngpcNativeAvailable && (
+                                  <MenuItem
+                                    onClick={onChangeNgpcNative}
+                                    icon={
+                                      ngpcNative ? <CheckIcon /> : <BlankIcon />
+                                    }
+                                  >
+                                    {l10n("FIELD_NGPC_NATIVE_COLORS")}
+                                  </MenuItem>
+                                )}
                               </DropdownButton>
                             </InlineDropdownWrapper>
                           </>
                         }
                       >
-                        {!background?.autoColor ? (
+                        {ngpcNative && scene.backgroundId ? (
+                          <NgpcNativePalettes
+                            backgroundId={scene.backgroundId}
+                            backgroundVersion={background?._v}
+                          />
+                        ) : !background?.autoColor ? (
                           <PaletteButtons>
                             {[0, 1, 2, 3, 4, 5, 6, 7].map((index) => (
                               <PaletteSelectButton
@@ -1344,6 +1414,11 @@ export const SceneEditor = ({ id }: SceneEditorProps) => {
                     {/* <FormDivider /> */}
                   </SidebarColumn>
                 )}
+                <SidebarColumn>
+                  <FormRow>
+                    <NgpcSceneBudget sceneId={scene.id} />
+                  </FormRow>
+                </SidebarColumn>
                 {scene.type !== "LOGO" && (
                   <>
                     <SidebarColumn>

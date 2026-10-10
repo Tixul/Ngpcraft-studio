@@ -1,0 +1,35 @@
+{
+  "schema": "ngpcraft-ir/0.1",
+  "start": "first",
+  "flags": {"bonus": false},
+  "globals": {"unused_score": 99},
+  "palettes": {"unused_palette": [0, 15, 240, 3840]},
+  "scripts": {
+    "display": [{"op": "backdrop", "value": {"scope": "local", "name": "color"}}],
+    "never_called": [{"op": "palette", "asset": "unused_palette", "slot": 0}]
+  },
+  "scenes": [
+    {
+      "id": "first",
+      "actors": [
+        {"id": "alice", "locals": {"color": 15}, "on_init": [
+          {"op": "call", "script": "display"},
+          {"op": "wait", "frames": 2},
+          {"op": "set", "target": {"scope": "local", "name": "color"}, "value": 240},
+          {"op": "call", "script": "display"}
+        ]},
+        {"id": "bob", "locals": {"color": 3840}, "on_init": [
+          {"op": "wait", "frames": 1},
+          {"op": "call", "script": "display"}
+        ]}
+      ],
+      "on_init": [
+        {"op": "if_flag", "flag": "bonus", "then": [{"op": "call", "script": "never_called"}]},
+        {"op": "wait", "frames": 4},
+        {"op": "scene", "target": "second"}
+      ]
+    },
+    {"id": "second", "on_init": [{"op": "backdrop", "value": 4095}]},
+    {"id": "unused_room", "on_init": [{"op": "call", "script": "never_called"}]}
+  ]
+}

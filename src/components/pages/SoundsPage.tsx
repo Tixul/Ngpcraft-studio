@@ -1,3 +1,4 @@
+import { NgpcSfxBinding } from "components/ngpcraft/NgpcSfxBinding";
 import React, { useContext, useEffect, useMemo, useRef } from "react";
 import styled, { ThemeContext } from "styled-components";
 import debounce from "lodash/debounce";
@@ -121,6 +122,7 @@ const SoundsPage = () => {
           flexDirection: "column",
         }}
       >
+        {viewSound && <NgpcSfxBinding sound={viewSound} />}
         <div style={{ flexGrow: 1, position: "relative" }}>
           {viewSound && <SoundViewer file={viewSound} />}
         </div>

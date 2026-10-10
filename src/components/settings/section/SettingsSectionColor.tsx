@@ -11,14 +11,12 @@ import { FormInfo } from "ui/form/FormInfo";
 import { FormField } from "ui/form/layout/FormLayout";
 import { FixedSpacer } from "ui/spacing/Spacing";
 import { ColorModeSelect } from "components/forms/ColorModeSelect";
-import { ColorCorrectionSelect } from "components/forms/ColorCorrectionSelect";
 import { AutoTileFlipSelect } from "components/forms/AutoTileFlipSelect";
 import { DMGPaletteSelectButton } from "components/forms/DMGPaletteSelectButton";
 import { defaultProjectSettings } from "consts";
 import { useAppDispatch, useAppSelector } from "store/hooks";
 import settingsActions from "store/features/settings/settingsActions";
 import {
-  ColorCorrectionSetting,
   ColorModeSetting,
   MonoBGPPalette,
   MonoOBJPalette,
@@ -37,10 +35,6 @@ export const SettingsSectionColor = ({
 
   const colorMode = useAppSelector(
     (state) => state.project.present.settings.colorMode,
-  );
-
-  const colorCorrection = useAppSelector(
-    (state) => state.project.present.settings.colorCorrection,
   );
 
   const autoTileFlipEnabled = useAppSelector(
@@ -83,12 +77,6 @@ export const SettingsSectionColor = ({
   const onChangeColorMode = useCallback(
     (e: ColorModeSetting) =>
       dispatch(settingsActions.editSettings({ colorMode: e })),
-    [dispatch],
-  );
-
-  const onChangeColorCorrection = useCallback(
-    (e: ColorCorrectionSetting) =>
-      dispatch(settingsActions.editSettings({ colorCorrection: e })),
     [dispatch],
   );
 
@@ -207,45 +195,14 @@ export const SettingsSectionColor = ({
             )}
             <br />
             <br />
-            {l10n("FIELD_SUPPORTED_PLATFORMS")}:
-            <ul style={{ marginTop: 5, marginBottom: 0 }}>
-              {colorMode !== "color" && (
-                <li>
-                  GB{" "}
-                  {colorMode !== "mono"
-                    ? `(${l10n("FIELD_MONOCHROME_ONLY")})`
-                    : ""}
-                </li>
-              )}
-              <li>GB Color</li>
-              {colorMode !== "color" && <li>Super GB</li>}
-              <li>Analogue Pocket</li>
-            </ul>
+            {l10n("FIELD_NGPC_COLOR_NOTE")}
           </FormInfo>
         </SettingRowInput>
       </SearchableSettingRow>
 
       {colorEnabled && (
         <>
-          <SearchableSettingRow
-            searchTerm={searchTerm}
-            searchMatches={[l10n("FIELD_COLOR_CORRECTION")]}
-          >
-            <SettingRowLabel>{l10n("FIELD_COLOR_CORRECTION")}</SettingRowLabel>
-            <SettingRowInput>
-              <ColorCorrectionSelect
-                name="colorCorrection"
-                value={colorCorrection}
-                onChange={onChangeColorCorrection}
-              />
-              <FormInfo>
-                {colorCorrection === "default" &&
-                  l10n("FIELD_COLOR_CORRECTION_ENABLED_DEFAULT_INFO")}
-                {colorCorrection === "none" &&
-                  l10n("FIELD_COLOR_CORRECTION_NONE_INFO")}
-              </FormInfo>
-            </SettingRowInput>
-          </SearchableSettingRow>
+          {/* NgpCraft: no colour correction on NGPC (K2GE), option hidden. */}
 
           <SearchableSettingRow
             searchTerm={searchTerm}

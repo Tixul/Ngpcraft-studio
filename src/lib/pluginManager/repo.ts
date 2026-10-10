@@ -44,6 +44,7 @@ const cache: {
   timestamp: 0,
 };
 const oneHour = 60 * 60 * 1000;
+const INCLUDE_GBSTUDIO_REPOSITORY = false;
 
 const getUserReposList = (): PluginRepositoryEntry[] => {
   const userRepositories: PluginRepositoryEntry[] = [];
@@ -60,7 +61,11 @@ const getUserReposList = (): PluginRepositoryEntry[] => {
 
 export const getReposList = (): PluginRepositoryEntry[] => {
   const userRepositories = getUserReposList();
-  return [corePluginRepository, ...userRepositories];
+  // NgpCraft: GB Studio's official repository lists Game Boy plugins that
+  // this fork cannot build. Only repositories the user adds are listed.
+  return INCLUDE_GBSTUDIO_REPOSITORY
+    ? [corePluginRepository, ...userRepositories]
+    : userRepositories;
 };
 
 export const addUserRepo = async (url: string) => {

@@ -1,4 +1,16 @@
 import { ipcRenderer, IpcRendererEvent, webFrame } from "electron";
+import type { NgpcCatalogue } from "shared/lib/ngpcraft/catalogue";
+import type {
+  NgpcPalettePlan,
+  NgpcSpritePalettePlan,
+} from "shared/lib/ngpcraft/palettePlan";
+import type { NgpcSceneBudget } from "shared/lib/ngpcraft/sceneBudget";
+import type {
+  ChooseNativeSongResult,
+  ConvertSfxResult,
+  ConvertUgeResult,
+  NgpcProjectExtension,
+} from "shared/lib/ngpcraft/projectExtension";
 import type { CreateProjectInput } from "lib/project/createProject";
 import type {
   MusicDataPacket,
@@ -73,6 +85,10 @@ export type BuildOptions = {
   engineSchema: EngineSchema;
   exportBuild: boolean;
   debugEnabled?: boolean;
+  // NgpCraft: in-memory ngpcraft.json (undefined: use the file on disk).
+  ngpcraftExtension?: NgpcProjectExtension | null;
+  // NgpCraft: build a ROM that only plays this song (V3 preview-music).
+  ngpcMusicPreviewId?: string;
 };
 
 export type RecentProjectData = {
@@ -148,6 +164,45 @@ const APISetup = {
     setZoomLevel: (level: number) => webFrame.setZoomLevel(level),
     getPatrons: (): Promise<Patrons> => ipcRenderer.invoke("app:get-patrons"),
     showProjectWindow: () => ipcRenderer.invoke("app:show-project-window"),
+  },
+  ngpcraft: {
+    getCatalogue: (): Promise<NgpcCatalogue | undefined> =>
+      ipcRenderer.invoke("ngpcraft:get-catalogue"),
+    writeExtension: (extension: NgpcProjectExtension | null): Promise<void> =>
+      ipcRenderer.invoke("ngpcraft:write-extension", extension),
+    chooseNativeSong: (): Promise<ChooseNativeSongResult> =>
+      ipcRenderer.invoke("ngpcraft:choose-native-song"),
+    convertUge: (
+      songPath: string,
+      modSpeedConversion?: boolean,
+    ): Promise<ConvertUgeResult> =>
+      ipcRenderer.invoke("ngpcraft:convert-uge", songPath, modSpeedConversion),
+    convertSfx: (
+      soundPath: string,
+      effects: number,
+    ): Promise<ConvertSfxResult> =>
+      ipcRenderer.invoke("ngpcraft:convert-sfx", soundPath, effects),
+    openSoundCreator: (songPath: string): Promise<string | undefined> =>
+      ipcRenderer.invoke("ngpcraft:open-sound-creator", songPath),
+    checkTools: (): Promise<{ ok: boolean; lines: string[] }> =>
+      ipcRenderer.invoke("ngpcraft:check-tools"),
+    nativeColorSupport: (): Promise<boolean> =>
+      ipcRenderer.invoke("ngpcraft:native-color-support"),
+    palettePlan: (
+      backgroundId: string,
+    ): Promise<{ plan: NgpcPalettePlan } | { error: string }> =>
+      ipcRenderer.invoke("ngpcraft:palette-plan", backgroundId),
+    spritePalettePlan: (
+      spriteId: string,
+    ): Promise<{ plan: NgpcSpritePalettePlan } | { error: string }> =>
+      ipcRenderer.invoke("ngpcraft:sprite-palette-plan", spriteId),
+    toolDefaults: (): Promise<{
+      isWindows: boolean;
+      v3Path: string;
+      pythonPath: string;
+      toolchainPath: string;
+      winePath: string;
+    }> => ipcRenderer.invoke("ngpcraft:tool-defaults"),
   },
   l10n: {
     getL10NStrings: (): Promise<L10NLookup> =>
@@ -537,6 +592,12 @@ const APISetup = {
         createSubscribeAPI<(event: IpcRendererEvent, data: UsageData) => void>(
           "debugger:romusage",
         ),
+    },
+    ngpcraft: {
+      // Per-scene budget of the last V3 build.
+      sceneBudgets: createSubscribeAPI<
+        (event: IpcRendererEvent, budgets: NgpcSceneBudget[]) => void
+      >("ngpcraft:scene-budgets"),
     },
     project: {
       saveProgress: createSubscribeAPI<

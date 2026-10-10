@@ -6,6 +6,23 @@ const APIMock = {
   l10n: {
     getL10NStrings: () => Promise.resolve(en),
   },
+  ngpcraft: {
+    getCatalogue: () => Promise.resolve(undefined),
+    writeExtension: () => Promise.resolve(undefined),
+    chooseNativeSong: () => Promise.resolve({ cancelled: true }),
+    openSoundCreator: () => Promise.resolve(undefined),
+    checkTools: () => Promise.resolve({ ok: true, lines: [] }),
+    nativeColorSupport: () => Promise.resolve(false),
+    palettePlan: () => Promise.resolve({ error: "mock" }),
+    toolDefaults: () =>
+      Promise.resolve({
+        isWindows: true,
+        v3Path: "",
+        pythonPath: "python",
+        toolchainPath: "",
+        winePath: "wine",
+      }),
+  },
   theme: {
     getTheme: () => Promise.resolve("light"),
     onChange: () => {},

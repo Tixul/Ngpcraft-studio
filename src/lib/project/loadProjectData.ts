@@ -43,12 +43,15 @@ import {
 } from "shared/lib/resources/compression";
 import { EngineSchema, loadEngineSchema } from "./loadEngineSchema";
 
+import type { NgpcProjectExtension } from "shared/lib/ngpcraft/projectExtension";
 export interface LoadProjectResult {
   resources: CompressedProjectResources;
   scriptEventDefs: Record<string, ScriptEventDef>;
   engineSchema: EngineSchema;
   modifiedSpriteIds: string[];
   isMigrated: boolean;
+  // NgpCraft: ngpcraft.json, filled by the main process (project:load).
+  ngpcraftExtension?: NgpcProjectExtension | null;
 }
 
 const toUnixFilename = (filename: string) => {

@@ -8,6 +8,7 @@ import { useAppDispatch, useAppSelector } from "store/hooks";
 import projectActions from "store/features/project/projectActions";
 import API from "renderer/lib/api";
 import { FlexGrow } from "ui/spacing/Spacing";
+import { APP_NAME, APP_REPO_NAME, APP_REPO_OWNER } from "consts";
 
 declare const VERSION: string;
 declare const COMMITHASH: string;
@@ -103,11 +104,11 @@ const GlobalError = () => {
   const stackTraceLines = error.stackTrace.split("\n");
 
   const reportIssue = useCallback(() => {
-    const owner = "chrismaltby";
-    const repo = "gb-studio";
+    const owner = APP_REPO_OWNER;
+    const repo = APP_REPO_NAME;
     const issueTitle = encodeURIComponent("Bug report: " + message);
     const issueBody = encodeURIComponent(
-      `**Error message**\n\`${message}\`\n\n**Stack trace**\n\`\`\`\n${stackTrace}\n\`\`\`\n\n**Platform**\n- OS: ${API.platform}\n- Version: GB Studio ${VERSION} (${COMMITHASH})\n\n**Additional context**\nAdd any other context about the problem here.\ne.g. What was the last thing you did before the error appeared.\n`,
+      `**Error message**\n\`${message}\`\n\n**Stack trace**\n\`\`\`\n${stackTrace}\n\`\`\`\n\n**Platform**\n- OS: ${API.platform}\n- Version: ${APP_NAME} (GB Studio ${VERSION}) (${COMMITHASH})\n\n**Additional context**\nAdd any other context about the problem here.\ne.g. What was the last thing you did before the error appeared.\n`,
     );
     const labels = encodeURIComponent("bug");
     const issueUrl = `https://github.com/${owner}/${repo}/issues/new?title=${issueTitle}&body=${issueBody}&labels=${labels}`;

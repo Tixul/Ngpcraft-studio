@@ -1,0 +1,878 @@
+{
+ "source": "appData/engine/gbvm/src/states/adventure.c",
+ "reference": "GB Studio 4.3.2 release (tag v4.3.2, gbvm bd6f41c; ../_reference/gb-studio-4.3.2)",
+ "gbvm_commit": "bd6f41cc5e05cbe6601dcc7f8e2db89bed527fe3",
+ "source_sha256": "1f48b90a0feaa743ae54311aecadd10f4beb816d0b130b581a533fcfbb07a89b",
+ "license": "MIT License\n\nCopyright (c) 2020 Toxa\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE.\n",
+ "engine_json": "appData/engine/engine.json",
+ "fields": [
+  {
+   "key": "INPUT_ADVENTURE_INTERACT",
+   "cType": "define",
+   "type": "togglebuttons",
+   "defaultValue": "INPUT_A",
+   "options": [
+    [
+     "INPUT_A",
+     "A"
+    ],
+    [
+     "INPUT_B",
+     "B"
+    ]
+   ]
+  },
+  {
+   "key": "INPUT_ADVENTURE_MOVE_TYPE",
+   "cType": "define",
+   "type": "select",
+   "defaultValue": "MOVE_TYPE_8_WAY",
+   "options": [
+    [
+     "MOVE_TYPE_4_WAY",
+     "FIELD_4_WAY"
+    ],
+    [
+     "MOVE_TYPE_8_WAY",
+     "FIELD_8_WAY"
+    ]
+   ]
+  },
+  {
+   "key": "INPUT_ADVENTURE_DIRECTION_TYPE",
+   "cType": "define",
+   "type": "select",
+   "defaultValue": "DIRECTION_TYPE_4_WAY",
+   "options": [
+    [
+     "DIRECTION_TYPE_4_WAY",
+     "FIELD_4_WAY"
+    ],
+    [
+     "DIRECTION_TYPE_HORIZONTAL",
+     "FIELD_HORIZONTAL_ONLY"
+    ]
+   ]
+  },
+  {
+   "key": "adv_walk_vel",
+   "cType": "WORD",
+   "type": "slider",
+   "defaultValue": 4096
+  },
+  {
+   "key": "adv_walk_acc",
+   "cType": "WORD",
+   "type": "slider",
+   "defaultValue": 1024
+  },
+  {
+   "key": "adv_dec",
+   "cType": "WORD",
+   "type": "slider",
+   "defaultValue": 1024
+  },
+  {
+   "key": "adv_turn_acc",
+   "cType": "WORD",
+   "type": "slider",
+   "defaultValue": 712
+  },
+  {
+   "key": "FEAT_ADVENTURE_RUN",
+   "cType": "define",
+   "type": "checkbox",
+   "defaultValue": 0
+  },
+  {
+   "key": "ADVENTURE_RUN_ANIM",
+   "cType": "define",
+   "type": "animationstate",
+   "defaultValue": ""
+  },
+  {
+   "key": "INPUT_ADVENTURE_RUN",
+   "cType": "define",
+   "type": "togglebuttons",
+   "defaultValue": "INPUT_B",
+   "options": [
+    [
+     "INPUT_A",
+     "A"
+    ],
+    [
+     "INPUT_B",
+     "B"
+    ]
+   ]
+  },
+  {
+   "key": "adv_run_vel",
+   "cType": "WORD",
+   "type": "slider",
+   "defaultValue": 6144
+  },
+  {
+   "key": "adv_run_acc",
+   "cType": "WORD",
+   "type": "slider",
+   "defaultValue": 512
+  },
+  {
+   "key": "FEAT_ADVENTURE_DASH",
+   "cType": "define",
+   "type": "checkbox",
+   "defaultValue": 0
+  },
+  {
+   "key": "adv_dash_active",
+   "cType": "UBYTE",
+   "type": "checkbox",
+   "defaultValue": 1
+  },
+  {
+   "key": "ADVENTURE_DASH_ANIM",
+   "cType": "define",
+   "type": "animationstate",
+   "defaultValue": ""
+  },
+  {
+   "key": "INPUT_ADVENTURE_DASH",
+   "cType": "define",
+   "type": "select",
+   "defaultValue": "DASH_INPUT_DOUBLE_TAP",
+   "options": [
+    [
+     "DASH_INPUT_INTERACT",
+     "FIELD_INTERACT_TAP"
+    ],
+    [
+     "DASH_INPUT_DOUBLE_TAP",
+     "FIELD_DPAD_DOUBLE_TAP"
+    ],
+    [
+     "DASH_INPUT_A",
+     "A"
+    ],
+    [
+     "DASH_INPUT_B",
+     "B"
+    ]
+   ]
+  },
+  {
+   "key": "adv_dash_mask",
+   "cType": "UBYTE",
+   "type": "mask",
+   "defaultValue": 255,
+   "options": [
+    [
+     -4,
+     "FIELD_ACTORS"
+    ],
+    [
+     -8,
+     "FIELD_TRIGGERS"
+    ],
+    [
+     -16,
+     "FIELD_WALLS"
+    ]
+   ]
+  },
+  {
+   "key": "adv_dash_dist",
+   "cType": "WORD",
+   "type": "slider",
+   "defaultValue": 2048
+  },
+  {
+   "key": "adv_dash_frames",
+   "cType": "UBYTE",
+   "type": "slider",
+   "defaultValue": 15
+  },
+  {
+   "key": "adv_dash_ready_frames",
+   "cType": "UBYTE",
+   "type": "slider",
+   "defaultValue": 10
+  },
+  {
+   "key": "adv_dash_deadzone",
+   "cType": "BYTE",
+   "type": "slider",
+   "defaultValue": 32
+  },
+  {
+   "key": "FEAT_ADVENTURE_PUSH",
+   "cType": "define",
+   "type": "checkbox",
+   "defaultValue": 0
+  },
+  {
+   "key": "ADVENTURE_PUSH_ANIM",
+   "cType": "define",
+   "type": "animationstate",
+   "defaultValue": ""
+  },
+  {
+   "key": "adv_push_delay_frames",
+   "cType": "UBYTE",
+   "type": "slider",
+   "defaultValue": 5
+  },
+  {
+   "key": "FEAT_ADVENTURE_KNOCKBACK",
+   "cType": "define",
+   "type": "checkbox",
+   "defaultValue": 1
+  },
+  {
+   "key": "ADVENTURE_KNOCKBACK_ANIM",
+   "cType": "define",
+   "type": "animationstate",
+   "defaultValue": ""
+  },
+  {
+   "key": "adv_knockback_vel_x",
+   "cType": "WORD",
+   "type": "slider",
+   "defaultValue": 6144
+  },
+  {
+   "key": "adv_knockback_vel_y",
+   "cType": "WORD",
+   "type": "slider",
+   "defaultValue": 6144
+  },
+  {
+   "key": "adv_knockback_frames",
+   "cType": "UBYTE",
+   "type": "slider",
+   "defaultValue": 10
+  },
+  {
+   "key": "FEAT_ADVENTURE_BLANK",
+   "cType": "define",
+   "type": "checkbox",
+   "defaultValue": 1
+  },
+  {
+   "key": "ADVENTURE_BLANK_ANIM",
+   "cType": "define",
+   "type": "animationstate",
+   "defaultValue": ""
+  },
+  {
+   "key": "adv_next_state",
+   "cType": "UBYTE",
+   "type": "select",
+   "defaultValue": "ADVENTURE_GROUND_STATE",
+   "options": [
+    [
+     "ADVENTURE_GROUND_STATE",
+     "FIELD_GROUND_STATE"
+    ],
+    [
+     "ADVENTURE_DASH_STATE",
+     "FIELD_DASH_STATE"
+    ],
+    [
+     "ADVENTURE_KNOCKBACK_STATE",
+     "FIELD_KNOCKBACK_STATE"
+    ],
+    [
+     "ADVENTURE_BLANK_STATE",
+     "FIELD_BLANK_STATE"
+    ],
+    [
+     "ADVENTURE_RUN_STATE",
+     "FIELD_RUN_STATE"
+    ],
+    [
+     "ADVENTURE_PUSH_STATE",
+     "FIELD_PUSH_STATE"
+    ]
+   ]
+  },
+  {
+   "key": "adv_vel_x",
+   "cType": "WORD",
+   "type": "number",
+   "defaultValue": 0
+  },
+  {
+   "key": "adv_vel_y",
+   "cType": "WORD",
+   "type": "number",
+   "defaultValue": 0
+  }
+ ],
+ "consts": {
+  "ADVENTURE_GROUND_STATE": 0,
+  "ADVENTURE_DASH_STATE": 1,
+  "ADVENTURE_KNOCKBACK_STATE": 2,
+  "ADVENTURE_BLANK_STATE": 3,
+  "ADVENTURE_RUN_STATE": 4,
+  "ADVENTURE_PUSH_STATE": 5,
+  "ADVENTURE_GROUND_INIT": 0,
+  "ADVENTURE_GROUND_END": 1,
+  "ADVENTURE_DASH_INIT": 2,
+  "ADVENTURE_DASH_END": 3,
+  "ADVENTURE_KNOCKBACK_INIT": 4,
+  "ADVENTURE_KNOCKBACK_END": 5,
+  "ADVENTURE_BLANK_INIT": 6,
+  "ADVENTURE_BLANK_END": 7,
+  "ADVENTURE_DASH_READY": 8,
+  "ADVENTURE_RUN_INIT": 9,
+  "ADVENTURE_RUN_END": 10,
+  "ADVENTURE_PUSH_INIT": 11,
+  "ADVENTURE_PUSH_END": 12
+ },
+ "public_variables": [
+  "adv_anim_dirty",
+  "adv_attached_actor",
+  "adv_attached_prev_x",
+  "adv_attached_prev_y",
+  "adv_camera_deadzone_x",
+  "adv_camera_deadzone_y",
+  "adv_camera_transitioning",
+  "adv_dash_active",
+  "adv_dash_cooldown_timer",
+  "adv_dash_currentframe",
+  "adv_dash_deadzone",
+  "adv_dash_dir",
+  "adv_dash_dist",
+  "adv_dash_frames",
+  "adv_dash_mask",
+  "adv_dash_per_frame",
+  "adv_dash_ready_frames",
+  "adv_dec",
+  "adv_events",
+  "adv_is_actor_attached",
+  "adv_knockback_frames",
+  "adv_knockback_timer",
+  "adv_knockback_vel_x",
+  "adv_knockback_vel_y",
+  "adv_next_state",
+  "adv_push_delay_frames",
+  "adv_push_timer",
+  "adv_run_acc",
+  "adv_run_vel",
+  "adv_state",
+  "adv_tap_timer",
+  "adv_temp_y",
+  "adv_turn_acc",
+  "adv_vel_x",
+  "adv_vel_y",
+  "adv_walk_acc",
+  "adv_walk_vel"
+ ],
+ "c89_hoisting": [
+  {
+   "function": "adventure_init",
+   "hoisted": []
+  },
+  {
+   "function": "adventure_update",
+   "hoisted": []
+  },
+  {
+   "function": "handle_dir_input",
+   "hoisted": [
+    "acc_x",
+    "acc_y",
+    "base_acc",
+    "down",
+    "left",
+    "max_vel",
+    "right",
+    "target_x",
+    "target_y",
+    "up"
+   ]
+  },
+  {
+   "function": "move_and_collide",
+   "hoisted": [
+    "is_solid",
+    "new_x",
+    "new_y",
+    "target_x",
+    "target_y",
+    "tile",
+    "tile_end",
+    "tile_start",
+    "tile_x",
+    "tile_y"
+   ]
+  },
+  {
+   "function": "adv_callback_attach",
+   "hoisted": []
+  },
+  {
+   "function": "adv_callback_detach",
+   "hoisted": []
+  },
+  {
+   "function": "adv_callback_execute",
+   "hoisted": []
+  },
+  {
+   "function": "adv_deceleration",
+   "hoisted": []
+  },
+  {
+   "function": "dash_init",
+   "hoisted": [
+    "col",
+    "dash_dx",
+    "dash_dy",
+    "new_x",
+    "new_y",
+    "tile_bottom",
+    "tile_left",
+    "tile_right",
+    "tile_top"
+   ]
+  },
+  {
+   "function": "state_enter_ground",
+   "hoisted": []
+  },
+  {
+   "function": "state_exit_ground",
+   "hoisted": []
+  },
+  {
+   "function": "state_update_ground",
+   "hoisted": [
+    "delta_mp_x",
+    "delta_mp_y",
+    "prev_x",
+    "prev_y",
+    "running"
+   ]
+  },
+  {
+   "function": "state_enter_dash",
+   "hoisted": []
+  },
+  {
+   "function": "state_exit_dash",
+   "hoisted": []
+  },
+  {
+   "function": "state_update_dash",
+   "hoisted": [
+    "dist",
+    "remaining_dash_dist",
+    "x_dir",
+    "y_dir"
+   ]
+  },
+  {
+   "function": "state_enter_knockback",
+   "hoisted": []
+  },
+  {
+   "function": "state_exit_knockback",
+   "hoisted": []
+  },
+  {
+   "function": "state_update_knockback",
+   "hoisted": []
+  },
+  {
+   "function": "state_enter_blank",
+   "hoisted": []
+  },
+  {
+   "function": "state_exit_blank",
+   "hoisted": []
+  },
+  {
+   "function": "state_enter_run",
+   "hoisted": []
+  },
+  {
+   "function": "state_exit_run",
+   "hoisted": []
+  },
+  {
+   "function": "state_enter_push",
+   "hoisted": []
+  },
+  {
+   "function": "state_exit_push",
+   "hoisted": []
+  },
+  {
+   "function": "state_update_push",
+   "hoisted": [
+    "prev_x",
+    "prev_y"
+   ]
+  }
+ ],
+ "adaptations": [
+  {
+   "old": "    static UBYTE facing_priority_axis = DIR_PRIORITY_NONE;\n",
+   "new": "",
+   "count": 1,
+   "reason": "handle_dir_input's static local, made file-scope (same lifetime): its initial value DIR_PRIORITY_NONE is 0, the boot clear of every file-scope variable (scene_genres.py)"
+  },
+  {
+   "old": "static direction_e collision_dir;\n",
+   "new": "static direction_e collision_dir;\nstatic UBYTE facing_priority_axis;\n",
+   "count": 1,
+   "reason": "see handle_dir_input's static local"
+  },
+  {
+   "old": "inline ",
+   "new": "",
+   "count": 4,
+   "reason": "C89 (cc900): no inline, no trailing comma in an enumerator list, no initialized RAM"
+  },
+  {
+   "old": "    PUSH_STATE,\n} state_e;",
+   "new": "    PUSH_STATE\n} state_e;",
+   "count": 1,
+   "reason": "C89 (cc900): no inline, no trailing comma in an enumerator list, no initialized RAM"
+  },
+  {
+   "old": "static direction_e facing_dir = DIR_DOWN;",
+   "new": "static direction_e facing_dir;",
+   "count": 1,
+   "reason": "C89 (cc900): no inline, no trailing comma in an enumerator list, no initialized RAM: set at boot (scene_genres.py BOOT_VALUES), as the Game Boy C runtime does"
+  },
+  {
+   "old": "UWORD adv_temp_y = 0;",
+   "new": "UWORD adv_temp_y;",
+   "count": 1,
+   "reason": "C89 (cc900): no inline, no trailing comma in an enumerator list, no initialized RAM: the boot clear gives 0"
+  },
+  {
+   "old": "void adv_state_script_attach(SCRIPT_CTX *THIS);\nvoid adv_state_script_detach(SCRIPT_CTX *THIS);\n",
+   "new": "",
+   "count": 1,
+   "reason": "adventure state scripts (adv_callback_attach/detach) are VM natives of GB Studio's EVENT_SET/REMOVE_ADVENTURE_CALLBACK_SCRIPT: compiled only when a project uses them (prototypes of functions adventure.c does not define)"
+  },
+  {
+   "old": "void adv_callback_attach(SCRIPT_CTX *THIS)",
+   "new": "#ifdef NGC_ADVENTURE_STATE_SCRIPTS\nvoid adv_callback_attach(SCRIPT_CTX *THIS)",
+   "count": 1,
+   "reason": "adventure state scripts (adv_callback_attach/detach) are VM natives of GB Studio's EVENT_SET/REMOVE_ADVENTURE_CALLBACK_SCRIPT: compiled only when a project uses them"
+  },
+  {
+   "old": "    adv_events[*slot].script_addr = NULL;\n}\n",
+   "new": "    adv_events[*slot].script_addr = NULL;\n}\n#endif\n",
+   "count": 1,
+   "reason": "adventure state scripts (adv_callback_attach/detach) are VM natives of GB Studio's EVENT_SET/REMOVE_ADVENTURE_CALLBACK_SCRIPT: compiled only when a project uses them"
+  },
+  {
+   "old": "    memset(adv_events, 0, sizeof(adv_events));",
+   "new": "    { UBYTE i; for (i = 0; i != CALLBACK_SIZE; ++i) { adv_events[i].script_addr = 0; adv_events[i].script_bank = 0; adv_events[i].handle = 0; } }",
+   "count": 1,
+   "reason": "no libc memset with cc900"
+  },
+  {
+   "old": "script_execute(event->script_bank, event->script_addr, &event->handle, 0, 0);",
+   "new": "NGC_STATE_SCRIPT_EXECUTE(event->script_addr, &event->handle);",
+   "count": 1,
+   "reason": "scene engine hook (scene_genres.py): defined by the exporter from what the scene uses (triggers, collision scripts, interaction scripts) (state scripts)"
+  },
+  {
+   "old": "void adv_callback_reset(void)",
+   "new": "static void adv_callback_reset(void)",
+   "count": 2,
+   "reason": "file-local function: entered through ngc_<state>_init/update (scene_genres.py); static keeps the public symbols those of the scene engine"
+  },
+  {
+   "old": "void adv_set_player_anim_state(UBYTE anim)",
+   "new": "static void adv_set_player_anim_state(UBYTE anim)",
+   "count": 1,
+   "reason": "file-local function: entered through ngc_<state>_init/update (scene_genres.py); static keeps the public symbols those of the scene engine"
+  },
+  {
+   "old": "void adv_restore_default_anim_state(void)",
+   "new": "static void adv_restore_default_anim_state(void)",
+   "count": 1,
+   "reason": "file-local function: entered through ngc_<state>_init/update (scene_genres.py); static keeps the public symbols those of the scene engine"
+  },
+  {
+   "old": "UBYTE dash_input_pressed(void)",
+   "new": "static UBYTE dash_input_pressed(void)",
+   "count": 1,
+   "reason": "file-local function: entered through ngc_<state>_init/update (scene_genres.py); static keeps the public symbols those of the scene engine"
+  },
+  {
+   "old": "void adventure_init(void)",
+   "new": "static void adventure_init(void)",
+   "count": 1,
+   "reason": "file-local function: entered through ngc_<state>_init/update (scene_genres.py); static keeps the public symbols those of the scene engine"
+  },
+  {
+   "old": "void adventure_update(void)",
+   "new": "static void adventure_update(void)",
+   "count": 1,
+   "reason": "file-local function: entered through ngc_<state>_init/update (scene_genres.py); static keeps the public symbols those of the scene engine"
+  },
+  {
+   "old": "#if ADVENTURE_ANIM_OVERRIDES_SET",
+   "new": "#if NGC_ADVENTURE_ANIM_OVERRIDES",
+   "count": 2,
+   "reason": "cc900: `defined` produced by a macro expansion inside #if is not portable; the exporter computes GB Studio's ADVENTURE_ANIM_OVERRIDES_SET as 0 or 1 (scene_genres.py)"
+  },
+  {
+   "old": "#elif ADVENTURE_ANIM_OVERRIDES_SET",
+   "new": "#elif NGC_ADVENTURE_ANIM_OVERRIDES",
+   "count": 5,
+   "reason": "cc900: `defined` produced by a macro expansion inside #if is not portable; the exporter computes GB Studio's ADVENTURE_ANIM_OVERRIDES_SET as 0 or 1 (scene_genres.py)"
+  },
+  {
+   "old": "load_animations(PLAYER.sprite.ptr, PLAYER.sprite.bank, anim, PLAYER.animations);",
+   "new": "ngc_player_load_animations(anim);",
+   "count": 1,
+   "reason": "scene engine load_animations for the player (scene_actors.py ngc_player_load_animations): the player's sheet tables are ROM data of the export, the set is a statesOrder index"
+  },
+  {
+   "old": "load_animations(PLAYER.sprite.ptr, PLAYER.sprite.bank, 0, PLAYER.animations);",
+   "new": "ngc_player_load_animations(0);",
+   "count": 1,
+   "reason": "scene engine load_animations for the player (scene_actors.py ngc_player_load_animations): the player's sheet tables are ROM data of the export, the set is a statesOrder index"
+  },
+  {
+   "old": "initial_hit_actor = hit_actor = actor_overlapping_player();",
+   "new": "initial_hit_actor = hit_actor = player_overlap();",
+   "count": 1,
+   "reason": "scene engine port of GBVM actor_overlapping_player (scene_collisions.py player_overlap)"
+  },
+  {
+   "old": "hit_actor = actor_overlapping_player_from(hit_actor);",
+   "new": "hit_actor = player_overlap_from(hit_actor);",
+   "count": 1,
+   "reason": "scene engine port of GBVM actor_overlapping_player_from (scene_genres.py OVERLAP_FROM)"
+  },
+  {
+   "old": "hit_actor = actor_with_script_in_front_of_player(8);",
+   "new": "hit_actor = NGC_ACTOR_IN_FRONT(8);",
+   "count": 1,
+   "reason": "scene engine hook (scene_genres.py): defined by the exporter from what the scene uses (triggers, collision scripts, interaction scripts)"
+  },
+  {
+   "old": "&& hit_actor->script.bank)",
+   "new": "&& NGC_ACTOR_HAS_SCRIPT(hit_actor))",
+   "count": 1,
+   "reason": "scene engine hook (scene_genres.py): defined by the exporter from what the scene uses (triggers, collision scripts, interaction scripts)"
+  },
+  {
+   "old": "script_execute(hit_actor->script.bank, hit_actor->script.ptr, 0, 1, 0);",
+   "new": "NGC_ACTOR_INTERACT(hit_actor);",
+   "count": 1,
+   "reason": "scene engine hook (scene_genres.py): defined by the exporter from what the scene uses (triggers, collision scripts, interaction scripts)"
+  },
+  {
+   "old": "player_register_collision_with(hit_actor);",
+   "new": "NGC_PLAYER_COLLISION(hit_actor);",
+   "count": 1,
+   "reason": "scene engine hook (scene_genres.py): defined by the exporter from what the scene uses (triggers, collision scripts, interaction scripts)"
+  },
+  {
+   "old": "trigger_activate_at_intersection(&PLAYER.bounds, &PLAYER.pos, FALSE);",
+   "new": "NGC_ADVENTURE_TRIGGERS();",
+   "count": 1,
+   "reason": "scene engine hook (scene_genres.py): defined by the exporter from what the scene uses (triggers, collision scripts, interaction scripts) (trigger.c activation at the player's box, not forced)"
+  },
+  {
+   "old": "actor_t *adv_attached_actor;",
+   "new": "unsigned char adv_attached_actor;",
+   "count": 1,
+   "reason": "scene engine actors are indexes in the actor arrays, not actor_t pointers: 255 is GBVM's NULL (no actor)"
+  },
+  {
+   "old": "        actor_t *hit_actor;\n        actor_t *initial_hit_actor;",
+   "new": "        unsigned char hit_actor;\n        unsigned char initial_hit_actor;",
+   "count": 1,
+   "reason": "scene engine actors are indexes in the actor arrays, not actor_t pointers: 255 is GBVM's NULL (no actor)"
+  },
+  {
+   "old": "PLAYER.pos.x",
+   "new": "act_x[0]",
+   "count": 30,
+   "reason": "scene engine actor arrays (scene_actors.c): actor 0 is the player, act_bounds holds left, right, top, bottom"
+  },
+  {
+   "old": "PLAYER.pos.y",
+   "new": "act_y[0]",
+   "count": 30,
+   "reason": "scene engine actor arrays (scene_actors.c): actor 0 is the player, act_bounds holds left, right, top, bottom"
+  },
+  {
+   "old": "PLAYER.bounds.left",
+   "new": "act_bounds[0]",
+   "count": 8,
+   "reason": "scene engine actor arrays (scene_actors.c): actor 0 is the player, act_bounds holds left, right, top, bottom"
+  },
+  {
+   "old": "PLAYER.bounds.right",
+   "new": "act_bounds[1]",
+   "count": 9,
+   "reason": "scene engine actor arrays (scene_actors.c): actor 0 is the player, act_bounds holds left, right, top, bottom"
+  },
+  {
+   "old": "PLAYER.bounds.top",
+   "new": "act_bounds[2]",
+   "count": 8,
+   "reason": "scene engine actor arrays (scene_actors.c): actor 0 is the player, act_bounds holds left, right, top, bottom"
+  },
+  {
+   "old": "PLAYER.bounds.bottom",
+   "new": "act_bounds[3]",
+   "count": 8,
+   "reason": "scene engine actor arrays (scene_actors.c): actor 0 is the player, act_bounds holds left, right, top, bottom"
+  },
+  {
+   "old": "PLAYER.dir",
+   "new": "act_dir[0]",
+   "count": 13,
+   "reason": "scene engine actor arrays (scene_actors.c): actor 0 is the player, act_bounds holds left, right, top, bottom"
+  },
+  {
+   "old": "&PLAYER",
+   "new": "0u",
+   "count": 7,
+   "reason": "scene engine actor arrays (scene_actors.c): actor 0 is the player, act_bounds holds left, right, top, bottom"
+  },
+  {
+   "old": "hit_actor->pos.x",
+   "new": "act_x[hit_actor]",
+   "count": 5,
+   "reason": "scene engine actors are indexes in the actor arrays, not actor_t pointers: 255 is GBVM's NULL (no actor)"
+  },
+  {
+   "old": "hit_actor->pos.y",
+   "new": "act_y[hit_actor]",
+   "count": 5,
+   "reason": "scene engine actors are indexes in the actor arrays, not actor_t pointers: 255 is GBVM's NULL (no actor)"
+  },
+  {
+   "old": "hit_actor->bounds.left",
+   "new": "act_bounds[(unsigned short)hit_actor << 2]",
+   "count": 2,
+   "reason": "scene engine actors are indexes in the actor arrays, not actor_t pointers: 255 is GBVM's NULL (no actor)"
+  },
+  {
+   "old": "hit_actor->bounds.right",
+   "new": "act_bounds[((unsigned short)hit_actor << 2) + 1u]",
+   "count": 2,
+   "reason": "scene engine actors are indexes in the actor arrays, not actor_t pointers: 255 is GBVM's NULL (no actor)"
+  },
+  {
+   "old": "hit_actor->bounds.top",
+   "new": "act_bounds[((unsigned short)hit_actor << 2) + 2u]",
+   "count": 2,
+   "reason": "scene engine actors are indexes in the actor arrays, not actor_t pointers: 255 is GBVM's NULL (no actor)"
+  },
+  {
+   "old": "hit_actor->bounds.bottom",
+   "new": "act_bounds[((unsigned short)hit_actor << 2) + 3u]",
+   "count": 2,
+   "reason": "scene engine actors are indexes in the actor arrays, not actor_t pointers: 255 is GBVM's NULL (no actor)"
+  },
+  {
+   "old": "hit_actor->collision_group",
+   "new": "act_collision_group[hit_actor]",
+   "count": 3,
+   "reason": "scene engine actors are indexes in the actor arrays, not actor_t pointers: 255 is GBVM's NULL (no actor)"
+  },
+  {
+   "old": "hit_actor->dir",
+   "new": "act_dir[hit_actor]",
+   "count": 1,
+   "reason": "scene engine actors are indexes in the actor arrays, not actor_t pointers: 255 is GBVM's NULL (no actor)"
+  },
+  {
+   "old": "hit_actor != NULL",
+   "new": "hit_actor != 255u",
+   "count": 2,
+   "reason": "scene engine actors are indexes in the actor arrays, not actor_t pointers: 255 is GBVM's NULL (no actor)"
+  },
+  {
+   "old": "if (hit_actor &&",
+   "new": "if (hit_actor != 255u &&",
+   "count": 1,
+   "reason": "scene engine actors are indexes in the actor arrays, not actor_t pointers: 255 is GBVM's NULL (no actor)"
+  },
+  {
+   "old": "adv_attached_actor->pos.x",
+   "new": "act_x[adv_attached_actor]",
+   "count": 2,
+   "reason": "scene engine actors are indexes in the actor arrays, not actor_t pointers: 255 is GBVM's NULL (no actor)"
+  },
+  {
+   "old": "adv_attached_actor->pos.y",
+   "new": "act_y[adv_attached_actor]",
+   "count": 2,
+   "reason": "scene engine actors are indexes in the actor arrays, not actor_t pointers: 255 is GBVM's NULL (no actor)"
+  },
+  {
+   "old": "adv_attached_actor != NULL",
+   "new": "adv_attached_actor != 255u",
+   "count": 1,
+   "reason": "scene engine actors are indexes in the actor arrays, not actor_t pointers: 255 is GBVM's NULL (no actor)"
+  },
+  {
+   "old": "adv_attached_actor = NULL",
+   "new": "adv_attached_actor = 255u",
+   "count": 10,
+   "reason": "scene engine actors are indexes in the actor arrays, not actor_t pointers: 255 is GBVM's NULL (no actor)"
+  }
+ ],
+ "unadapted": [],
+ "file_variables": [
+  "adv_anim_dirty",
+  "adv_attached_actor",
+  "adv_attached_prev_x",
+  "adv_attached_prev_y",
+  "adv_camera_deadzone_x",
+  "adv_camera_deadzone_y",
+  "adv_camera_transitioning",
+  "adv_dash_active",
+  "adv_dash_cooldown_timer",
+  "adv_dash_currentframe",
+  "adv_dash_deadzone",
+  "adv_dash_dir",
+  "adv_dash_dist",
+  "adv_dash_frames",
+  "adv_dash_mask",
+  "adv_dash_per_frame",
+  "adv_dash_ready_frames",
+  "adv_dec",
+  "adv_events",
+  "adv_is_actor_attached",
+  "adv_knockback_frames",
+  "adv_knockback_timer",
+  "adv_knockback_vel_x",
+  "adv_knockback_vel_y",
+  "adv_next_state",
+  "adv_push_delay_frames",
+  "adv_push_timer",
+  "adv_run_acc",
+  "adv_run_vel",
+  "adv_state",
+  "adv_tap_timer",
+  "adv_temp_y",
+  "adv_turn_acc",
+  "adv_vel_x",
+  "adv_vel_y",
+  "adv_walk_acc",
+  "adv_walk_vel",
+  "facing_priority_axis",
+  "temp_x",
+  "temp_y"
+ ],
+ "code": "\n\n\n// Feature Flags --------------------------------------------------------------\n// Optional feature flags, set in 'state_defines.h'\n\n// #define FEAT_ADVENTURE_BLANK\n// #define FEAT_ADVENTURE_DASH\n// #define FEAT_ADVENTURE_RUN\n// #define FEAT_ADVENTURE_KNOCKBACK\n// #define FEAT_ADVENTURE_PUSH\n\n// End of Feature Flags -------------------------------------------------------\n\n// Constants ------------------------------------------------------------------\n\n#ifndef ADVENTURE_CAMERA_DEADZONE\n#define ADVENTURE_CAMERA_DEADZONE 8\n#endif\n\n#define MAX_CORNER_PUSH_DISTANCE PX_TO_SUBPX(9)\n\n#define COLLISION_SLOPE 0x10\n\n#define COL_CHECK_X 0x1\n#define COL_CHECK_Y 0x2\n#define COL_CHECK_ACTORS 0x4\n#define COL_CHECK_TRIGGERS 0x8\n#define COL_CHECK_WALLS 0x10\n#define COL_CHECK_ALL COL_CHECK_X | COL_CHECK_Y | COL_CHECK_ACTORS | COL_CHECK_TRIGGERS | COL_CHECK_WALLS\n\n#define ADVENTURE_ANIM_OVERRIDES_SET \\\n    (defined(FEAT_ADVENTURE_RUN) && defined(ADVENTURE_RUN_ANIM)) || \\\n    (defined(FEAT_ADVENTURE_DASH) && defined(ADVENTURE_DASH_ANIM)) || \\\n    (defined(FEAT_ADVENTURE_KNOCKBACK) && defined(ADVENTURE_KNOCKBACK_ANIM)) || \\\n    (defined(FEAT_ADVENTURE_BLANK) && defined(ADVENTURE_BLANK_ANIM)) || \\\n    (defined(FEAT_ADVENTURE_PUSH) && defined(ADVENTURE_PUSH_ANIM))\n\n#define MOVE_TYPE_4_WAY 0\n#define MOVE_TYPE_8_WAY 1\n\n#define DIRECTION_TYPE_4_WAY 0\n#define DIRECTION_TYPE_HORIZONTAL 1\n\n#define DIR_PRIORITY_NONE 0\n#define DIR_PRIORITY_HORIZONTAL 1\n#define DIR_PRIORITY_VERTICAL 2\n\n#ifndef INPUT_ADVENTURE_INTERACT\n#define INPUT_ADVENTURE_INTERACT INPUT_A\n#endif\n\n#ifndef INPUT_ADVENTURE_RUN\n#define INPUT_ADVENTURE_RUN INPUT_B\n#endif\n\n#ifndef INPUT_ADVENTURE_MOVE_TYPE\n#define INPUT_ADVENTURE_MOVE_TYPE MOVE_TYPE_8_WAY\n#endif\n#ifndef INPUT_ADVENTURE_DIRECTION_TYPE\n#define INPUT_ADVENTURE_DIRECTION_TYPE DIRECTION_TYPE_4_WAY\n#endif\n#define DASH_INPUT_INTERACT 0\n#define DASH_INPUT_DOUBLE_TAP 1\n#define DASH_INPUT_A 3\n#define DASH_INPUT_B 4\n\n#define DOUBLE_TAP_WINDOW 15\n#define MAX_DELTA 127\n\n// End of Constants -----------------------------------------------------------\n\n// Macros ---------------------------------------------------------------------\n\n#define VEL_TO_SUBPX(v) ((((v) & 0x8000) ? (((v) >> 8) | 0xFF00) : ((v) >> 8)) << 1)\n#define DELTA_TO_VEL(v) ((v) << 8)\n\n#define COUNTER_DECREMENT(x)                                                                                           \\\n    do                                                                                                                 \\\n    {                                                                                                                  \\\n        if ((x) != 0)                                                                                                  \\\n            (x)--;                                                                                                     \\\n    } while (0)\n#define COUNTER_DECREMENT_CB(x, cond)                                                                                  \\\n    do                                                                                                                 \\\n    {                                                                                                                  \\\n        if ((x) != 0) {                                                                                                \\\n            (x)--;                                                                                                     \\\n            if ((x) == 0) cond                                                                                         \\\n        }                                                                                                              \\\n    } while (0)\n\n// End of Macros --------------------------------------------------------------\n\n// Type Definitions -----------------------------------------------------------\n\ntypedef enum\n{\n    GROUND_STATE = 0,\n    DASH_STATE,\n    KNOCKBACK_STATE,\n    BLANK_STATE,\n    RUN_STATE,\n    PUSH_STATE\n} state_e;\n\ntypedef enum\n{\n    GROUND_INIT = 0,\n    GROUND_END,\n    DASH_INIT,\n    DASH_END,\n    KNOCKBACK_INIT,\n    KNOCKBACK_END,\n    BLANK_INIT,\n    BLANK_END,\n    DASH_READY,\n    RUN_INIT,\n    RUN_END,\n    PUSH_INIT,\n    PUSH_END,\n    CALLBACK_SIZE\n} callback_e;\n\n// End of Type Definitions ----------------------------------------------------\n\n// Engine Fields --------------------------------------------------------------\n\nWORD adv_walk_vel;            // Maximum velocity while walking\nWORD adv_run_vel;             // Maximum velocity while running\nWORD adv_dec;                 // Deceleration value\nWORD adv_turn_acc;            // Acceleration when changing direction\nWORD adv_walk_acc;            // Acceleration when walking\nWORD adv_run_acc;             // Acceleration when running\nWORD adv_knockback_vel_x;     // Knockback velocity in the x direction\nWORD adv_knockback_vel_y;     // Knockback velocity in the y direction\nUBYTE adv_knockback_frames;   // Number of frames for knockback\nUBYTE adv_dash_active;        // Dash feature is active\nUBYTE adv_dash_mask;          // Choose if the player can dash through actors, triggers, and walls\nWORD adv_dash_dist;           // Distance of the dash\nUBYTE adv_dash_frames;        // Number of frames for dashing\nUBYTE adv_dash_ready_frames;  // Frames before the player can dash again\nUBYTE adv_dash_deadzone;      // Override camera deadzone when in dash state\nUBYTE adv_push_delay_frames;  // Frames before entering push state\n\n// End of Engine Fields -------------------------------------------------------\n\n// Runtime State --------------------------------------------------------------\n\nscript_event_t adv_events[CALLBACK_SIZE];\n\n// State machine\nstate_e adv_state;            // Current adventure state\nstate_e adv_next_state;       // Next frame's adventure state\n\nWORD adv_vel_x;               // Tracks the player's x-velocity between frames\nWORD adv_vel_y;               // Tracks the player's y-velocity between frames\n\n// Track last cardinal direction for facing\nstatic direction_e facing_dir;\nstatic point16_t delta;\nstatic point16_t movement_delta;\n\n// Counters\nUBYTE adv_knockback_timer;    // Current Knockback frame\n\n// Animation\nUBYTE adv_anim_dirty;         // Tracks whether the player animation has been modified from the default\n\n// Solid actors\nunsigned char adv_attached_actor;  // The last actor the player hit, and that they were attached to\nUBYTE adv_is_actor_attached;  // Keeps track of whether the player is currently on an actor\nUWORD adv_attached_prev_x;    // Keeps track of the pos.x of the attached actor from the previous frame\nUWORD adv_attached_prev_y;    // Keeps track of the pos.y of the attached actor from the previous frame\nUWORD adv_temp_y;         // Temporary y position for the player when moving and colliding with an solid actor\nstatic direction_e collision_dir;\nstatic UBYTE facing_priority_axis;\nstatic UWORD temp_y;    // Player's position on the last frame\nstatic UWORD temp_x;    // Player's position on the last frame\n\n// Dash\nUBYTE adv_dash_cooldown_timer;// tracks the current amount before the dash is ready\nWORD adv_dash_per_frame;      // Takes overall dash distance and holds the amount per-frame\nUBYTE adv_dash_currentframe;  // Tracks the current frame of the overall dash\nUBYTE adv_tap_timer;          // Number of frames since the last time dpad button was tapped\nUBYTE adv_dash_dir;\n\n// Camera\nBYTE adv_camera_deadzone_x;   // Default camera deadzone X - used to restore camera after dash\nBYTE adv_camera_deadzone_y;   // Default camera deadzone Y - used to restore camera after dash\nUBYTE adv_camera_transitioning; // Flag to track if we're animating back from dash deadzone\n\n// Push\nUBYTE adv_push_timer;         // Number of frames pushing against a wall\n\n// End of Runtime State -------------------------------------------------------\n\n// Function Definitions -------------------------------------------------------\n\nstatic void move_and_collide(UBYTE mask);\nstatic void handle_dir_input(void);\nstatic void adv_deceleration(void);\nstatic void dash_init(void);\n\nstatic void adv_callback_reset(void);\nstatic void adv_callback_execute(UBYTE i);\n\n#if NGC_ADVENTURE_ANIM_OVERRIDES\n\nstatic void adv_set_player_anim_state(UBYTE anim)\n{\n    ngc_player_load_animations(anim);\n    actor_reset_anim(0u);\n    adv_anim_dirty = TRUE;\n}\n\nstatic void adv_restore_default_anim_state(void)\n{\n    if (adv_anim_dirty) {\n        ngc_player_load_animations(0);\n        actor_reset_anim(0u);\n        adv_anim_dirty = FALSE;\n    }\n}\n\n#endif\n\n#ifdef FEAT_ADVENTURE_DASH\n\nstatic UBYTE dash_input_pressed(void)\n{\n    if (!adv_dash_active) {\n      return FALSE;\n    }\n#if INPUT_ADVENTURE_DASH == DASH_INPUT_INTERACT\n    return INPUT_PRESSED(INPUT_ADVENTURE_INTERACT);\n#elif INPUT_ADVENTURE_DASH == DASH_INPUT_A\n    return INPUT_PRESSED(INPUT_A);\n#elif INPUT_ADVENTURE_DASH == DASH_INPUT_B\n    return INPUT_PRESSED(INPUT_B);\n#elif INPUT_ADVENTURE_DASH == DASH_INPUT_DOUBLE_TAP\n    // Double-Tap Dash\n    if (INPUT_PRESSED(INPUT_DPAD)) {\n        UBYTE dir = joy & INPUT_DPAD;\n        if (adv_tap_timer > 0 && dir == adv_dash_dir) {\n            adv_tap_timer = 0;\n            return TRUE;\n        } else {\n            adv_tap_timer = DOUBLE_TAP_WINDOW;\n            adv_dash_dir = dir;\n        }\n    }\n    return FALSE;\n#endif\n}\n\n#endif\n\nstatic void state_enter_ground(void);\nstatic void state_exit_ground(void);\nstatic void state_update_ground(void);\n#ifdef FEAT_ADVENTURE_DASH\nstatic void state_enter_dash(void);\nstatic void state_exit_dash(void);\nstatic void state_update_dash(void);\n#endif\n#ifdef FEAT_ADVENTURE_KNOCKBACK\nstatic void state_enter_knockback(void);\nstatic void state_exit_knockback(void);\nstatic void state_update_knockback(void);\n#endif\n#ifdef FEAT_ADVENTURE_BLANK\nstatic void state_enter_blank(void);\nstatic void state_exit_blank(void);\n#endif\n#ifdef FEAT_ADVENTURE_RUN\nstatic void state_enter_run(void);\nstatic void state_exit_run(void);\n#endif\n#ifdef FEAT_ADVENTURE_PUSH\nstatic void state_enter_push(void);\nstatic void state_exit_push(void);\nstatic void state_update_push(void);\n#endif\n\n// End of Function Definitions ------------------------------------------------\n\nstatic void adventure_init(void) {\n\n    adv_callback_reset();\n\n    // Set camera to follow player\n    camera_offset_x = 0;\n    camera_offset_y = 0;\n    camera_deadzone_x = ADVENTURE_CAMERA_DEADZONE;\n    camera_deadzone_y = ADVENTURE_CAMERA_DEADZONE;\n\n    // Initialize facing direction\n    facing_dir = act_dir[0];\n    delta.x  = 0;\n    delta.y  = 0;\n    movement_delta.x = 0;\n    movement_delta.y = 0;\n    adv_vel_x = 0;\n    adv_vel_y = 0;\n\n    collision_dir = DIR_NONE;\n\n    adv_state = GROUND_STATE;\n    adv_next_state = GROUND_STATE;\n    adv_camera_deadzone_x = camera_deadzone_x;\n    adv_camera_deadzone_y = camera_deadzone_y;\n    adv_camera_transitioning = FALSE;\n    adv_dash_cooldown_timer = 0;\n    adv_knockback_timer = 0;\n    adv_push_timer = 0;\n}\n\nstatic void adventure_update(void) {\n    // State transitions\n\n    if (adv_state != adv_next_state)\n    {\n        // Exit state\n        switch (adv_state)\n        {\n            case GROUND_STATE: {\n                state_exit_ground();\n                break;\n            }\n#ifdef FEAT_ADVENTURE_RUN\n            case RUN_STATE: {\n                state_exit_run();\n                break;\n            }\n#endif\n#ifdef FEAT_ADVENTURE_DASH\n            case DASH_STATE: {\n                state_exit_dash();\n                break;\n            }\n#endif\n#ifdef FEAT_ADVENTURE_KNOCKBACK\n            case KNOCKBACK_STATE: {\n                state_exit_knockback();\n                break;\n            }\n#endif\n#ifdef FEAT_ADVENTURE_BLANK\n            case BLANK_STATE: {\n                state_exit_blank();\n                break;\n            }\n#endif\n#ifdef FEAT_ADVENTURE_PUSH\n            case PUSH_STATE: {\n                state_exit_push();\n                break;\n            }\n#endif\n        }\n\n        adv_state = adv_next_state;\n\n        // Enter state\n        switch (adv_state)\n        {\n            case GROUND_STATE: {\n                state_enter_ground();\n                break;\n            }\n#ifdef FEAT_ADVENTURE_RUN\n            case RUN_STATE: {\n                state_enter_run();\n                break;\n            }\n#endif\n#ifdef FEAT_ADVENTURE_DASH\n            case DASH_STATE: {\n                state_enter_dash();\n                break;\n            }\n#endif\n#ifdef FEAT_ADVENTURE_KNOCKBACK\n            case KNOCKBACK_STATE: {\n                state_enter_knockback();\n                break;\n            }\n#endif\n#ifdef FEAT_ADVENTURE_BLANK\n            case BLANK_STATE: {\n                state_enter_blank();\n                break;\n            }\n#endif\n#ifdef FEAT_ADVENTURE_PUSH\n            case PUSH_STATE: {\n                state_enter_push();\n                break;\n            }\n#endif\n        }\n    }\n\n\n    // STATE MACHINE =======================================================\n\n    switch (adv_state)\n    {\n        case GROUND_STATE:\n        case RUN_STATE: {\n            state_update_ground();\n            break;\n        }\n\n#ifdef FEAT_ADVENTURE_DASH\n        case DASH_STATE: {\n            state_update_dash();\n            break;\n        }\n#endif\n\n#ifdef FEAT_ADVENTURE_KNOCKBACK\n        case KNOCKBACK_STATE: {\n            state_update_knockback();\n            break;\n        }\n#endif\n\n#ifdef FEAT_ADVENTURE_PUSH\n        case PUSH_STATE: {\n            state_update_push();\n            break;\n        }\n#endif\n\n    }\n\n    // Timers\n\n#ifdef FEAT_ADVENTURE_DASH\n    COUNTER_DECREMENT(adv_tap_timer);\n\n    // COUNTERS================================================================\n    //  Counting down until dashing is ready again\n    //  XX Set in dash Init and checked in wall, fall, ground, and jump states\n    COUNTER_DECREMENT_CB(adv_dash_cooldown_timer, {\n        adv_callback_execute(DASH_READY);\n    });\n#endif\n\n    // Restore camera deadzone after dash\n    if (adv_camera_transitioning) {\n        if (camera_deadzone_x > adv_camera_deadzone_x) {\n            camera_deadzone_x--;\n        } else if (camera_deadzone_x < adv_camera_deadzone_x) {\n            camera_deadzone_x++;\n        }\n\n        if (camera_deadzone_y > adv_camera_deadzone_y) {\n            camera_deadzone_y--;\n        } else if (camera_deadzone_y < adv_camera_deadzone_y) {\n            camera_deadzone_y++;\n        }\n        if (camera_deadzone_x == adv_camera_deadzone_x &&\n            camera_deadzone_y == adv_camera_deadzone_y) {\n            adv_camera_transitioning = FALSE;\n        }\n    }\n}\n\nstatic void handle_dir_input(void) {\n    WORD target_x;\n    WORD target_y;\n    WORD max_vel;\n    WORD base_acc;\n    UBYTE left;\n    UBYTE right;\n    UBYTE up;\n    UBYTE down;\n    WORD acc_x;\n    WORD acc_y;\n    target_x = 0;\n    target_y = 0;\n#ifdef FEAT_ADVENTURE_RUN\n    max_vel = (adv_state == RUN_STATE) ? adv_run_vel : adv_walk_vel;\n    base_acc = (adv_state == RUN_STATE) ? adv_run_acc : adv_walk_acc;\n#else\n    max_vel = adv_walk_vel;\n    base_acc = adv_walk_acc;\n#endif\n\n#if INPUT_ADVENTURE_MOVE_TYPE == MOVE_TYPE_8_WAY\n    // ---------------------- 8-WAY ----------------------\n    left = INPUT_LEFT;\n    right = INPUT_RIGHT;\n    up = INPUT_UP;\n    down = INPUT_DOWN;\n\n    // Determine velocity intent\n    if (left)  target_x = -max_vel;\n    if (right) target_x =  max_vel;\n    if (up)    target_y = -max_vel;\n    if (down)  target_y =  max_vel;\n\n    if (target_x && target_y) {\n        // Approximate diagonal movement normalization\n        target_x = (target_x >> 1) + (target_x >> 2);\n        target_y = (target_y >> 1) + (target_y >> 2);\n    }\n#if INPUT_ADVENTURE_DIRECTION_TYPE == DIRECTION_TYPE_4_WAY\n    // Update facing priority axis\n    if ((left | right) && !(up | down)) {\n        facing_priority_axis = DIR_PRIORITY_HORIZONTAL;\n    } else if ((up | down) && !(left | right)) {\n        facing_priority_axis = DIR_PRIORITY_VERTICAL;\n    } else if (!(left | right | up | down)) {\n        facing_priority_axis = DIR_PRIORITY_NONE;\n    }\n#endif\n    // Determine facing based on which axis was pressed first\n    if ((left | right) && (up | down)) {\n#if INPUT_ADVENTURE_DIRECTION_TYPE == DIRECTION_TYPE_4_WAY\n        // Both axes pressed, respect whichever axis was pressed first\n        if (facing_priority_axis == DIR_PRIORITY_HORIZONTAL) {\n            facing_dir = left ? DIR_LEFT : DIR_RIGHT;\n        } else {\n            facing_dir = up ? DIR_UP : DIR_DOWN;\n        }\n#else\n        facing_dir = left ? DIR_LEFT : DIR_RIGHT;\n#endif\n    } else if (left) {\n        facing_dir = DIR_LEFT;\n    } else if (right) {\n        facing_dir = DIR_RIGHT;\n    }\n#if INPUT_ADVENTURE_DIRECTION_TYPE != DIRECTION_TYPE_HORIZONTAL\n    else if (up) {\n        facing_dir = DIR_UP;\n    } else if (down) {\n        facing_dir = DIR_DOWN;\n    }\n#endif\n#else\n    // ---------------------- 4-WAY ----------------------\n#if INPUT_ADVENTURE_DIRECTION_TYPE != DIRECTION_TYPE_HORIZONTAL\n    if (INPUT_RECENT_LEFT) {\n        target_x = -max_vel;\n        facing_dir = DIR_LEFT;\n    } else if (INPUT_RECENT_RIGHT) {\n        target_x =  max_vel;\n        facing_dir = DIR_RIGHT;\n    } else if (INPUT_RECENT_UP) {\n        target_y = -max_vel;\n        facing_dir = DIR_UP;\n    } else if (INPUT_RECENT_DOWN) {\n        target_y =  max_vel;\n        facing_dir = DIR_DOWN;\n    }\n#else\n    if (INPUT_RECENT_LEFT) {\n        target_x = -max_vel;\n        facing_dir = DIR_LEFT;\n    } else if (INPUT_RECENT_RIGHT) {\n        target_x =  max_vel;\n        facing_dir = DIR_RIGHT;\n    } else if (INPUT_RECENT_UP) {\n        target_y = -max_vel;\n    } else if (INPUT_RECENT_DOWN) {\n        target_y =  max_vel;\n    }\n#endif\n#endif\n\n    // ---------------------- Apply Acceleration ----------------------\n    if (target_x != 0) {\n        acc_x = ((target_x > 0 && adv_vel_x < 0) || (target_x < 0 && adv_vel_x > 0))\n            ? adv_turn_acc : base_acc;\n\n        if (target_x > adv_vel_x) {\n            adv_vel_x += acc_x;\n            if (adv_vel_x >  max_vel) adv_vel_x =  max_vel;\n        } else if (target_x < adv_vel_x) {\n            adv_vel_x -= acc_x;\n            if (adv_vel_x < -max_vel) adv_vel_x = -max_vel;\n        }\n    }\n\n    if (target_y != 0) {\n        acc_y = ((target_y > 0 && adv_vel_y < 0) || (target_y < 0 && adv_vel_y > 0))\n            ? adv_turn_acc : base_acc;\n\n        if (target_y > adv_vel_y) {\n            adv_vel_y += acc_y;\n            if (adv_vel_y >  max_vel) adv_vel_y =  max_vel;\n        } else if (target_y < adv_vel_y) {\n            adv_vel_y -= acc_y;\n            if (adv_vel_y < -max_vel) adv_vel_y = -max_vel;\n        }\n    }\n\n    adv_vel_x = CLAMP(adv_vel_x, -max_vel, max_vel);\n    adv_vel_y = CLAMP(adv_vel_y, -max_vel, max_vel);\n}\n\nstatic void move_and_collide(UBYTE mask)\n{\n    UWORD new_x;\n    UBYTE tile_start;\n    UBYTE tile_end;\n    UBYTE tile_x;\n    UBYTE tile;\n    UWORD target_y;\n    UWORD new_y;\n    UBYTE tile_y;\n    UWORD target_x;\n    UBYTE is_solid;\n    temp_x = act_x[0];\n    temp_y = act_y[0];\n\n    // Horizontal Movement\n    if (mask & COL_CHECK_X)\n    {\n        new_x = act_x[0] + delta.x;\n\n        if (!(mask & COL_CHECK_WALLS))\n        {\n            goto finally_update_x;\n        }\n\n        // Step X\n        tile_start = SUBPX_TO_TILE(act_y[0] + act_bounds[2]);\n        tile_end = SUBPX_TO_TILE(act_y[0] + act_bounds[3]);\n        if (delta.x > 0) {\n            tile_x = SUBPX_TO_TILE(new_x + act_bounds[1]);\n            tile = tile_col_test_range_y(COLLISION_LEFT, tile_x, tile_start, tile_end);\n            if (tile) {\n                new_x = TILE_TO_SUBPX(tile_x) - EXCLUSIVE_OFFSET(act_bounds[1]);\n                adv_vel_x = 0;\n                if (tile & COLLISION_SLOPE && delta.y == 0) {\n                    if (tile & COLLISION_TOP) {\n                        target_y = TILE_TO_SUBPX(tile_hit_y) - EXCLUSIVE_OFFSET(act_bounds[3]);\n                        if (act_y[0] < target_y + MAX_CORNER_PUSH_DISTANCE) {\n                            adv_attached_actor = 255u;\n                            act_y[0] -= VEL_TO_SUBPX(adv_walk_vel);\n                            if (act_y[0] < target_y) {\n                                act_y[0] = target_y;\n                            }\n                        }\n                    } else if (tile & COLLISION_BOTTOM) {\n                        target_y = TILE_TO_SUBPX(tile_hit_y + 1) + 1 - EXCLUSIVE_OFFSET(act_bounds[2]);\n                        if (act_y[0] > target_y - MAX_CORNER_PUSH_DISTANCE) {\n                            adv_attached_actor = 255u;\n                            act_y[0] += VEL_TO_SUBPX(adv_walk_vel);\n                            if (act_y[0] > target_y) {\n                                act_y[0] = target_y;\n                            }\n                        }\n                    }\n                }\n            }\n            new_x = MIN(image_width_subpx - EXCLUSIVE_OFFSET(act_bounds[1]), new_x);\n        } else if (delta.x < 0) {\n            tile_x = SUBPX_TO_TILE(new_x + act_bounds[0]);\n            tile = tile_col_test_range_y(COLLISION_RIGHT, tile_x, tile_start, tile_end);\n            if (tile) {\n                new_x = TILE_TO_SUBPX(tile_x + 1) - act_bounds[0];\n                adv_vel_x = 0;\n                if (tile & COLLISION_SLOPE && delta.y == 0) {\n                    if (tile & COLLISION_TOP) {\n                        target_y = TILE_TO_SUBPX(tile_hit_y) - EXCLUSIVE_OFFSET(act_bounds[3]);\n                        if (act_y[0] < target_y + MAX_CORNER_PUSH_DISTANCE) {\n                            adv_attached_actor = 255u;\n                            act_y[0] -= VEL_TO_SUBPX(adv_walk_vel);\n                            if (act_y[0] < target_y) {\n                                act_y[0] = target_y;\n                            }\n                        }\n                    } else if (tile & COLLISION_BOTTOM) {\n                        target_y = TILE_TO_SUBPX(tile_hit_y + 1) + 1 - EXCLUSIVE_OFFSET(act_bounds[2]);\n                        if (act_y[0] > target_y - MAX_CORNER_PUSH_DISTANCE) {\n                            adv_attached_actor = 255u;\n                            act_y[0] += VEL_TO_SUBPX(adv_walk_vel);\n                            if (act_y[0] > target_y) {\n                                act_y[0] = target_y;\n                            }\n                        }\n                    }\n                }\n            }\n        }\n\n    finally_update_x:\n        act_x[0] = new_x;\n    }\n\n    // Vertical Movement\n    if (mask & COL_CHECK_Y)\n    {\n        new_y = act_y[0] + delta.y;\n\n        if (!(mask & COL_CHECK_WALLS))\n        {\n            goto finally_update_y;\n        }\n\n        // Step Y\n        tile_start = SUBPX_TO_TILE(act_x[0] + act_bounds[0]);\n        tile_end = SUBPX_TO_TILE(act_x[0] + act_bounds[1]);\n        if (delta.y > 0) {\n            tile_y = SUBPX_TO_TILE(new_y + act_bounds[3]);\n            tile = tile_col_test_range_x(COLLISION_TOP, tile_y, tile_start, tile_end);\n            if (tile) {\n                new_y = TILE_TO_SUBPX(tile_y) - EXCLUSIVE_OFFSET(act_bounds[3]);\n                adv_vel_y = 0;\n                if (tile & COLLISION_SLOPE && delta.x == 0) {\n                    if (tile & COLLISION_LEFT) {\n                        target_x = TILE_TO_SUBPX(tile_hit_x) - EXCLUSIVE_OFFSET(act_bounds[1]);\n                        if (act_x[0] < target_x + MAX_CORNER_PUSH_DISTANCE) {\n                            adv_attached_actor = 255u;\n                            act_x[0] -= VEL_TO_SUBPX(adv_walk_vel);\n                            if (act_x[0] < target_x) {\n                                act_x[0] = target_x;\n                            }\n                        }\n                    } else if (tile & COLLISION_RIGHT) {\n                        target_x = TILE_TO_SUBPX(tile_hit_x + 1) + 1 - EXCLUSIVE_OFFSET(act_bounds[0]);\n                        if (act_x[0] > target_x - MAX_CORNER_PUSH_DISTANCE) {\n                            adv_attached_actor = 255u;\n                            act_x[0] += VEL_TO_SUBPX(adv_walk_vel);\n                            if (act_x[0] > target_x) {\n                                act_x[0] = target_x;\n                            }\n                        }\n                    }\n                }\n            }\n        } else if (delta.y < 0) {\n            tile_y = SUBPX_TO_TILE(new_y + act_bounds[2]);\n            tile = tile_col_test_range_x(COLLISION_BOTTOM, tile_y, tile_start, tile_end);\n            if (tile) {\n                new_y = TILE_TO_SUBPX(tile_y + 1) - act_bounds[2];\n                adv_vel_y = 0;\n                if (tile & COLLISION_SLOPE && delta.x == 0) {\n                    if (tile & COLLISION_LEFT) {\n                        target_x = TILE_TO_SUBPX(tile_hit_x) - EXCLUSIVE_OFFSET(act_bounds[1]);\n                        if (act_x[0] < target_x + MAX_CORNER_PUSH_DISTANCE) {\n                            adv_attached_actor = 255u;\n                            act_x[0] -= VEL_TO_SUBPX(adv_walk_vel);\n                            if (act_x[0] < target_x) {\n                                act_x[0] = target_x;\n                            }\n                        }\n                    } else if (tile & COLLISION_RIGHT) {\n                        target_x = TILE_TO_SUBPX(tile_hit_x + 1) + 1 - EXCLUSIVE_OFFSET(act_bounds[0]);\n                        if (act_x[0] > target_x - MAX_CORNER_PUSH_DISTANCE) {\n                            adv_attached_actor = 255u;\n                            act_x[0] += VEL_TO_SUBPX(adv_walk_vel);\n                            if (act_x[0] > target_x) {\n                                act_x[0] = target_x;\n                            }\n                        }\n                    }\n                }\n            }\n        }\n\n    finally_update_y:\n        act_y[0] = new_y;\n    }\n\n    delta.x  = 0;\n    delta.y  = 0;\n\n    if (mask & COL_CHECK_ACTORS)\n    {\n        unsigned char hit_actor;\n        unsigned char initial_hit_actor;\n        initial_hit_actor = hit_actor = player_overlap();\n        adv_attached_actor = 255u;\n\n        while (hit_actor != 255u) {\n            is_solid = act_collision_group[hit_actor] & COLLISION_GROUP_FLAG_SOLID;\n            if (is_solid)\n            {\n                adv_attached_actor = hit_actor;\n                if ((temp_y + act_bounds[3]) < (act_y[hit_actor] + act_bounds[((unsigned short)hit_actor << 2) + 2u])) {\n                    act_y[0] += (act_y[hit_actor] + act_bounds[((unsigned short)hit_actor << 2) + 2u]) - (act_y[0] + EXCLUSIVE_OFFSET(act_bounds[3]));\n                    collision_dir = DIR_UP;\n                } else if ((temp_y  + act_bounds[2]) > (act_y[hit_actor] + act_bounds[((unsigned short)hit_actor << 2) + 3u])) {\n                    act_y[0] += (act_y[hit_actor] + EXCLUSIVE_OFFSET(act_bounds[((unsigned short)hit_actor << 2) + 3u])) - (act_y[0] + act_bounds[2]);\n                    collision_dir = DIR_DOWN;\n                } else if ((temp_x + act_bounds[1]) < (act_x[hit_actor] + act_bounds[(unsigned short)hit_actor << 2])) {\n                    act_x[0] += (act_x[hit_actor] + act_bounds[(unsigned short)hit_actor << 2]) - (act_x[0] + EXCLUSIVE_OFFSET(act_bounds[1]));\n                    collision_dir = DIR_LEFT;\n                } else if ((temp_x + act_bounds[0]) > act_x[hit_actor] + act_bounds[((unsigned short)hit_actor << 2) + 1u]) {\n                    act_x[0] += (act_x[hit_actor] + EXCLUSIVE_OFFSET(act_bounds[((unsigned short)hit_actor << 2) + 1u])) - (act_x[0] + act_bounds[0]);\n                    collision_dir = DIR_RIGHT;\n                } else {\n                    collision_dir = act_dir[hit_actor];\n                }\n            }\n            hit_actor = player_overlap_from(hit_actor);\n        }\n\n        if (adv_attached_actor != 255u) {\n            hit_actor = adv_attached_actor;\n            adv_attached_prev_x = act_x[hit_actor];\n            adv_attached_prev_y = act_y[hit_actor];\n        } else {\n            hit_actor = initial_hit_actor;\n            adv_attached_actor = 255u;\n            collision_dir = DIR_NONE;\n            adv_attached_prev_x = 0;\n            adv_attached_prev_y = 0;\n        }\n\n        if (hit_actor != 255u && (act_collision_group[hit_actor] & COLLISION_GROUP_MASK))\n        {\n            // Collision group script handling\n            NGC_PLAYER_COLLISION(hit_actor);\n        }\n        else if (INPUT_PRESSED(INPUT_ADVENTURE_INTERACT)) {\n            hit_actor = NGC_ACTOR_IN_FRONT(8);\n            if (hit_actor != 255u && !(act_collision_group[hit_actor] & COLLISION_GROUP_MASK) && NGC_ACTOR_HAS_SCRIPT(hit_actor)) {\n                actor_set_dir(hit_actor, FLIPPED_DIR(act_dir[0]), FALSE);\n                NGC_ACTOR_INTERACT(hit_actor);\n            }\n        }\n    }\n\n    if (mask & COL_CHECK_TRIGGERS)\n    {\n        NGC_ADVENTURE_TRIGGERS();\n    }\n}\n\n\n#ifdef NGC_ADVENTURE_STATE_SCRIPTS\nvoid adv_callback_attach(SCRIPT_CTX *THIS)\n{\n    UWORD *slot = VM_REF_TO_PTR(FN_ARG2);\n    UBYTE *bank = VM_REF_TO_PTR(FN_ARG1);\n    UBYTE **ptr = VM_REF_TO_PTR(FN_ARG0);\n    adv_events[*slot].script_bank = *bank;\n    adv_events[*slot].script_addr = *ptr;\n}\n\nvoid adv_callback_detach(SCRIPT_CTX *THIS)\n{\n    UWORD *slot = VM_REF_TO_PTR(FN_ARG0);\n    adv_events[*slot].script_bank = 0;\n    adv_events[*slot].script_addr = NULL;\n}\n#endif\n\nstatic void adv_callback_reset(void)\n{\n    { UBYTE i; for (i = 0; i != CALLBACK_SIZE; ++i) { adv_events[i].script_addr = 0; adv_events[i].script_bank = 0; adv_events[i].handle = 0; } }\n}\n\nstatic void adv_callback_execute(UBYTE i)\n{\n    script_event_t *event = &adv_events[i];\n    if (!event->script_addr)\n        return;\n    if ((event->handle == 0) || ((event->handle & SCRIPT_TERMINATED) != 0))\n    {\n        NGC_STATE_SCRIPT_EXECUTE(event->script_addr, &event->handle);\n    }\n}\n\nstatic void adv_deceleration(void) {\n#if INPUT_ADVENTURE_MOVE_TYPE == MOVE_TYPE_8_WAY\n    if (!(INPUT_LEFT | INPUT_RIGHT)) {\n        if (adv_vel_x > adv_dec) {\n            adv_vel_x -= adv_dec;\n        } else if (adv_vel_x < -adv_dec) {\n            adv_vel_x += adv_dec;\n        } else {\n            adv_vel_x = 0;\n        }\n    }\n\n    if (!(INPUT_UP | INPUT_DOWN)) {\n        if (adv_vel_y > adv_dec) {\n            adv_vel_y -= adv_dec;\n        } else if (adv_vel_y < -adv_dec) {\n            adv_vel_y += adv_dec;\n        } else {\n            adv_vel_y = 0;\n        }\n    }\n#else\n    if (!(INPUT_RECENT_LEFT | INPUT_RECENT_RIGHT)) {\n        if (adv_vel_x > adv_dec) {\n            adv_vel_x -= adv_dec;\n        } else if (adv_vel_x < -adv_dec) {\n            adv_vel_x += adv_dec;\n        } else {\n            adv_vel_x = 0;\n        }\n    }\n\n    if (!(INPUT_RECENT_UP | INPUT_RECENT_DOWN)) {\n        if (adv_vel_y > adv_dec) {\n            adv_vel_y -= adv_dec;\n        } else if (adv_vel_y < -adv_dec) {\n            adv_vel_y += adv_dec;\n        } else {\n            adv_vel_y = 0;\n        }\n    }\n#endif\n}\n\n#ifdef FEAT_ADVENTURE_DASH\nstatic void dash_init(void)\n{\n    WORD dash_dx;\n    WORD dash_dy;\n    UWORD new_x;\n    UWORD new_y;\n    UBYTE tile_top;\n    UBYTE tile_bottom;\n    UBYTE tile_left;\n    UBYTE tile_right;\n    UBYTE col;\n    adv_dash_per_frame = adv_dash_dist / adv_dash_frames; // Dash distance per frame in the DASH_STATE\n\n    // Dash through walls - check if destination is clear\n    if ((adv_dash_mask & COL_CHECK_WALLS) == 0)\n    {\n        // Compute destination position based on dash direction\n        dash_dx = 0;\n        dash_dy = 0;\n\n        switch (act_dir[0]) {\n            case DIR_LEFT:\n                dash_dx = -adv_dash_per_frame * adv_dash_frames;\n                break;\n            case DIR_RIGHT:\n                dash_dx =  adv_dash_per_frame * adv_dash_frames;\n                break;\n            case DIR_UP:\n                dash_dy = -adv_dash_per_frame * adv_dash_frames;\n                break;\n            case DIR_DOWN:\n                dash_dy =  adv_dash_per_frame * adv_dash_frames;\n                break;\n        }\n\n        new_x = act_x[0] + dash_dx;\n        new_y = act_y[0] + dash_dy;\n\n        tile_top = SUBPX_TO_TILE(new_y + act_bounds[2]);\n        tile_bottom = SUBPX_TO_TILE(new_y + act_bounds[3]);\n        tile_left = SUBPX_TO_TILE(new_x + act_bounds[0]);\n        tile_right = SUBPX_TO_TILE(new_x + act_bounds[1]);\n\n        col = 0;\n\n        if (act_dir[0] == DIR_LEFT || act_dir[0] == DIR_RIGHT) {\n            col = tile_col_test_range_y(COLLISION_ALL, tile_left, tile_top, tile_bottom);\n            if (!col) {\n                col = tile_col_test_range_y(COLLISION_ALL, tile_right, tile_top, tile_bottom);\n            }\n        }\n        else {\n            col = tile_col_test_range_x(COLLISION_ALL, tile_top, tile_left, tile_right);\n            if (!col) {\n                col = tile_col_test_range_x(COLLISION_ALL, tile_bottom, tile_left, tile_right);\n            }\n        }\n\n        if (col) {\n            adv_dash_per_frame = 0;\n            adv_next_state = GROUND_STATE;\n            return;\n        }\n    }\n\n    adv_is_actor_attached = FALSE;\n    adv_camera_deadzone_x = camera_deadzone_x;\n    adv_camera_deadzone_y = camera_deadzone_y;\n    camera_deadzone_x = adv_dash_deadzone;\n    camera_deadzone_y = adv_dash_deadzone;\n    adv_camera_transitioning = TRUE;\n    adv_dash_cooldown_timer = adv_dash_ready_frames + adv_dash_frames;\n    adv_dash_currentframe = adv_dash_frames;\n    adv_tap_timer = 0;\n    adv_next_state = DASH_STATE;\n\n    adv_dash_mask |= COL_CHECK_X | COL_CHECK_Y;\n}\n#endif\n\n// State Machine Functions ----------------------------------------------------\n\n// GROUND_STATE\n\nstatic void state_enter_ground(void)\n{\n#if NGC_ADVENTURE_ANIM_OVERRIDES\n    adv_restore_default_anim_state();\n#endif\n    adv_callback_execute(GROUND_INIT);\n}\n\nstatic void state_exit_ground(void)\n{\n    adv_callback_execute(GROUND_END);\n}\n\nstatic void state_update_ground(void)\n{\n    WORD delta_mp_x;\n    WORD delta_mp_y;\n    UWORD prev_x;\n    UWORD prev_y;\n    UBYTE running;\n    handle_dir_input();\n    adv_deceleration();\n\n    if (collision_dir != DIR_NONE) {\n        // Push away from attached solid actor\n        delta_mp_x = act_x[adv_attached_actor] - adv_attached_prev_x;\n        delta_mp_y = act_y[adv_attached_actor] - adv_attached_prev_y;\n        adv_attached_prev_x = act_x[adv_attached_actor];\n        adv_attached_prev_y = act_y[adv_attached_actor];\n\n        if (collision_dir == DIR_DOWN && delta_mp_y > adv_vel_y) {\n            adv_vel_y = MAX(0, DELTA_TO_VEL(delta_mp_y));\n        } else if (collision_dir == DIR_UP && delta_mp_y < adv_vel_y) {\n            adv_vel_y = MIN(0, DELTA_TO_VEL(delta_mp_y));\n        } else if (collision_dir == DIR_LEFT && delta_mp_x < adv_vel_x) {\n            adv_vel_x = MIN(0, DELTA_TO_VEL(delta_mp_x));\n        } else if (collision_dir == DIR_RIGHT && delta_mp_x > adv_vel_x) {\n            adv_vel_x = MAX(0, DELTA_TO_VEL(delta_mp_x));\n        }\n    }\n\n    delta.x = VEL_TO_SUBPX(adv_vel_x);\n    delta.y = VEL_TO_SUBPX(adv_vel_y);\n\n#ifdef FEAT_ADVENTURE_PUSH\n    prev_x = act_x[0];\n    prev_y = act_y[0];\n#endif\n\n    move_and_collide(COL_CHECK_ALL);\n\n#ifdef FEAT_ADVENTURE_PUSH\n    // Check if player is pushing against an obstacle\n    if (joy & INPUT_DPAD && prev_x == act_x[0] && prev_y == act_y[0]) {\n        if (adv_push_timer == adv_push_delay_frames) {\n            adv_next_state = PUSH_STATE;\n            return;\n        }\n        adv_push_timer++;\n    } else {\n        adv_push_timer = 0;\n    }\n#endif\n\n#ifdef FEAT_ADVENTURE_DASH\n    if (adv_dash_cooldown_timer == 0 && dash_input_pressed()) {\n        adv_next_state = DASH_STATE;\n        return;\n    }\n#endif\n\n#ifdef FEAT_ADVENTURE_RUN\n    running = INPUT_ADVENTURE_RUN;\n    if (adv_state == GROUND_STATE && running) {\n        adv_next_state = RUN_STATE;\n        return;\n    } else if (adv_state == RUN_STATE && !running) {\n        adv_next_state = GROUND_STATE;\n        return;\n    }\n#endif\n\n    // Facing and animation update\n    if (joy & INPUT_DPAD) {\n        actor_set_dir(0u, facing_dir, TRUE);\n    } else {\n        actor_set_anim_idle(0u);\n    }\n\n}\n\n// DASH_STATE\n\n#ifdef FEAT_ADVENTURE_DASH\nstatic void state_enter_dash(void)\n{\n    dash_init();\n    if (adv_next_state != DASH_STATE) {\n        // Break out if dash not allowed\n        return;\n    }\n#ifdef ADVENTURE_DASH_ANIM\n    adv_set_player_anim_state(ADVENTURE_DASH_ANIM);\n#elif NGC_ADVENTURE_ANIM_OVERRIDES\n    adv_restore_default_anim_state();\n#endif\n    adv_callback_execute(DASH_INIT);\n}\n\nstatic void state_exit_dash(void)\n{\n    adv_callback_execute(DASH_END);\n}\n\nstatic void state_update_dash(void)\n{\n    WORD remaining_dash_dist;\n    BYTE x_dir;\n    BYTE y_dir;\n    WORD dist;\n    remaining_dash_dist = adv_dash_per_frame;\n\n    x_dir = 0;\n    y_dir = 0;\n\n    if (act_dir[0] == DIR_RIGHT) {\n        x_dir = 1;\n    } else if (act_dir[0] == DIR_LEFT) {\n        x_dir = -1;\n    } else if (act_dir[0] == DIR_DOWN) {\n        y_dir = 1;\n    } else if (act_dir[0] == DIR_UP) {\n        y_dir = -1;\n    }\n\n    while (remaining_dash_dist)\n    {\n        dist = MIN(remaining_dash_dist, MAX_DELTA);\n        delta.x = dist * x_dir;\n        delta.y = dist * y_dir;\n        move_and_collide(adv_dash_mask);\n        remaining_dash_dist -= dist;\n    }\n\n    COUNTER_DECREMENT_CB(adv_dash_currentframe, {\n        adv_next_state = GROUND_STATE;\n        adv_vel_x = 0;\n        adv_vel_y = 0;\n    });\n}\n#endif\n\n// KNOCKBACK_STATE\n\n#ifdef FEAT_ADVENTURE_KNOCKBACK\nstatic void state_enter_knockback(void)\n{\n    // Knockback in opposite direction to current movement\n    if (adv_vel_x != 0) {\n        adv_vel_x = adv_vel_x > 0 ? -adv_knockback_vel_x : adv_knockback_vel_x;\n    } else if (IS_DIR_HORIZONTAL(act_dir[0])) {\n        adv_vel_x = act_dir[0] == DIR_RIGHT ? -adv_knockback_vel_x : adv_knockback_vel_x;\n    }\n\n    if (adv_vel_y != 0) {\n        adv_vel_y = adv_vel_y > 0 ? -adv_knockback_vel_y : adv_knockback_vel_y;\n    } else if (IS_DIR_VERTICAL(act_dir[0])) {\n        adv_vel_y = act_dir[0] == DIR_DOWN ? -adv_knockback_vel_y : adv_knockback_vel_y;\n    }\n\n    adv_knockback_timer = adv_knockback_frames;\n#ifdef ADVENTURE_KNOCKBACK_ANIM\n    adv_set_player_anim_state(ADVENTURE_KNOCKBACK_ANIM);\n#elif NGC_ADVENTURE_ANIM_OVERRIDES\n    adv_restore_default_anim_state();\n#endif\n    adv_callback_execute(KNOCKBACK_INIT);\n}\n\nstatic void state_exit_knockback(void)\n{\n    adv_vel_x = 0;\n    adv_vel_y = 0;\n    adv_callback_execute(KNOCKBACK_END);\n}\n\nstatic void state_update_knockback(void)\n{\n    delta.x = VEL_TO_SUBPX(adv_vel_x);\n    delta.y = VEL_TO_SUBPX(adv_vel_y);\n\n    move_and_collide(COL_CHECK_ALL);\n\n    COUNTER_DECREMENT_CB(adv_knockback_timer, {\n        adv_next_state = GROUND_STATE;\n    });\n}\n#endif\n\n// BLANK_STATE\n\n#ifdef FEAT_ADVENTURE_BLANK\nstatic void state_enter_blank(void)\n{\n    adv_vel_x = 0;\n    adv_vel_y = 0;\n#ifdef ADVENTURE_BLANK_ANIM\n    adv_set_player_anim_state(ADVENTURE_BLANK_ANIM);\n#elif NGC_ADVENTURE_ANIM_OVERRIDES\n    adv_restore_default_anim_state();\n#endif\n    adv_callback_execute(BLANK_INIT);\n}\n\nstatic void state_exit_blank(void)\n{\n    adv_vel_x = 0;\n    adv_vel_y = 0;\n    adv_callback_execute(BLANK_END);\n}\n#endif\n\n// RUN_STATE\n\n#ifdef FEAT_ADVENTURE_RUN\nstatic void state_enter_run(void)\n{\n#ifdef ADVENTURE_RUN_ANIM\n    adv_set_player_anim_state(ADVENTURE_RUN_ANIM);\n#elif NGC_ADVENTURE_ANIM_OVERRIDES\n    adv_restore_default_anim_state();\n#endif\n    adv_callback_execute(RUN_INIT);\n}\n\nstatic void state_exit_run(void)\n{\n    adv_callback_execute(RUN_END);\n}\n#endif\n\n// PUSH_STATE\n\n#ifdef FEAT_ADVENTURE_PUSH\nstatic void state_enter_push(void)\n{\n#ifdef ADVENTURE_PUSH_ANIM\n    adv_set_player_anim_state(ADVENTURE_PUSH_ANIM);\n#elif NGC_ADVENTURE_ANIM_OVERRIDES\n    adv_restore_default_anim_state();\n#endif\n    actor_set_dir(0u, facing_dir, TRUE);\n    adv_callback_execute(PUSH_INIT);\n}\n\nstatic void state_exit_push(void)\n{\n    adv_callback_execute(PUSH_END);\n}\n\nstatic void state_update_push(void)\n{\n    UWORD prev_x;\n    UWORD prev_y;\n    handle_dir_input();\n\n    delta.x = VEL_TO_SUBPX(adv_vel_x);\n    delta.y = VEL_TO_SUBPX(adv_vel_y);\n\n    prev_x = act_x[0];\n    prev_y = act_y[0];\n\n    move_and_collide(COL_CHECK_ALL);\n\n    // Check if player is still pushing against an obstacle\n    if (!(joy & INPUT_DPAD) || prev_x != act_x[0] || prev_y != act_y[0]) {\n        adv_next_state = GROUND_STATE;\n        return;\n    }\n\n    // Facing and animation update\n    if (joy & INPUT_DPAD) {\n        actor_set_dir(0u, facing_dir, TRUE);\n    } else {\n        actor_set_anim_idle(0u);\n    }\n}\n#endif\n\n// End of State Machine Functions ---------------------------------------------\n"
+}

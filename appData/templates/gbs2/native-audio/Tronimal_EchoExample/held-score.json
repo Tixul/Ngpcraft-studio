@@ -1,0 +1,385 @@
+{
+  "schema": "ngpcraft-held-score/1",
+  "duration_unit_frames": 1,
+  "notes": [
+    {
+      "id": 41,
+      "divider": 582
+    },
+    {
+      "id": 46,
+      "divider": 436
+    },
+    {
+      "id": 49,
+      "divider": 367
+    },
+    {
+      "id": 58,
+      "divider": 218
+    },
+    {
+      "id": 61,
+      "divider": 183
+    },
+    {
+      "id": 65,
+      "divider": 146
+    }
+  ],
+  "channels": [
+    {
+      "first": [
+        {
+          "kind": "attack",
+          "duration_frames": 24,
+          "note": 58,
+          "instrument": 0,
+          "attenuation": 1
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 24,
+          "note": 61,
+          "instrument": 0,
+          "attenuation": 1
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 48,
+          "note": 65,
+          "instrument": 0,
+          "attenuation": 1
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 16,
+          "note": 58,
+          "instrument": 0,
+          "attenuation": 1
+        }
+      ],
+      "repeat": [
+        {
+          "kind": "hold",
+          "duration_frames": 8
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 24,
+          "note": 61,
+          "instrument": 0,
+          "attenuation": 1
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 48,
+          "note": 65,
+          "instrument": 0,
+          "attenuation": 1
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 24,
+          "note": 58,
+          "instrument": 4,
+          "attenuation": 1
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 24,
+          "note": 61,
+          "instrument": 4,
+          "attenuation": 1
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 48,
+          "note": 65,
+          "instrument": 4,
+          "attenuation": 1
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 24,
+          "note": 58,
+          "instrument": 4,
+          "attenuation": 1
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 24,
+          "note": 61,
+          "instrument": 4,
+          "attenuation": 1
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 48,
+          "note": 65,
+          "instrument": 4,
+          "attenuation": 1
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 24,
+          "note": 58,
+          "instrument": 0,
+          "attenuation": 1
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 24,
+          "note": 61,
+          "instrument": 0,
+          "attenuation": 1
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 48,
+          "note": 65,
+          "instrument": 0,
+          "attenuation": 1
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 16,
+          "note": 58,
+          "instrument": 0,
+          "attenuation": 1
+        }
+      ]
+    },
+    {
+      "first": [
+        {
+          "kind": "hold",
+          "duration_frames": 108
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 4,
+          "note": 58,
+          "instrument": 3,
+          "attenuation": 3
+        }
+      ],
+      "repeat": [
+        {
+          "kind": "hold",
+          "duration_frames": 8
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 12,
+          "note": 58,
+          "instrument": 3,
+          "attenuation": 7
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 12,
+          "note": 61,
+          "instrument": 3,
+          "attenuation": 3
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 12,
+          "note": 61,
+          "instrument": 3,
+          "attenuation": 7
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 12,
+          "note": 65,
+          "instrument": 3,
+          "attenuation": 3
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 30,
+          "note": 65,
+          "instrument": 3,
+          "attenuation": 7
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 24,
+          "note": 58,
+          "instrument": 5,
+          "attenuation": 7
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 24,
+          "note": 61,
+          "instrument": 5,
+          "attenuation": 7
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 24,
+          "note": 65,
+          "instrument": 5,
+          "attenuation": 7
+        },
+        {
+          "kind": "off",
+          "duration_frames": 30
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 24,
+          "note": 58,
+          "instrument": 6,
+          "attenuation": 3
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 24,
+          "note": 61,
+          "instrument": 6,
+          "attenuation": 3
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 144,
+          "note": 65,
+          "instrument": 6,
+          "attenuation": 3
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 4,
+          "note": 58,
+          "instrument": 3,
+          "attenuation": 3
+        }
+      ]
+    },
+    {
+      "first": [
+        {
+          "kind": "attack",
+          "duration_frames": 112,
+          "note": 46,
+          "instrument": 1,
+          "attenuation": 0
+        }
+      ],
+      "repeat": [
+        {
+          "kind": "hold",
+          "duration_frames": 32
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 48,
+          "note": 49,
+          "instrument": 1,
+          "attenuation": 0
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 144,
+          "note": 41,
+          "instrument": 1,
+          "attenuation": 0
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 48,
+          "note": 49,
+          "instrument": 1,
+          "attenuation": 0
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 112,
+          "note": 46,
+          "instrument": 1,
+          "attenuation": 0
+        }
+      ]
+    },
+    {
+      "first": [
+        {
+          "kind": "hold",
+          "duration_frames": 48
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 64,
+          "note": 5,
+          "instrument": 2,
+          "attenuation": 1
+        }
+      ],
+      "repeat": [
+        {
+          "kind": "hold",
+          "duration_frames": 32
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 24,
+          "note": 5,
+          "instrument": 2,
+          "attenuation": 1
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 72,
+          "note": 5,
+          "instrument": 2,
+          "attenuation": 5
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 96,
+          "note": 5,
+          "instrument": 2,
+          "attenuation": 1
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 12,
+          "note": 5,
+          "instrument": 2,
+          "attenuation": 1
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 12,
+          "note": 5,
+          "instrument": 2,
+          "attenuation": 3
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 12,
+          "note": 5,
+          "instrument": 2,
+          "attenuation": 5
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 60,
+          "note": 5,
+          "instrument": 2,
+          "attenuation": 9
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 64,
+          "note": 5,
+          "instrument": 2,
+          "attenuation": 1
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+__pycache__/
+*.pyc
+build/
+dist/
+.venv/
+toolchains/toshiba/*
+!toolchains/toshiba/README.md
+*.rel
+*.abs
+*.s24
+*.ngc
+*.ngp
+*.map
+_work/
+.pytest_cache/
+# Working notes, kept locally, not published. ECARTS_GBSTUDIO.md is
+# published: the editor shows it (Help) and carries it in its packages.
+/docs/*
+!/docs/ECARTS_GBSTUDIO.md
+/AGENTS.md
+/DEVLOG.md

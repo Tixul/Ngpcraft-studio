@@ -1,9 +1,9 @@
 {
   "name": "gb-studio",
-  "productName": "GB Studio",
-  "homepage": "https://www.gbstudio.dev",
+  "productName": "NgpCraft Studio",
+  "homepage": "https://github.com/Tixul/Ngpcraft-studio",
   "bugs": {
-    "url": "https://github.com/chrismaltby/gb-studio/issues"
+    "url": "https://github.com/Tixul/Ngpcraft-studio/issues"
   },
   "version": "4.3.2",
   "description": "Visual retro game maker",

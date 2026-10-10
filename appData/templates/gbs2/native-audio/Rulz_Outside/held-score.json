@@ -1,0 +1,650 @@
+{
+  "schema": "ngpcraft-held-score/1",
+  "duration_unit_frames": 1,
+  "notes": [
+    {
+      "id": 48,
+      "divider": 389
+    },
+    {
+      "id": 52,
+      "divider": 309
+    },
+    {
+      "id": 53,
+      "divider": 291
+    },
+    {
+      "id": 55,
+      "divider": 259
+    },
+    {
+      "id": 62,
+      "divider": 173
+    },
+    {
+      "id": 67,
+      "divider": 130
+    }
+  ],
+  "channels": [
+    {
+      "first": [
+        {
+          "kind": "attack",
+          "duration_frames": 3,
+          "note": 62,
+          "instrument": 0,
+          "attenuation": 1
+        },
+        {
+          "kind": "off",
+          "duration_frames": 13
+        }
+      ],
+      "repeat": [
+        {
+          "kind": "attack",
+          "duration_frames": 3,
+          "note": 62,
+          "instrument": 0,
+          "attenuation": 1
+        },
+        {
+          "kind": "off",
+          "duration_frames": 237
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 3,
+          "note": 62,
+          "instrument": 0,
+          "attenuation": 1
+        },
+        {
+          "kind": "off",
+          "duration_frames": 13
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 3,
+          "note": 62,
+          "instrument": 0,
+          "attenuation": 1
+        },
+        {
+          "kind": "off",
+          "duration_frames": 237
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 3,
+          "note": 62,
+          "instrument": 0,
+          "attenuation": 1
+        },
+        {
+          "kind": "off",
+          "duration_frames": 13
+        }
+      ]
+    },
+    {
+      "first": [
+        {
+          "kind": "attack",
+          "duration_frames": 3,
+          "note": 67,
+          "instrument": 1,
+          "attenuation": 1
+        },
+        {
+          "kind": "off",
+          "duration_frames": 13
+        }
+      ],
+      "repeat": [
+        {
+          "kind": "attack",
+          "duration_frames": 3,
+          "note": 67,
+          "instrument": 1,
+          "attenuation": 1
+        },
+        {
+          "kind": "off",
+          "duration_frames": 237
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 3,
+          "note": 67,
+          "instrument": 1,
+          "attenuation": 1
+        },
+        {
+          "kind": "off",
+          "duration_frames": 13
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 3,
+          "note": 67,
+          "instrument": 1,
+          "attenuation": 1
+        },
+        {
+          "kind": "off",
+          "duration_frames": 237
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 3,
+          "note": 67,
+          "instrument": 1,
+          "attenuation": 1
+        },
+        {
+          "kind": "off",
+          "duration_frames": 13
+        }
+      ]
+    },
+    {
+      "first": [
+        {
+          "kind": "attack",
+          "duration_frames": 16,
+          "note": 55,
+          "instrument": 2,
+          "attenuation": 0
+        }
+      ],
+      "repeat": [
+        {
+          "kind": "attack",
+          "duration_frames": 16,
+          "note": 55,
+          "instrument": 2,
+          "attenuation": 3
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 16,
+          "note": 52,
+          "instrument": 2,
+          "attenuation": 0
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 16,
+          "note": 53,
+          "instrument": 2,
+          "attenuation": 0
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 16,
+          "note": 53,
+          "instrument": 2,
+          "attenuation": 3
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 32,
+          "note": 55,
+          "instrument": 2,
+          "attenuation": 0
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 16,
+          "note": 55,
+          "instrument": 2,
+          "attenuation": 3
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 16,
+          "note": 55,
+          "instrument": 2,
+          "attenuation": 6
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 16,
+          "note": 55,
+          "instrument": 2,
+          "attenuation": 0
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 16,
+          "note": 55,
+          "instrument": 2,
+          "attenuation": 3
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 16,
+          "note": 55,
+          "instrument": 2,
+          "attenuation": 6
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 32,
+          "note": 55,
+          "instrument": 2,
+          "attenuation": 0
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 16,
+          "note": 55,
+          "instrument": 2,
+          "attenuation": 3
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 16,
+          "note": 55,
+          "instrument": 2,
+          "attenuation": 6
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 16,
+          "note": 55,
+          "instrument": 2,
+          "attenuation": 0
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 16,
+          "note": 55,
+          "instrument": 2,
+          "attenuation": 3
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 16,
+          "note": 52,
+          "instrument": 2,
+          "attenuation": 0
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 16,
+          "note": 53,
+          "instrument": 2,
+          "attenuation": 0
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 16,
+          "note": 53,
+          "instrument": 2,
+          "attenuation": 3
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 32,
+          "note": 52,
+          "instrument": 2,
+          "attenuation": 0
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 16,
+          "note": 52,
+          "instrument": 2,
+          "attenuation": 3
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 16,
+          "note": 52,
+          "instrument": 2,
+          "attenuation": 6
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 16,
+          "note": 52,
+          "instrument": 2,
+          "attenuation": 6
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 16,
+          "note": 52,
+          "instrument": 2,
+          "attenuation": 3
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 16,
+          "note": 52,
+          "instrument": 2,
+          "attenuation": 6
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 32,
+          "note": 48,
+          "instrument": 2,
+          "attenuation": 0
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 16,
+          "note": 48,
+          "instrument": 2,
+          "attenuation": 3
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 16,
+          "note": 48,
+          "instrument": 2,
+          "attenuation": 6
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 16,
+          "note": 55,
+          "instrument": 2,
+          "attenuation": 0
+        }
+      ]
+    },
+    {
+      "first": [
+        {
+          "kind": "attack",
+          "duration_frames": 2,
+          "note": 5,
+          "instrument": 3,
+          "attenuation": 2
+        },
+        {
+          "kind": "off",
+          "duration_frames": 14
+        }
+      ],
+      "repeat": [
+        {
+          "kind": "attack",
+          "duration_frames": 2,
+          "note": 5,
+          "instrument": 3,
+          "attenuation": 2
+        },
+        {
+          "kind": "off",
+          "duration_frames": 14
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 2,
+          "note": 5,
+          "instrument": 3,
+          "attenuation": 2
+        },
+        {
+          "kind": "off",
+          "duration_frames": 14
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 2,
+          "note": 5,
+          "instrument": 3,
+          "attenuation": 2
+        },
+        {
+          "kind": "off",
+          "duration_frames": 14
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 16,
+          "note": 5,
+          "instrument": 3,
+          "attenuation": 6
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 2,
+          "note": 5,
+          "instrument": 3,
+          "attenuation": 2
+        },
+        {
+          "kind": "off",
+          "duration_frames": 14
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 2,
+          "note": 5,
+          "instrument": 3,
+          "attenuation": 2
+        },
+        {
+          "kind": "off",
+          "duration_frames": 14
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 2,
+          "note": 5,
+          "instrument": 3,
+          "attenuation": 2
+        },
+        {
+          "kind": "off",
+          "duration_frames": 30
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 2,
+          "note": 5,
+          "instrument": 3,
+          "attenuation": 2
+        },
+        {
+          "kind": "off",
+          "duration_frames": 6
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 2,
+          "note": 5,
+          "instrument": 3,
+          "attenuation": 2
+        },
+        {
+          "kind": "off",
+          "duration_frames": 22
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 2,
+          "note": 5,
+          "instrument": 3,
+          "attenuation": 2
+        },
+        {
+          "kind": "off",
+          "duration_frames": 14
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 16,
+          "note": 5,
+          "instrument": 3,
+          "attenuation": 6
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 2,
+          "note": 5,
+          "instrument": 3,
+          "attenuation": 2
+        },
+        {
+          "kind": "off",
+          "duration_frames": 14
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 2,
+          "note": 5,
+          "instrument": 3,
+          "attenuation": 2
+        },
+        {
+          "kind": "off",
+          "duration_frames": 46
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 2,
+          "note": 5,
+          "instrument": 3,
+          "attenuation": 2
+        },
+        {
+          "kind": "off",
+          "duration_frames": 14
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 2,
+          "note": 5,
+          "instrument": 3,
+          "attenuation": 2
+        },
+        {
+          "kind": "off",
+          "duration_frames": 14
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 2,
+          "note": 5,
+          "instrument": 3,
+          "attenuation": 2
+        },
+        {
+          "kind": "off",
+          "duration_frames": 14
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 16,
+          "note": 5,
+          "instrument": 3,
+          "attenuation": 6
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 2,
+          "note": 5,
+          "instrument": 3,
+          "attenuation": 2
+        },
+        {
+          "kind": "off",
+          "duration_frames": 14
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 2,
+          "note": 5,
+          "instrument": 3,
+          "attenuation": 2
+        },
+        {
+          "kind": "off",
+          "duration_frames": 14
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 2,
+          "note": 5,
+          "instrument": 3,
+          "attenuation": 2
+        },
+        {
+          "kind": "off",
+          "duration_frames": 30
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 2,
+          "note": 5,
+          "instrument": 3,
+          "attenuation": 2
+        },
+        {
+          "kind": "off",
+          "duration_frames": 14
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 2,
+          "note": 5,
+          "instrument": 3,
+          "attenuation": 2
+        },
+        {
+          "kind": "off",
+          "duration_frames": 14
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 2,
+          "note": 5,
+          "instrument": 3,
+          "attenuation": 2
+        },
+        {
+          "kind": "off",
+          "duration_frames": 30
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 3,
+          "note": 5,
+          "instrument": 3,
+          "attenuation": 2
+        },
+        {
+          "kind": "off",
+          "duration_frames": 13
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 32,
+          "note": 5,
+          "instrument": 3,
+          "attenuation": 6
+        },
+        {
+          "kind": "attack",
+          "duration_frames": 2,
+          "note": 5,
+          "instrument": 3,
+          "attenuation": 2
+        },
+        {
+          "kind": "off",
+          "duration_frames": 14
+        }
+      ]
+    }
+  ]
+}

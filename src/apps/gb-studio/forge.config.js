@@ -16,8 +16,8 @@ module.exports = async () => {
       {
         name: "@electron-forge/maker-squirrel",
         config: {
-          name: "gb_studio",
-          exe: "gb-studio.exe",
+          name: "ngpcraft_studio",
+          exe: "ngpcraft-studio.exe",
           loadingGif: "src/assets/app/install.gif",
           setupIcon: "src/assets/app/icon/app_icon.ico",
         },
@@ -28,9 +28,9 @@ module.exports = async () => {
       },
       new MakerAppImage({
         options: {
-          name: "gb-studio",
-          bin: "gb-studio",
-          productName: "GB Studio",
+          name: "ngpcraft-studio",
+          bin: "ngpcraft-studio",
+          productName: "NgpCraft Studio",
           genericName: "Visual retro game maker",
           icon: {
             strict: true,
@@ -65,25 +65,35 @@ module.exports = async () => {
       },
     ],
     packagerConfig: {
-      name: "GB Studio",
-      executableName: "gb-studio",
+      name: "NgpCraft Studio",
+      executableName: "ngpcraft-studio",
       packageManager: "yarn",
       icon: "src/assets/app/icon/app_icon",
       darwinDarkModeSupport: true,
       extendInfo: "src/assets/app/Info.plist",
       extraResource: [
         "src/assets/app/icon/gbsproj.icns",
-        "src/assets/app/icon/Assets.car",
+        // NgpCraft: no Assets.car (GB Studio's macOS 26 icon catalogue):
+        // macOS takes the NgpCraft app_icon.icns instead.
+        // NgpCraft: V3 compiler, assembled by the prePackage hook.
+        ".bundle/ngpcraft-v3",
       ],
       afterCopy: ["./src/lib/forge/hooks/after-copy"],
       asar: true,
-      appBundleId: "dev.gbstudio.gbstudio",
-      osxSign: {
-        "hardened-runtime": true,
-        entitlements: "./entitlements.plist",
-      },
+      appBundleId: "io.github.tixul.ngpcraftstudio",
+      // NgpCraft: sign only when a certificate is configured (CI secrets);
+      // otherwise the macOS build is unsigned instead of failing.
+      ...(process.env.APPLE_ID
+        ? {
+            osxSign: {
+              "hardened-runtime": true,
+              entitlements: "./entitlements.plist",
+            },
+          }
+        : {}),
     },
     hooks: {
+      prePackage: require("../../../src/lib/forge/hooks/bundle-v3"),
       postPackage: require("../../../src/lib/forge/hooks/notarize"),
     },
     plugins: [

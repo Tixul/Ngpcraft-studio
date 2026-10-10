@@ -1,0 +1,19 @@
+{
+  "schema": "ngpcraft-project/1",
+  "resources": {
+    "e2eb6dec-2800-4df9-a6c9-214f42e6b070": {
+      "native_music": {
+        "format": "held-score",
+        "score": "native-audio/Rulz_GonaSpace/held-score.json",
+        "bank": "native-audio/Rulz_GonaSpace/bank.json"
+      }
+    },
+    "f50428ab-a084-4591-9bba-2ba10fe7b1c6": {
+      "native_music": {
+        "format": "held-score",
+        "score": "native-audio/template/held-score.json",
+        "bank": "native-audio/template/bank.json"
+      }
+    }
+  }
+}

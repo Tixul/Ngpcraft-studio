@@ -58,6 +58,7 @@ import { SpriteSymbolsEditor } from "components/forms/symbols/SpriteSymbolsEdito
 import { SymbolEditorWrapper } from "components/forms/symbols/SymbolEditorWrapper";
 import { useAppDispatch, useAppSelector } from "store/hooks";
 import { SpriteModeSelect } from "components/forms/SpriteModeSelect";
+import { NgpcSpriteColors } from "components/ngpcraft/NgpcSpriteColors";
 import {
   MetaspriteTile,
   MonoOBJPalette,
@@ -65,7 +66,7 @@ import {
   SpriteAnimationType,
   SpriteModeSetting,
 } from "shared/lib/resources/types";
-import { TILE_SIZE } from "consts";
+import { SCREEN_HEIGHT_PX, TILE_SIZE } from "consts";
 import { InputGroup, InputGroupAppend } from "ui/form/InputGroup";
 import { NoteField } from "ui/form/NoteField";
 
@@ -851,7 +852,7 @@ export const SpriteEditor = ({
                   value={sprite.canvasHeight}
                   placeholder="16"
                   min={spriteMode === "8x8" ? 8 : 16}
-                  max={144}
+                  max={SCREEN_HEIGHT_PX}
                   step={8}
                   onChange={onChangeCanvasHeight}
                 />
@@ -896,6 +897,10 @@ export const SpriteEditor = ({
                   </FormField>
                 </FormRow>
               )}
+              <NgpcSpriteColors
+                spriteId={sprite.id}
+                spriteVersion={sprite._v}
+              />
 
               <FormDivider />
 

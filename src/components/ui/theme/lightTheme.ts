@@ -9,7 +9,8 @@ const lightTheme: ThemeInterface = {
     toolbarFontSize: "13px",
   },
   colors: {
-    highlight: "#c92c61",
+    // NgpCraft: blue highlight instead of GB Studio pink.
+    highlight: "#1f6fd1",
     highlightText: "#ffffff",
     text: "#3b3a3b",
     background: "#f9f9f9",
@@ -158,7 +159,7 @@ const lightTheme: ThemeInterface = {
         border: "#3b3a3b66",
       },
       sharpBackground: "#3aa1d511",
-      wave: "#c92c61",
+      wave: "#1f6fd1",
       waveGrid: "#333333",
       waveBackground: "#000000",
     },

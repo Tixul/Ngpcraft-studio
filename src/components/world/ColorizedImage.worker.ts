@@ -1,5 +1,6 @@
 import { DMG_PALETTE } from "consts";
-import { hex2GBCrgb } from "shared/lib/helpers/color";
+// NgpCraft: NGPC colours (4 bits per channel, no GBC colour correction).
+import { hex2NgpcRgb } from "shared/lib/ngpcraft/color";
 
 // eslint-disable-next-line no-restricted-globals
 const workerCtx: Worker = self as unknown as Worker;
@@ -40,7 +41,7 @@ workerCtx.onmessage = async (evt) => {
   const previewAsMono = evt.data.previewAsMono;
   const monoBGP = evt.data.monoBGP ?? [0, 1, 2, 3];
   const palettes = evt.data.palettes;
-  const colorCorrectionFn = hex2GBCrgb(evt.data.colorCorrection);
+  const colorCorrectionFn = hex2NgpcRgb;
   const palettesRGB = palettes.map((colors: string[]) =>
     colors.map(colorCorrectionFn),
   );

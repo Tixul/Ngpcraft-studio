@@ -1,0 +1,126 @@
+{
+  "source_effect_key": "ca718340-6862-49ef-b052-0a086eda78f4:4",
+  "transpose_semitones": 0,
+  "noise_preset": 4,
+  "steps": [
+    {
+      "frames": 2,
+      "tone_divider": 54,
+      "tone_attenuation": 1,
+      "noise": 4,
+      "noise_attenuation": 15
+    },
+    {
+      "frames": 2,
+      "tone_divider": 109,
+      "tone_attenuation": 1,
+      "noise": 4,
+      "noise_attenuation": 15
+    },
+    {
+      "frames": 2,
+      "tone_divider": 54,
+      "tone_attenuation": 15,
+      "noise": 4,
+      "noise_attenuation": 15
+    },
+    {
+      "frames": 2,
+      "tone_divider": 54,
+      "tone_attenuation": 2,
+      "noise": 4,
+      "noise_attenuation": 15
+    },
+    {
+      "frames": 1,
+      "tone_divider": 109,
+      "tone_attenuation": 2,
+      "noise": 4,
+      "noise_attenuation": 15
+    },
+    {
+      "frames": 2,
+      "tone_divider": 54,
+      "tone_attenuation": 15,
+      "noise": 4,
+      "noise_attenuation": 15
+    },
+    {
+      "frames": 2,
+      "tone_divider": 54,
+      "tone_attenuation": 3,
+      "noise": 4,
+      "noise_attenuation": 15
+    },
+    {
+      "frames": 2,
+      "tone_divider": 109,
+      "tone_attenuation": 3,
+      "noise": 4,
+      "noise_attenuation": 15
+    },
+    {
+      "frames": 2,
+      "tone_divider": 54,
+      "tone_attenuation": 15,
+      "noise": 4,
+      "noise_attenuation": 15
+    },
+    {
+      "frames": 2,
+      "tone_divider": 54,
+      "tone_attenuation": 5,
+      "noise": 4,
+      "noise_attenuation": 15
+    },
+    {
+      "frames": 2,
+      "tone_divider": 109,
+      "tone_attenuation": 5,
+      "noise": 4,
+      "noise_attenuation": 15
+    },
+    {
+      "frames": 2,
+      "tone_divider": 54,
+      "tone_attenuation": 15,
+      "noise": 4,
+      "noise_attenuation": 15
+    },
+    {
+      "frames": 1,
+      "tone_divider": 54,
+      "tone_attenuation": 7,
+      "noise": 4,
+      "noise_attenuation": 15
+    },
+    {
+      "frames": 2,
+      "tone_divider": 109,
+      "tone_attenuation": 7,
+      "noise": 4,
+      "noise_attenuation": 15
+    },
+    {
+      "frames": 2,
+      "tone_divider": 54,
+      "tone_attenuation": 15,
+      "noise": 4,
+      "noise_attenuation": 15
+    },
+    {
+      "frames": 2,
+      "tone_divider": 54,
+      "tone_attenuation": 12,
+      "noise": 4,
+      "noise_attenuation": 15
+    },
+    {
+      "frames": 2,
+      "tone_divider": 109,
+      "tone_attenuation": 12,
+      "noise": 4,
+      "noise_attenuation": 15
+    }
+  ]
+}

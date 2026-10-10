@@ -3,11 +3,11 @@
   "id": "b340b9a2-2865-4e05-91c0-148846a693c8",
   "name": "house",
   "symbol": "bg_house",
-  "tileColors": "",
+  "tileColors": "0017c+",
   "filename": "house.png",
   "width": 20,
-  "height": 18,
+  "height": 19,
   "imageWidth": 160,
-  "imageHeight": 144,
+  "imageHeight": 152,
   "autoColor": false
 }

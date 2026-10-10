@@ -4,6 +4,7 @@ import {
 } from "shared/lib/resources/types";
 import { clampN } from "shared/lib/helpers/clamp";
 import { hexDec, wrap8Bit } from "shared/lib/helpers/8bit";
+import { hex2NgpcRgb } from "shared/lib/ngpcraft/color";
 import { Branded } from "shared/types";
 
 /**
@@ -141,9 +142,10 @@ export const colorizeSpriteData = (
   mutData: Uint8ClampedArray,
   objPalette: MonoOBJPalette,
   palette: string[],
-  colorCorrection: ColorCorrectionSetting,
+  _colorCorrection: ColorCorrectionSetting,
 ) => {
-  const colorCorrectionFn = hex2GBCrgb(colorCorrection);
+  // NgpCraft: sprites are previewed in NGPC colours (no GBC correction).
+  const colorCorrectionFn = hex2NgpcRgb;
   const paletteRGB = palette.map(colorCorrectionFn);
   for (let index = 0; index < mutData.length; index += 4) {
     const colorIndex = indexSpriteColour(mutData[index + 1], objPalette);

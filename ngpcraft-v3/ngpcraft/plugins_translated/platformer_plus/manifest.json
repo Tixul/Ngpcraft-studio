@@ -1,0 +1,219 @@
+{
+ "format": "ngpcraft-translated-plugin/1",
+ "id": "platformer_plus",
+ "name": "PlatformerPlus",
+ "upstream": {
+  "repository": "https://github.com/becomingplural/GBS_PlatformerPlus",
+  "commit": "eb7488bf11204cca4056814939b2c7c3e9a3813a",
+  "path": "plugins/PlatformerPlus",
+  "license": "MIT",
+  "copyright": "Copyright (c) 2022 becomingplural",
+  "engine_of_origin": "GB Studio 4.1.3 (engine 4.2.0-e1)"
+ },
+ "engine_files": {
+  "engine/engine.json": "921a8ad01cf4e4124f731d84cccce52e49b3322a6413082e9759dbc2c4af60bc",
+  "engine/include/states/platform.h": "5ef6ac7ffc84e87a605a20f7112f2cf06d2581fcded06d4043f40e7cd63f3585",
+  "engine/src/states/platform.c": "245aabdc698b44496d53dc932b5c9865b8048e13b9baf58c7a64be9f930c0200"
+ },
+ "fields": [
+  {
+   "key": "plat_camera_deadzone_x",
+   "cType": "BYTE",
+   "type": "slider",
+   "defaultValue": 4
+  },
+  {
+   "key": "plat_camera_block",
+   "cType": "UBYTE",
+   "type": "select",
+   "defaultValue": 0
+  },
+  {
+   "key": "plat_drop_through",
+   "cType": "UBYTE",
+   "type": "select",
+   "defaultValue": 0
+  },
+  {
+   "key": "plat_mp_group",
+   "cType": "UBYTE",
+   "type": "select",
+   "defaultValue": 0
+  },
+  {
+   "key": "plat_solid_group",
+   "cType": "UBYTE",
+   "type": "select",
+   "defaultValue": 0
+  },
+  {
+   "key": "plat_jump_min",
+   "cType": "WORD",
+   "type": "slider",
+   "defaultValue": 0
+  },
+  {
+   "key": "plat_hold_jump_max",
+   "cType": "UBYTE",
+   "type": "slider",
+   "defaultValue": 1
+  },
+  {
+   "key": "plat_extra_jumps",
+   "cType": "UBYTE",
+   "type": "slider",
+   "defaultValue": 0
+  },
+  {
+   "key": "plat_jump_reduction",
+   "cType": "WORD",
+   "type": "slider",
+   "defaultValue": 0
+  },
+  {
+   "key": "plat_coyote_max",
+   "cType": "UBYTE",
+   "type": "slider",
+   "defaultValue": 0
+  },
+  {
+   "key": "plat_buffer_max",
+   "cType": "UBYTE",
+   "type": "slider",
+   "defaultValue": 0
+  },
+  {
+   "key": "plat_wall_jump_max",
+   "cType": "UBYTE",
+   "type": "slider",
+   "defaultValue": 0
+  },
+  {
+   "key": "plat_wall_slide",
+   "cType": "UBYTE",
+   "type": "select",
+   "defaultValue": 0
+  },
+  {
+   "key": "plat_wall_grav",
+   "cType": "WORD",
+   "type": "slider",
+   "defaultValue": 1792
+  },
+  {
+   "key": "plat_wall_kick",
+   "cType": "WORD",
+   "type": "slider",
+   "defaultValue": 600
+  },
+  {
+   "key": "plat_float_input",
+   "cType": "UBYTE",
+   "type": "select",
+   "defaultValue": 0
+  },
+  {
+   "key": "plat_float_grav",
+   "cType": "WORD",
+   "type": "slider",
+   "defaultValue": 912
+  },
+  {
+   "key": "plat_air_control",
+   "cType": "UBYTE",
+   "type": "select",
+   "defaultValue": 1
+  },
+  {
+   "key": "plat_turn_control",
+   "cType": "UBYTE",
+   "type": "select",
+   "defaultValue": 1
+  },
+  {
+   "key": "plat_air_dec",
+   "cType": "WORD",
+   "type": "slider",
+   "defaultValue": 208
+  },
+  {
+   "key": "plat_run_type",
+   "cType": "UBYTE",
+   "type": "select",
+   "defaultValue": 1
+  },
+  {
+   "key": "plat_turn_acc",
+   "cType": "WORD",
+   "type": "slider",
+   "defaultValue": 712
+  },
+  {
+   "key": "plat_run_boost",
+   "cType": "UBYTE",
+   "type": "slider",
+   "defaultValue": 0
+  },
+  {
+   "key": "plat_dash",
+   "cType": "UBYTE",
+   "type": "select",
+   "defaultValue": 0
+  },
+  {
+   "key": "plat_dash_style",
+   "cType": "UBYTE",
+   "type": "select",
+   "defaultValue": 0
+  },
+  {
+   "key": "plat_dash_momentum",
+   "cType": "UBYTE",
+   "type": "select",
+   "defaultValue": 0
+  },
+  {
+   "key": "plat_dash_through",
+   "cType": "UBYTE",
+   "type": "select",
+   "defaultValue": 0
+  },
+  {
+   "key": "plat_dash_dist",
+   "cType": "WORD",
+   "type": "slider",
+   "defaultValue": 800
+  },
+  {
+   "key": "plat_dash_frames",
+   "cType": "UBYTE",
+   "type": "slider",
+   "defaultValue": 5
+  },
+  {
+   "key": "plat_dash_ready_max",
+   "cType": "UBYTE",
+   "type": "slider",
+   "defaultValue": 10
+  },
+  {
+   "key": "plat_dash_deadzone",
+   "cType": "UBYTE",
+   "type": "slider",
+   "defaultValue": 4
+  }
+ ],
+ "script_variables": [
+  "que_state",
+  "plat_state"
+ ],
+ "requires": [],
+ "replaces": {
+  "states/platform.c": "platform_runtime.json"
+ },
+ "natives": [],
+ "refused_natives": [
+  "assign_state_script",
+  "clear_state_script"
+ ]
+}

@@ -1,0 +1,17 @@
+/* Adapted from NgpCraft_base_template; MIT, see NOTICE.txt.
+ * Keep cart.rel FIRST: its 64-byte f_const header must start at 0x200000.
+ * No initialized RAM permitted by the current bootstrap; checked after link.
+ */
+memory
+{
+    ram(RW) : org=0x004000, len=0x002C00
+    rom(RX) : org=0x200000, len=0x1F0000
+}
+sections
+{
+    far_area org=0x004000 : {*(f_area)}
+    far_const org=0x200000 : {*(f_const)}
+    far_code org=org(far_const)+sizeof(far_const) : {*(f_code)}
+    far_data org=org(far_code)+sizeof(far_code)
+        addr=org(far_area)+sizeof(far_area) : {*(f_data)}
+}

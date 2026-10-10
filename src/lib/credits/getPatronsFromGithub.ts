@@ -47,8 +47,12 @@ const isPatrons = (input: unknown): input is Patrons => {
   return true;
 };
 
+// NgpCraft: no network call to GB Studio's GitHub. The credits keep the
+// patron list shipped with GB Studio 4.3.2.
+const NGPCRAFT_OFFLINE_CREDITS = true;
+
 export const getPatronsFromGithub = async () => {
-  if (process.env.NODE_ENV === "test") {
+  if (process.env.NODE_ENV === "test" || NGPCRAFT_OFFLINE_CREDITS) {
     return inbuiltPatrons;
   }
   try {

@@ -35,7 +35,7 @@ const EventHelperWrapper = styled.div`
 const CameraPos = styled.div`
   position: absolute;
   width: 160px;
-  height: 144px;
+  height: ${SCREEN_HEIGHT * 8}px;
   outline: 4px solid red;
   box-shadow: 0 0 1000px 1000px rgba(0, 0, 0, 0.6);
 `;
@@ -43,7 +43,7 @@ const CameraPos = styled.div`
 const ScreenMarker = styled.div`
   position: absolute;
   width: 160px;
-  height: 144px;
+  height: ${SCREEN_HEIGHT * 8}px;
   box-shadow: 0 0 1000px 1000px rgba(0, 0, 0, 0.6);
 `;
 
@@ -102,8 +102,8 @@ const ScanlinePos = styled.div`
   top: 0;
   left: 0;
   width: 160px;
-  height: 144px;
-  maxheight: 144px;
+  height: ${SCREEN_HEIGHT * 8}px;
+  maxheight: ${SCREEN_HEIGHT * 8}px;
   background: #e0f8cf;
   &:before {
     content: "";
@@ -155,7 +155,7 @@ const AreaPos = styled.div<{
   transition: none;
   position: absolute;
   width: 160px;
-  height: 144px;
+  height: ${SCREEN_HEIGHT * 8}px;
   background-color: ${(props) => props.fillColor};
   box-shadow:
     0 0 0 8px ${(props) => props.borderColor},
@@ -547,7 +547,7 @@ export const SceneEventHelper: FC<SceneEventHelperProps> = ({ scene }) => {
           showFrame={false}
           showFill={false}
           minHeight={0}
-          maxHeight={18}
+          maxHeight={SCREEN_HEIGHT}
         />
       </PosOffset>
     );

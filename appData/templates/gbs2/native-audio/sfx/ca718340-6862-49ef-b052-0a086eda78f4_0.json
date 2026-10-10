@@ -1,0 +1,175 @@
+{
+  "source_effect_key": "ca718340-6862-49ef-b052-0a086eda78f4:0",
+  "transpose_semitones": 0,
+  "noise_preset": 4,
+  "steps": [
+    {
+      "frames": 1,
+      "tone_divider": 97,
+      "tone_attenuation": 1,
+      "noise": 4,
+      "noise_attenuation": 15
+    },
+    {
+      "frames": 1,
+      "tone_divider": 51,
+      "tone_attenuation": 1,
+      "noise": 4,
+      "noise_attenuation": 15
+    },
+    {
+      "frames": 1,
+      "tone_divider": 54,
+      "tone_attenuation": 1,
+      "noise": 4,
+      "noise_attenuation": 15
+    },
+    {
+      "frames": 1,
+      "tone_divider": 58,
+      "tone_attenuation": 1,
+      "noise": 4,
+      "noise_attenuation": 15
+    },
+    {
+      "frames": 1,
+      "tone_divider": 62,
+      "tone_attenuation": 1,
+      "noise": 4,
+      "noise_attenuation": 15
+    },
+    {
+      "frames": 1,
+      "tone_divider": 65,
+      "tone_attenuation": 1,
+      "noise": 4,
+      "noise_attenuation": 15
+    },
+    {
+      "frames": 1,
+      "tone_divider": 69,
+      "tone_attenuation": 1,
+      "noise": 4,
+      "noise_attenuation": 15
+    },
+    {
+      "frames": 1,
+      "tone_divider": 73,
+      "tone_attenuation": 1,
+      "noise": 4,
+      "noise_attenuation": 15
+    },
+    {
+      "frames": 1,
+      "tone_divider": 77,
+      "tone_attenuation": 1,
+      "noise": 4,
+      "noise_attenuation": 15
+    },
+    {
+      "frames": 1,
+      "tone_divider": 82,
+      "tone_attenuation": 1,
+      "noise": 4,
+      "noise_attenuation": 15
+    },
+    {
+      "frames": 1,
+      "tone_divider": 86,
+      "tone_attenuation": 1,
+      "noise": 4,
+      "noise_attenuation": 15
+    },
+    {
+      "frames": 1,
+      "tone_divider": 92,
+      "tone_attenuation": 1,
+      "noise": 4,
+      "noise_attenuation": 15
+    },
+    {
+      "frames": 1,
+      "tone_divider": 97,
+      "tone_attenuation": 1,
+      "noise": 4,
+      "noise_attenuation": 15
+    },
+    {
+      "frames": 1,
+      "tone_divider": 103,
+      "tone_attenuation": 1,
+      "noise": 4,
+      "noise_attenuation": 15
+    },
+    {
+      "frames": 1,
+      "tone_divider": 109,
+      "tone_attenuation": 1,
+      "noise": 4,
+      "noise_attenuation": 15
+    },
+    {
+      "frames": 1,
+      "tone_divider": 116,
+      "tone_attenuation": 1,
+      "noise": 4,
+      "noise_attenuation": 15
+    },
+    {
+      "frames": 1,
+      "tone_divider": 122,
+      "tone_attenuation": 1,
+      "noise": 4,
+      "noise_attenuation": 15
+    },
+    {
+      "frames": 1,
+      "tone_divider": 130,
+      "tone_attenuation": 1,
+      "noise": 4,
+      "noise_attenuation": 15
+    },
+    {
+      "frames": 1,
+      "tone_divider": 138,
+      "tone_attenuation": 1,
+      "noise": 4,
+      "noise_attenuation": 15
+    },
+    {
+      "frames": 1,
+      "tone_divider": 146,
+      "tone_attenuation": 2,
+      "noise": 4,
+      "noise_attenuation": 15
+    },
+    {
+      "frames": 1,
+      "tone_divider": 155,
+      "tone_attenuation": 2,
+      "noise": 4,
+      "noise_attenuation": 15
+    },
+    {
+      "frames": 1,
+      "tone_divider": 163,
+      "tone_attenuation": 3,
+      "noise": 4,
+      "noise_attenuation": 15
+    },
+    {
+      "frames": 1,
+      "tone_divider": 173,
+      "tone_attenuation": 3,
+      "noise": 4,
+      "noise_attenuation": 15
+    },
+    {
+      "frames": 1,
+      "tone_divider": 183,
+      "tone_attenuation": 4,
+      "noise": 4,
+      "noise_attenuation": 15
+    }
+  ]
+}

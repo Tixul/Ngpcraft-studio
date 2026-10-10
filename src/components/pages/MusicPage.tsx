@@ -23,6 +23,7 @@ import { useAppDispatch, useAppSelector } from "store/hooks";
 import { sortByFilename } from "shared/lib/entities/entitiesHelpers";
 import { NavigatorInstrumentsPane } from "components/music/navigator/NavigatorInstrumentsPane";
 import { NavigatorSongsPane } from "components/music/navigator/NavigatorSongsPane";
+import { NgpcMusicBinding } from "components/ngpcraft/NgpcMusicBinding";
 import SplitPaneVerticalContainer, {
   SplitPaneLayout,
 } from "ui/splitpane/SplitPaneVerticalContainer";
@@ -287,6 +288,7 @@ const MusicPage = () => {
             flexDirection: "column",
           }}
         >
+          <NgpcMusicBinding songId={viewSong.id} />
           <div style={{ flexGrow: 1, position: "relative" }}>
             <ModViewer trackId={viewSong.id} allowConvertToUge />
           </div>
@@ -308,6 +310,7 @@ const MusicPage = () => {
               flexDirection: "column",
             }}
           >
+            <NgpcMusicBinding songId={viewSong.id} />
             <SongEditorToolsPanel musicAsset={viewSong} />
             <SplitPaneVerticalDivider />
 

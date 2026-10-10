@@ -370,7 +370,7 @@ export const StyledPianoRollNote = styled.div<StyledPianoRollNoteProps>`
     props.$isSelected &&
     !props.$isDragging &&
     css`
-      box-shadow: 0 0 0px 2px #c92c61;
+      box-shadow: 0 0 0px 2px ${(props) => props.theme.colors.highlight};
     `}    
 
     ${(props) =>

@@ -1,0 +1,280 @@
+{
+ "source": "appData/engine/gbvm/src/states/shmup.c",
+ "reference": "GB Studio 4.3.2 release (tag v4.3.2, gbvm bd6f41c; ../_reference/gb-studio-4.3.2)",
+ "gbvm_commit": "bd6f41cc5e05cbe6601dcc7f8e2db89bed527fe3",
+ "source_sha256": "1cfb193d1f9f67a1db63613293e01f97e7271fd742def8b233f83e6206274159",
+ "license": "MIT License\n\nCopyright (c) 2020 Toxa\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE.\n",
+ "engine_json": "appData/engine/engine.json",
+ "fields": [
+  {
+   "key": "SHOOTER_MOVEMENT_TYPE",
+   "cType": "define",
+   "type": "select",
+   "defaultValue": "MOVEMENT_TYPE_FREE",
+   "options": [
+    [
+     "MOVEMENT_TYPE_FREE",
+     "FIELD_FREE_MOVEMENT"
+    ],
+    [
+     "MOVEMENT_TYPE_LOCK_PERPENDICULAR",
+     "FIELD_LOCKED_MOVEMENT"
+    ]
+   ]
+  },
+  {
+   "key": "shooter_scroll_speed",
+   "cType": "UBYTE",
+   "type": "slider",
+   "defaultValue": 32
+  },
+  {
+   "key": "SHOOTER_TRIGGER_ACTIVATION",
+   "cType": "define",
+   "type": "select",
+   "defaultValue": "ON_PLAYER_COLLISION",
+   "options": [
+    [
+     "ON_PLAYER_COLLISION",
+     "FIELD_ON_PLAYER_COLLISION"
+    ],
+    [
+     "ON_SCREEN_ENTER",
+     "FIELD_ON_SCREEN_ENTER"
+    ]
+   ]
+  },
+  {
+   "key": "SHOOTER_WALL_COLLISION_GROUP",
+   "cType": "define",
+   "type": "togglebuttons",
+   "defaultValue": "COLLISION_GROUP_NONE",
+   "options": [
+    [
+     "COLLISION_GROUP_NONE",
+     "FIELD_NONE"
+    ],
+    [
+     "COLLISION_GROUP_1",
+     "1"
+    ],
+    [
+     "COLLISION_GROUP_2",
+     "2"
+    ],
+    [
+     "COLLISION_GROUP_3",
+     "3"
+    ]
+   ]
+  }
+ ],
+ "consts": {},
+ "public_variables": [
+  "shooter_dest",
+  "shooter_direction",
+  "shooter_reached_end",
+  "shooter_scroll_speed"
+ ],
+ "c89_hoisting": [
+  {
+   "function": "shmup_init",
+   "hoisted": []
+  },
+  {
+   "function": "shmup_update",
+   "hoisted": [
+    "angle",
+    "down",
+    "left",
+    "player_bottom",
+    "player_left",
+    "player_right",
+    "player_top",
+    "right",
+    "tile",
+    "tile_end",
+    "tile_start",
+    "tile_x",
+    "tile_y",
+    "up",
+    "wrapped_bottom",
+    "wrapped_left",
+    "wrapped_right",
+    "wrapped_top"
+   ]
+  }
+ ],
+ "adaptations": [
+  {
+   "old": "upoint_translate_angle(&(PLAYER.pos), angle, PLAYER.move_speed);",
+   "new": "NGC_TRANSLATE_ANGLE(0u, angle, act_speed[0]);",
+   "count": 1,
+   "reason": "sincos.h upoint_translate_angle on the actor arrays (scene_genres.py NGC_TRANSLATE_ANGLE): same sine table and arithmetic, products widened explicitly to 16-bit signed"
+  },
+  {
+   "old": "if (trigger_activate_at_intersection(&PLAYER.bounds, &PLAYER.pos, FALSE)) {",
+   "new": "if (NGC_SHMUP_TRIGGERS()) {",
+   "count": 1,
+   "reason": "scene engine hook (scene_genres.py): defined by the exporter from what the scene uses (triggers, collision scripts, interaction scripts)"
+  },
+  {
+   "old": "        scroll_pos.x = PX_TO_SUBPX(scroll_x);\n        scroll_pos.y = PX_TO_SUBPX(scroll_y);\n\n        if (trigger_activate_at_intersection(&scroll_trigger_area, &scroll_pos, FALSE)) {",
+   "new": "        if (NGC_SHMUP_SCREEN_TRIGGERS()) {",
+   "count": 1,
+   "reason": "SHOOTER_TRIGGER_ACTIVATION ON_SCREEN_ENTER: scroll_pos / scroll_trigger_area are the screen rectangle at the scroll position; struct types, designated initializers and initialized RAM do not exist here, so the hook runs the same trigger.h intersection on gb_scroll_x/y and SCREEN_WIDTH/HEIGHT (scene_triggers.trigger_source box)"
+  },
+  {
+   "old": "#if SHOOTER_TRIGGER_ACTIVATION == ON_SCREEN_ENTER\n    upoint16_t scroll_pos;\n    rect16_t scroll_trigger_area = {\n        .left = 0,\n        .right = PX_TO_SUBPX(SCREEN_WIDTH),\n        .top = 0,\n        .bottom = PX_TO_SUBPX(SCREEN_HEIGHT)\n    };\n#endif\n",
+   "new": "",
+   "count": 1,
+   "reason": "SHOOTER_TRIGGER_ACTIVATION ON_SCREEN_ENTER: scroll_pos / scroll_trigger_area are the screen rectangle at the scroll position; struct types, designated initializers and initialized RAM do not exist here, so the hook runs the same trigger.h intersection on gb_scroll_x/y and SCREEN_WIDTH/HEIGHT (scene_triggers.trigger_source box)"
+  },
+  {
+   "old": "&& PLAYER.script.bank) {",
+   "new": "&& NGC_PLAYER_HAS_HIT_SCRIPT) {",
+   "count": 1,
+   "reason": "scene engine hook (scene_genres.py): defined by the exporter from what the scene uses (triggers, collision scripts, interaction scripts)"
+  },
+  {
+   "old": "        script_execute(\n            PLAYER.script.bank,\n            PLAYER.script.ptr, 0, 1,\n            (UWORD)(SHOOTER_WALL_COLLISION_GROUP)\n        );",
+   "new": "        NGC_PLAYER_HIT((UWORD)(SHOOTER_WALL_COLLISION_GROUP));",
+   "count": 1,
+   "reason": "scene engine hook (scene_genres.py): defined by the exporter from what the scene uses (triggers, collision scripts, interaction scripts)"
+  },
+  {
+   "old": "hit_actor = actor_overlapping_player();",
+   "new": "hit_actor = player_overlap();",
+   "count": 1,
+   "reason": "scene engine port of GBVM actor_overlapping_player (scene_collisions.py player_overlap)"
+  },
+  {
+   "old": "player_register_collision_with(hit_actor);",
+   "new": "NGC_PLAYER_COLLISION(hit_actor);",
+   "count": 1,
+   "reason": "scene engine hook (scene_genres.py): defined by the exporter from what the scene uses (triggers, collision scripts, interaction scripts)"
+  },
+  {
+   "old": "    actor_t *hit_actor;",
+   "new": "    unsigned char hit_actor;",
+   "count": 1,
+   "reason": "scene engine actors are indexes in the actor arrays, not actor_t pointers: 255 is GBVM's NULL (no actor)"
+  },
+  {
+   "old": "inline UWORD add_signed_clamped_u16(",
+   "new": "static UWORD add_signed_clamped_u16(",
+   "count": 1,
+   "reason": "no inline in C89; file-local function: entered through ngc_<state>_init/update (scene_genres.py); static keeps the public symbols those of the scene engine"
+  },
+  {
+   "old": "void shmup_init(void)",
+   "new": "static void shmup_init(void)",
+   "count": 1,
+   "reason": "file-local function: entered through ngc_<state>_init/update (scene_genres.py); static keeps the public symbols those of the scene engine"
+  },
+  {
+   "old": "void shmup_update(void)",
+   "new": "static void shmup_update(void)",
+   "count": 1,
+   "reason": "file-local function: entered through ngc_<state>_init/update (scene_genres.py); static keeps the public symbols those of the scene engine"
+  },
+  {
+   "old": "UINT8 shooter_scroll_speed;",
+   "new": "UBYTE shooter_scroll_speed;",
+   "count": 1,
+   "reason": "engine field, cType UBYTE in engine.json: 16-bit like the platformer's (scene_platform.py PRELUDE)"
+  },
+  {
+   "old": "direction_e shooter_direction;",
+   "new": "UBYTE shooter_direction;",
+   "count": 1,
+   "reason": "direction_e is GBVM's direction enum held in a UBYTE (DIR_DOWN..DIR_NONE)"
+  },
+  {
+   "old": "    direction_e new_dir = DIR_NONE;",
+   "new": "    UBYTE new_dir = DIR_NONE;",
+   "count": 1,
+   "reason": "direction_e is GBVM's direction enum held in a UBYTE (DIR_DOWN..DIR_NONE)"
+  },
+  {
+   "old": "MOVEMENT_TYPE_LOCK_PERPENDICULAR ? 64 : camera_offset_y);",
+   "new": "MOVEMENT_TYPE_LOCK_PERPENDICULAR ? (64 + NGC_SHMUP_VIEW_DELTA) : camera_offset_y);",
+   "count": 1,
+   "reason": "NGPC screen (NgpCraft decision, 2026-10-07): locked vertical scrolling keeps the player at the same distance from the screen edge as on the Game Boy; GB Studio's offset is set for a 144 px view, NGC_SHMUP_VIEW_DELTA = SCREEN_HEIGHT_HALF - 72 (0 between black bands, 4 on the 152 px NGPC screen). ECARTS_GBSTUDIO.md"
+  },
+  {
+   "old": "MOVEMENT_TYPE_LOCK_PERPENDICULAR ? -48 : camera_offset_y);",
+   "new": "MOVEMENT_TYPE_LOCK_PERPENDICULAR ? (-48 - NGC_SHMUP_VIEW_DELTA) : camera_offset_y);",
+   "count": 1,
+   "reason": "NGPC screen (NgpCraft decision, 2026-10-07): locked vertical scrolling keeps the player at the same distance from the screen edge as on the Game Boy; GB Studio's offset is set for a 144 px view, NGC_SHMUP_VIEW_DELTA = SCREEN_HEIGHT_HALF - 72 (0 between black bands, 4 on the 152 px NGPC screen). ECARTS_GBSTUDIO.md"
+  },
+  {
+   "old": "PLAYER.pos.x",
+   "new": "act_x[0]",
+   "count": 23,
+   "reason": "scene engine actor arrays (scene_actors.c): actor 0 is the player, act_bounds holds left, right, top, bottom"
+  },
+  {
+   "old": "PLAYER.pos.y",
+   "new": "act_y[0]",
+   "count": 23,
+   "reason": "scene engine actor arrays (scene_actors.c): actor 0 is the player, act_bounds holds left, right, top, bottom"
+  },
+  {
+   "old": "PLAYER.bounds.left",
+   "new": "act_bounds[0]",
+   "count": 8,
+   "reason": "scene engine actor arrays (scene_actors.c): actor 0 is the player, act_bounds holds left, right, top, bottom"
+  },
+  {
+   "old": "PLAYER.bounds.right",
+   "new": "act_bounds[1]",
+   "count": 8,
+   "reason": "scene engine actor arrays (scene_actors.c): actor 0 is the player, act_bounds holds left, right, top, bottom"
+  },
+  {
+   "old": "PLAYER.bounds.top",
+   "new": "act_bounds[2]",
+   "count": 8,
+   "reason": "scene engine actor arrays (scene_actors.c): actor 0 is the player, act_bounds holds left, right, top, bottom"
+  },
+  {
+   "old": "PLAYER.bounds.bottom",
+   "new": "act_bounds[3]",
+   "count": 8,
+   "reason": "scene engine actor arrays (scene_actors.c): actor 0 is the player, act_bounds holds left, right, top, bottom"
+  },
+  {
+   "old": "PLAYER.dir",
+   "new": "act_dir[0]",
+   "count": 2,
+   "reason": "scene engine actor arrays (scene_actors.c): actor 0 is the player, act_bounds holds left, right, top, bottom"
+  },
+  {
+   "old": "&PLAYER",
+   "new": "0u",
+   "count": 1,
+   "reason": "scene engine actor arrays (scene_actors.c): actor 0 is the player, act_bounds holds left, right, top, bottom"
+  },
+  {
+   "old": "hit_actor->collision_group",
+   "new": "act_collision_group[hit_actor]",
+   "count": 1,
+   "reason": "scene engine actors are indexes in the actor arrays, not actor_t pointers: 255 is GBVM's NULL (no actor)"
+  },
+  {
+   "old": "hit_actor != NULL",
+   "new": "hit_actor != 255u",
+   "count": 1,
+   "reason": "scene engine actors are indexes in the actor arrays, not actor_t pointers: 255 is GBVM's NULL (no actor)"
+  }
+ ],
+ "unadapted": [],
+ "file_variables": [
+  "shooter_dest",
+  "shooter_direction",
+  "shooter_reached_end",
+  "shooter_scroll_speed"
+ ],
+ "code": "\n\n\n// Feature Flags --------------------------------------------------------------\n// Optional feature flags, set in 'state_defines.h'\n\n// End of Feature Flags -------------------------------------------------------\n\n// Constants ------------------------------------------------------------------\n\n#define ON_PLAYER_COLLISION 0\n#define ON_SCREEN_ENTER 1\n\n#ifndef SHOOTER_TRIGGER_ACTIVATION\n#define SHOOTER_TRIGGER_ACTIVATION ON_PLAYER_COLLISION\n#endif\n\n#define MOVEMENT_TYPE_FREE 0\n#define MOVEMENT_TYPE_LOCK_PERPENDICULAR 1\n\n#ifndef SHOOTER_MOVEMENT_TYPE\n#define SHOOTER_MOVEMENT_TYPE MOVEMENT_TYPE_FREE\n#endif\n\n#ifndef SHOOTER_WALL_COLLISION_GROUP\n#define SHOOTER_WALL_COLLISION_GROUP COLLISION_GROUP_NONE\n#endif\n\n// End of Constants -----------------------------------------------------------\n\n// Macros ---------------------------------------------------------------------\n\n#if SHOOTER_MOVEMENT_TYPE == MOVEMENT_TYPE_FREE\n  #define IF_FREE_MOVEMENT(code) code\n#else\n  #define IF_FREE_MOVEMENT(code)\n#endif\n\n// End of Macros --------------------------------------------------------------\n\n// Engine Fields --------------------------------------------------------------\n\nUBYTE shooter_scroll_speed;\n\n// End of Engine Fields -------------------------------------------------------\n\n// Runtime State --------------------------------------------------------------\n\nUBYTE shooter_reached_end;\nUWORD shooter_dest;\nUBYTE shooter_direction;\n\n\n// End of Runtime State -------------------------------------------------------\n\n// Function Definitions -------------------------------------------------------\n\n// Adds a signed offset to an unsigned 16-bit value with clamping\nstatic UWORD add_signed_clamped_u16(UWORD value, WORD offset, UWORD min, UWORD max) {\n    UWORD result;\n\n    if (offset < 0) {\n        result = value + (UWORD)(-offset);\n        if (result < value) result = max;\n    } else {\n        result = value - (UWORD)offset;\n        if (result > value) result = min;\n    }\n\n    if (result < min) result = min;\n    else if (result > max) result = max;\n\n    return result;\n}\n\n// End of Function Definitions ------------------------------------------------\n\nstatic void shmup_init(void) {\n    camera_offset_x = 0;\n    camera_offset_y = 0;\n    camera_deadzone_x = 0;\n    camera_deadzone_y = 0;\n\n    shooter_direction = act_dir[0];\n\n    if (shooter_direction == DIR_LEFT) {\n        // Right to left scrolling\n        camera_offset_x = (SHOOTER_MOVEMENT_TYPE == MOVEMENT_TYPE_LOCK_PERPENDICULAR ? 64 : camera_offset_x);\n        camera_deadzone_y = 16;\n        shooter_dest = PX_TO_SUBPX(SCREEN_WIDTH_HALF);\n        IF_FREE_MOVEMENT(camera_settings &= ~CAMERA_LOCK_X_FLAG);\n    } else if (shooter_direction == DIR_RIGHT) {\n        // Left to right scrolling\n        camera_offset_x = (SHOOTER_MOVEMENT_TYPE == MOVEMENT_TYPE_LOCK_PERPENDICULAR ? -64 : camera_offset_x);\n        camera_deadzone_y = 16;\n        shooter_dest = image_width_subpx - PX_TO_SUBPX(SCREEN_WIDTH_HALF);\n        IF_FREE_MOVEMENT(camera_settings &= ~CAMERA_LOCK_X_FLAG);\n    } else if (shooter_direction == DIR_UP) {\n        // Bottom to top scrolling\n        camera_offset_y = (SHOOTER_MOVEMENT_TYPE == MOVEMENT_TYPE_LOCK_PERPENDICULAR ? (64 + NGC_SHMUP_VIEW_DELTA) : camera_offset_y);\n        camera_deadzone_x = 16;\n        shooter_dest = PX_TO_SUBPX(SCREEN_HEIGHT_HALF);\n        IF_FREE_MOVEMENT(camera_settings &= ~CAMERA_LOCK_Y_FLAG);\n    } else {\n        // Top to bottom scrolling\n        camera_offset_y = (SHOOTER_MOVEMENT_TYPE == MOVEMENT_TYPE_LOCK_PERPENDICULAR ? (-48 - NGC_SHMUP_VIEW_DELTA) : camera_offset_y);\n        camera_deadzone_x = 16;\n        shooter_dest = image_height_subpx - PX_TO_SUBPX(SCREEN_HEIGHT_HALF);\n        IF_FREE_MOVEMENT(camera_settings &= ~CAMERA_LOCK_Y_FLAG);\n    }\n\n    shooter_reached_end = FALSE;\n\n    // Initialize camera position for unlocked movement\n    IF_FREE_MOVEMENT({\n        camera_x = add_signed_clamped_u16(act_x[0], PX_TO_SUBPX(camera_offset_x),\n            PX_TO_SUBPX(SCREEN_WIDTH_HALF),\n            image_width_subpx - PX_TO_SUBPX(SCREEN_WIDTH_HALF)\n        );\n        camera_y = add_signed_clamped_u16(act_y[0], PX_TO_SUBPX(camera_offset_y),\n            PX_TO_SUBPX(SCREEN_HEIGHT_HALF),\n            image_height_subpx - PX_TO_SUBPX(SCREEN_HEIGHT_HALF)\n        );\n    });\n}\n\nstatic void shmup_update(void) {\n    UBYTE tile_start;\n    UBYTE tile_end;\n    UBYTE angle;\n    UBYTE up;\n    UBYTE down;\n    UBYTE left;\n    UBYTE right;\n    UBYTE tile;\n    UBYTE tile_y;\n    UBYTE tile_x;\n    UWORD player_left;\n    UBYTE wrapped_left;\n    UWORD player_right;\n    UBYTE wrapped_right;\n    UWORD player_top;\n    UBYTE wrapped_top;\n    UWORD player_bottom;\n    UBYTE wrapped_bottom;\n\n    unsigned char hit_actor;\n    UBYTE new_dir = DIR_NONE;\n\n    player_moving = FALSE;\n    new_dir = shooter_direction;\n    angle = ANGLE_0DEG;\n\n    // Determine movement input\n#if SHOOTER_MOVEMENT_TYPE == MOVEMENT_TYPE_FREE\n    up = INPUT_UP;\n    down = INPUT_DOWN;\n    left = INPUT_LEFT;\n    right = INPUT_RIGHT;\n\n    if (left || right || up || down) {\n        player_moving = TRUE;\n\n        if (left) {\n            if (up) {\n                angle = ANGLE_315DEG;\n            } else if (down) {\n                angle = ANGLE_225DEG;\n            } else {\n                angle = ANGLE_270DEG;\n            }\n        } else if (right) {\n            if (up) {\n                angle = ANGLE_45DEG;\n            } else if (down) {\n                angle = ANGLE_135DEG;\n            } else {\n                angle = ANGLE_90DEG;\n            }\n        } else if (up) {\n            angle = ANGLE_0DEG;\n        } else if (down) {\n            angle = ANGLE_180DEG;\n        }\n\n        if (IS_DIR_HORIZONTAL(shooter_direction)) {\n            if (up) {\n                new_dir = DIR_UP;\n            } else if (down) {\n                new_dir = DIR_DOWN;\n            } else {\n                new_dir = shooter_direction;\n            }\n        } else {\n            if (left) {\n                new_dir = DIR_LEFT;\n            } else if (right) {\n                new_dir = DIR_RIGHT;\n            } else {\n                new_dir = shooter_direction;\n            }\n        }\n    } else {\n        new_dir = shooter_direction;\n        angle = ANGLE_0DEG;\n    }\n#elif SHOOTER_MOVEMENT_TYPE == MOVEMENT_TYPE_LOCK_PERPENDICULAR\n    if (IS_DIR_HORIZONTAL(shooter_direction)) {\n        up = INPUT_UP;\n        down = INPUT_DOWN;\n        if (up || down) {\n            player_moving = TRUE;\n            if (up) {\n                angle = ANGLE_0DEG;\n                new_dir = DIR_UP;\n            } else if (down) {\n                angle = ANGLE_180DEG;\n                new_dir = DIR_DOWN;\n            }\n        } else {\n            new_dir = shooter_direction;\n            angle = ANGLE_0DEG;\n        }\n    } else {\n        left = INPUT_LEFT;\n        right = INPUT_RIGHT;\n        if (left || right) {\n            player_moving = TRUE;\n            if (left) {\n                angle = ANGLE_270DEG;\n                new_dir = DIR_LEFT;\n            } else if (right) {\n                angle = ANGLE_90DEG;\n                new_dir = DIR_RIGHT;\n            }\n        } else {\n            new_dir = shooter_direction;\n            angle = ANGLE_0DEG;\n        }\n    }\n#endif\n\n    // Set animation if direction has changed\n    if (new_dir != act_dir[0]) {\n        actor_set_dir(0u, new_dir, player_moving);\n    }\n\n    tile = 0;\n\n    // Move player from input\n    if (player_moving) {\n        NGC_TRANSLATE_ANGLE(0u, angle, act_speed[0]);\n\n        // Check for tile collisions\n        if (angle != ANGLE_90DEG && angle != ANGLE_270DEG) { // Moved vertically\n            // Step Y\n            tile_start = SUBPX_TO_TILE(act_x[0] + act_bounds[0]);\n            tile_end   = SUBPX_TO_TILE(act_x[0] + act_bounds[1]);\n            if (angle > ANGLE_90DEG && angle < ANGLE_270DEG) { // Moving down\n                tile_y = SUBPX_TO_TILE(act_y[0] + act_bounds[3]);\n                tile = tile_col_test_range_x(COLLISION_TOP, tile_y, tile_start, tile_end);\n                if (tile) {\n                    act_y[0] = TILE_TO_SUBPX(tile_y) - EXCLUSIVE_OFFSET(act_bounds[3]);\n                }\n            } else { // Moving up\n                tile_y = SUBPX_TO_TILE(act_y[0] + act_bounds[2]);\n                tile = tile_col_test_range_x(COLLISION_BOTTOM, tile_y, tile_start, tile_end);\n                if (tile) {\n                    act_y[0] = TILE_TO_SUBPX(tile_y + 1) - act_bounds[2];\n                }\n            }\n        }\n\n        if (angle != ANGLE_0DEG && angle != ANGLE_180DEG) { // Moved horizontally\n            // Step X\n            tile_start = SUBPX_TO_TILE(act_y[0] + act_bounds[2]);\n            tile_end   = SUBPX_TO_TILE(act_y[0] + act_bounds[3]);\n            if (angle > ANGLE_0DEG && angle < ANGLE_180DEG) { // Moving right\n                tile_x = SUBPX_TO_TILE(act_x[0] + act_bounds[1]);\n                tile = tile_col_test_range_y(COLLISION_LEFT, tile_x, tile_start, tile_end);\n                if (tile) {\n                    act_x[0] = TILE_TO_SUBPX(tile_x) - EXCLUSIVE_OFFSET(act_bounds[1]);\n                }\n            } else { // Moving left\n                tile_x = SUBPX_TO_TILE(act_x[0] + act_bounds[0]);\n                tile = tile_col_test_range_y(COLLISION_RIGHT, tile_x, tile_start, tile_end);\n                if (tile) {\n                    act_x[0] = TILE_TO_SUBPX(tile_x + 1) - act_bounds[0];\n                }\n            }\n        }\n\n    }\n\n    // Auto scroll background\n    if (!shooter_reached_end) {\n        if (shooter_direction == DIR_LEFT) {\n            IF_FREE_MOVEMENT(camera_x -= shooter_scroll_speed);\n            act_x[0] -= shooter_scroll_speed;\n            if (camera_x < shooter_dest) {\n                shooter_reached_end = TRUE;\n                camera_x = shooter_dest;\n            }\n            // Sync camera subpixels with player to prevent visual jitter\n            // (only when player isn't moving horizontally)\n            IF_FREE_MOVEMENT({\n                if (!player_moving || angle == ANGLE_0DEG || angle == ANGLE_180DEG) {\n                    camera_x = SUBPX_SNAP_PX(camera_x) | SUBPX_PX_REMAINDER(act_x[0]);\n                }\n            })\n        } else if (shooter_direction == DIR_RIGHT) {\n            IF_FREE_MOVEMENT(camera_x += shooter_scroll_speed);\n            act_x[0] += shooter_scroll_speed;\n            if (camera_x > shooter_dest) {\n                shooter_reached_end = TRUE;\n                camera_x = shooter_dest;\n            }\n            // Sync camera subpixels with player to prevent visual jitter\n            // (only when player isn't moving horizontally)\n            IF_FREE_MOVEMENT({\n                if (!player_moving || angle == ANGLE_0DEG || angle == ANGLE_180DEG) {\n                    camera_x = SUBPX_SNAP_PX(camera_x) | SUBPX_PX_REMAINDER(act_x[0]);\n                }\n            })\n        } else if (shooter_direction == DIR_UP) {\n            IF_FREE_MOVEMENT(camera_y -= shooter_scroll_speed);\n            act_y[0] -= shooter_scroll_speed;\n            if (camera_y < shooter_dest) {\n                shooter_reached_end = TRUE;\n                camera_y = shooter_dest;\n            }\n            // Sync camera subpixels with player to prevent visual jitter\n            // (only when player isn't moving vertically)\n            IF_FREE_MOVEMENT({\n                if (!player_moving || angle == ANGLE_90DEG || angle == ANGLE_270DEG) {\n                    camera_y = SUBPX_SNAP_PX(camera_y) | SUBPX_PX_REMAINDER(act_y[0]);\n                }\n            })\n        } else {\n            IF_FREE_MOVEMENT(camera_y += shooter_scroll_speed);\n            act_y[0] += shooter_scroll_speed;\n            if (camera_y > shooter_dest) {\n                shooter_reached_end = TRUE;\n                camera_y = shooter_dest;\n            }\n            // Sync camera subpixels with player to prevent visual jitter\n            // (only when player isn't moving vertically)\n            IF_FREE_MOVEMENT({\n                if (!player_moving || angle == ANGLE_90DEG || angle == ANGLE_270DEG) {\n                    camera_y = SUBPX_SNAP_PX(camera_y) | SUBPX_PX_REMAINDER(act_y[0]);\n                }\n            })\n        }\n    }\n\n    // Check for collisions caused by auto-scroll\n    if (player_iframes == 0 && (!tile || tile_hit_x >= image_tile_width || tile_hit_y >= image_tile_height)) {\n        if (IS_DIR_HORIZONTAL(shooter_direction)) {\n            tile_start = SUBPX_TO_TILE(act_y[0] + act_bounds[2]);\n            tile_end   = SUBPX_TO_TILE(act_y[0] + act_bounds[3]);\n            if (shooter_direction == DIR_RIGHT) {\n                tile_x = SUBPX_TO_TILE(act_x[0] + act_bounds[1]);\n                tile = tile_col_test_range_y(COLLISION_LEFT, tile_x, tile_start, tile_end);\n                IF_FREE_MOVEMENT({\n                    if (tile) {\n                        act_x[0] = TILE_TO_SUBPX(tile_x) - EXCLUSIVE_OFFSET(act_bounds[1]);\n                    }\n                })\n            } else { // DIR_LEFT\n                tile_x = SUBPX_TO_TILE(act_x[0] + act_bounds[0]);\n                tile = tile_col_test_range_y(COLLISION_RIGHT, tile_x, tile_start, tile_end);\n                IF_FREE_MOVEMENT({\n                    if (tile) {\n                        act_x[0] = TILE_TO_SUBPX(tile_x + 1) - act_bounds[0];\n                    }\n                })\n            }\n        } else {\n            tile_start = SUBPX_TO_TILE(act_x[0] + act_bounds[0]);\n            tile_end   = SUBPX_TO_TILE(act_x[0] + act_bounds[1]);\n            if (shooter_direction == DIR_DOWN) {\n                tile_y = SUBPX_TO_TILE(act_y[0] + act_bounds[3]);\n                tile = tile_col_test_range_x(COLLISION_TOP, tile_y, tile_start, tile_end);\n                IF_FREE_MOVEMENT({\n                    if (tile) {\n                        act_y[0] = TILE_TO_SUBPX(tile_y) - EXCLUSIVE_OFFSET(act_bounds[3]);\n                    }\n                })\n            } else { // DIR_UP\n                tile_y = SUBPX_TO_TILE(act_y[0] + act_bounds[2]);\n                tile = tile_col_test_range_x(COLLISION_BOTTOM, tile_y, tile_start, tile_end);\n                IF_FREE_MOVEMENT({\n                    if (tile) {\n                        act_y[0] = TILE_TO_SUBPX(tile_y + 1) - act_bounds[2];\n                    }\n                })\n            }\n        }\n    }\n\n    IF_FREE_MOVEMENT({\n        // Keep player within screen bounds\n        if (IS_DIR_HORIZONTAL(shooter_direction)) {\n            // Clamp X\n            player_left = act_x[0] + act_bounds[0] + PX_TO_SUBPX(SCREEN_WIDTH_HALF);\n            wrapped_left = (player_left < act_x[0]);\n\n            player_right = act_x[0] + act_bounds[1];\n            wrapped_right = (player_right < act_x[0]);\n\n            if (!wrapped_left && (player_left < camera_x)) {\n                act_x[0] = camera_x - act_bounds[0] - PX_TO_SUBPX(SCREEN_WIDTH_HALF);\n            } else if (!wrapped_right && (player_right > camera_x + PX_TO_SUBPX(SCREEN_WIDTH_HALF))) {\n                act_x[0] = camera_x - act_bounds[1] + PX_TO_SUBPX(SCREEN_WIDTH_HALF);\n            }\n        } else {\n            // Clamp Y\n            player_top = act_y[0] + act_bounds[2] + PX_TO_SUBPX(SCREEN_HEIGHT_HALF);\n            wrapped_top = (player_top < act_y[0]);\n\n            player_bottom = act_y[0] + act_bounds[3];\n            wrapped_bottom = (player_bottom < act_y[0]);\n\n            if (!wrapped_top && (player_top < camera_y)) {\n                act_y[0] = camera_y - act_bounds[2] - PX_TO_SUBPX(SCREEN_HEIGHT_HALF);\n            } else if (!wrapped_bottom && (player_bottom > camera_y + PX_TO_SUBPX(SCREEN_HEIGHT_HALF))) {\n                act_y[0] = camera_y - act_bounds[3] + PX_TO_SUBPX(SCREEN_HEIGHT_HALF);\n            }\n        }\n    })\n\n#if SHOOTER_WALL_COLLISION_GROUP != COLLISION_GROUP_NONE\n    // Collisions with tiles that aren't out of bounds trigger player hit script\n    if (tile && tile_hit_x < image_tile_width && tile_hit_y < image_tile_height && player_iframes == 0 && NGC_PLAYER_HAS_HIT_SCRIPT) {\n        player_iframes = PLAYER_HURT_IFRAMES;\n        NGC_PLAYER_HIT((UWORD)(SHOOTER_WALL_COLLISION_GROUP));\n    }\n#endif\n\n    if (IS_FRAME_ODD) {\n        // Check for trigger collisions on odd frames\n#if SHOOTER_TRIGGER_ACTIVATION == ON_PLAYER_COLLISION\n        if (NGC_SHMUP_TRIGGERS()) {\n            // Landed on a trigger\n            return;\n        }\n#elif SHOOTER_TRIGGER_ACTIVATION == ON_SCREEN_ENTER\n        if (NGC_SHMUP_SCREEN_TRIGGERS()) {\n            // Trigger appeared on screen edge\n            return;\n        }\n#endif\n\n    } else {\n        // Check for actor collisions on even frames\n        hit_actor = player_overlap();\n        if (hit_actor != 255u && (act_collision_group[hit_actor] & COLLISION_GROUP_MASK)) {\n            NGC_PLAYER_COLLISION(hit_actor);\n        }\n    }\n}\n"
+}

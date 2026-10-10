@@ -1,0 +1,131 @@
+# NgpCraft Studio: test, then build the editor for Windows, Linux and macOS
+# on every push. Builds are kept as workflow artifacts (Actions tab, about 90
+# days). Replaces GB Studio's own workflows (main.yml, chores.yml, web.yml).
+#
+# The packaged application carries the NgpCraft V3 compiler, the ngpcraft-v3
+# folder of this repository (prePackage hook src/lib/forge/hooks/bundle-v3.js).
+# Not included: the Toshiba toolchain (each user points to it in Preferences),
+# and the Play window WebAssembly rebuild (appData/wasm/ngpcraft-web is
+# committed; ngpcraft-player/build.ps1 rebuilds it locally).
+#
+# macOS: unsigned unless the APPLE_ID / certificate secrets are set.
+
+name: Build NgpCraft Studio
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "21.7.1"
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Type check
+        run: node --max-old-space-size=8192 node_modules/typescript/bin/tsc --noEmit -p .
+
+      - name: Test
+        run: yarn test
+
+  build:
+    needs: test
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: windows-x64
+            os: windows-latest
+          - name: linux-x64
+            os: ubuntu-latest
+          - name: macos-arm64
+            os: macos-14
+          - name: macos-x64
+            os: macos-14
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "21.7.1"
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Linux packaging tools
+        if: matrix.name == 'linux-x64'
+        run: sudo apt-get update && sudo apt-get install -y rpm
+
+      - name: Build Windows
+        if: matrix.name == 'windows-x64'
+        shell: bash
+        run: |
+          yarn make:win
+          mkdir -p out/keep
+          cp out/make/zip/win32/x64/*.zip out/keep/
+          cp -r out/make/squirrel.windows/x64 out/keep/installer
+
+      - name: Build Linux
+        if: matrix.name == 'linux-x64'
+        run: |
+          yarn make:linux
+          mkdir -p out/keep
+          cp out/make/deb/x64/*.deb out/keep/
+          cp out/make/rpm/x64/*.rpm out/keep/
+          cp out/make/AppImage/x64/*.AppImage out/keep/
+
+      - name: Build macOS (Apple Silicon)
+        if: matrix.name == 'macos-arm64'
+        env:
+          APPLE_ID: ${{ secrets.MAC_NOTARIZE_ID }}
+          APPLE_ID_PASSWORD: ${{ secrets.MAC_NOTARIZE_PWD }}
+          APPLE_TEAM_ID: ${{ secrets.MAC_NOTARIZE_TEAM }}
+        run: |
+          yarn make:mac
+          mkdir -p out/keep
+          cp out/make/zip/darwin/arm64/*.zip out/keep/
+
+      - name: Build macOS (Intel)
+        if: matrix.name == 'macos-x64'
+        env:
+          APPLE_ID: ${{ secrets.MAC_NOTARIZE_ID }}
+          APPLE_ID_PASSWORD: ${{ secrets.MAC_NOTARIZE_PWD }}
+          APPLE_TEAM_ID: ${{ secrets.MAC_NOTARIZE_TEAM }}
+        run: |
+          yarn make:mac-intel
+          mkdir -p out/keep
+          cp out/make/zip/darwin/x64/*.zip out/keep/
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ngpcraft-studio-${{ matrix.name }}-${{ github.sha }}
+          path: out/keep/**
+          if-no-files-found: error

@@ -1,0 +1,4419 @@
+{
+ "reference": "GB Studio 4.3.2 release (tag v4.3.2, gbvm bd6f41c; ../_reference/gb-studio-4.3.2)",
+ "gbvm_commit": "bd6f41cc5e05cbe6601dcc7f8e2db89bed527fe3",
+ "sources": {
+  "macros": {
+   "path": "appData/engine/gbvm/include/vm.i",
+   "sha256": "d07af6798364e4bcbc2b128738d9470d9529f3f4e4516538273b997213ec58f3"
+  },
+  "instructions": {
+   "path": "appData/engine/gbvm/src/core/vm_instructions.c",
+   "sha256": "0888709311cf4bff345e2c023d2f9a5ea08ec30764d61c9c2eabc3b3d6a7c44f"
+  }
+ },
+ "opcodes": {
+  "OP_VM_STOP": 0,
+  "OP_VM_PUSH_CONST": 1,
+  "OP_VM_POP": 2,
+  "OP_VM_CALL": 4,
+  "OP_VM_RET": 5,
+  "OP_VM_GET_FAR": 6,
+  "OP_VM_LOOP": 7,
+  "OP_VM_SWITCH": 8,
+  "OP_VM_JUMP": 9,
+  "OP_VM_RATE_LIMIT_CONST": 28,
+  "OP_VM_CALL_FAR": 10,
+  "OP_VM_RET_FAR": 11,
+  "OP_VM_INVOKE": 13,
+  "OP_VM_BEGINTHREAD": 14,
+  "OP_VM_IF": 15,
+  "OP_VM_PUSH_VALUE_IND": 16,
+  "OP_VM_PUSH_VALUE": 17,
+  "OP_VM_RESERVE": 18,
+  "OP_VM_SET": 19,
+  "OP_VM_SET_CONST": 20,
+  "OP_VM_RPN": 21,
+  "OP_VM_JOIN": 22,
+  "OP_VM_TERMINATE": 23,
+  "OP_VM_IDLE": 24,
+  "OP_VM_GET_TLOCAL": 25,
+  "OP_VM_IF_CONST": 26,
+  "OP_VM_ASM": 27,
+  "OP_VM_INIT_RNG": 35,
+  "OP_VM_RAND": 36,
+  "OP_VM_LOCK": 37,
+  "OP_VM_UNLOCK": 38,
+  "OP_VM_RAISE": 39,
+  "OP_VM_SET_INDIRECT": 40,
+  "OP_VM_GET_INDIRECT": 41,
+  "OP_VM_TEST_TERMINATE": 42,
+  "OP_VM_POLL_LOADED": 43,
+  "OP_VM_PUSH_REFERENCE": 44,
+  "OP_VM_CALL_NATIVE": 45,
+  "OP_VM_MEMSET": 118,
+  "OP_VM_MEMCPY": 119,
+  "OP_VM_SAVE_PEEK": 46,
+  "OP_VM_SAVE_CLEAR": 47,
+  "OP_VM_ACTOR_MOVE_TO": 48,
+  "OP_VM_ACTOR_MOVE_TO_INIT": 143,
+  "OP_VM_ACTOR_MOVE_TO_X": 144,
+  "OP_VM_ACTOR_MOVE_TO_Y": 145,
+  "OP_VM_ACTOR_MOVE_TO_XY": 146,
+  "OP_VM_ACTOR_MOVE_TO_SET_DIR_X": 147,
+  "OP_VM_ACTOR_MOVE_TO_SET_DIR_Y": 148,
+  "OP_VM_ACTOR_SET_ANIM_MOVING": 149,
+  "OP_VM_ACTOR_MOVE_CANCEL": 136,
+  "OP_VM_ACTOR_ACTIVATE": 49,
+  "OP_VM_ACTOR_SET_DIR": 50,
+  "OP_VM_ACTOR_DEACTIVATE": 51,
+  "OP_VM_ACTOR_SET_ANIM": 52,
+  "OP_VM_ACTOR_SET_POS": 53,
+  "OP_VM_ACTOR_EMOTE": 54,
+  "OP_VM_ACTOR_SET_BOUNDS": 55,
+  "OP_VM_ACTOR_SET_SPRITESHEET": 56,
+  "OP_VM_ACTOR_SET_SPRITESHEET_BY_REF": 135,
+  "OP_VM_ACTOR_REPLACE_TILE": 57,
+  "OP_VM_ACTOR_GET_POS": 58,
+  "OP_VM_ACTOR_GET_DIR": 60,
+  "OP_VM_ACTOR_GET_ANGLE": 134,
+  "OP_VM_ACTOR_SET_ANIM_TICK": 61,
+  "OP_VM_ACTOR_SET_MOVE_SPEED": 62,
+  "OP_VM_ACTOR_SET_FLAGS": 63,
+  "OP_VM_ACTOR_BEGIN_UPDATE": 142,
+  "OP_VM_ACTOR_TERMINATE_UPDATE": 116,
+  "OP_VM_ACTOR_SET_ANIM_FRAME": 117,
+  "OP_VM_ACTOR_GET_ANIM_FRAME": 131,
+  "OP_VM_ACTOR_SET_ANIM_SET": 132,
+  "OP_VM_LOAD_TEXT": 64,
+  "OP_VM_DISPLAY_TEXT": 65,
+  "OP_VM_SWITCH_TEXT_LAYER": 133,
+  "OP_VM_OVERLAY_SETPOS": 66,
+  "OP_VM_LOAD_TEXT_EX": 67,
+  "OP_VM_OVERLAY_WAIT": 68,
+  "OP_VM_OVERLAY_MOVE_TO": 69,
+  "OP_VM_OVERLAY_SHOW": 70,
+  "OP_VM_OVERLAY_CLEAR": 71,
+  "OP_VM_CHOICE": 72,
+  "OP_VM_SET_FONT": 75,
+  "OP_VM_OVERLAY_SET_SUBMAP_EX": 76,
+  "OP_VM_OVERLAY_SCROLL": 77,
+  "OP_VM_OVERLAY_SET_SCROLL": 78,
+  "OP_VM_OVERLAY_SET_SUBMAP": 79,
+  "OP_VM_LOAD_TILESET": 80,
+  "OP_VM_SET_SPRITE_VISIBLE": 81,
+  "OP_VM_INPUT_WAIT": 82,
+  "OP_VM_INPUT_ATTACH": 83,
+  "OP_VM_INPUT_GET": 84,
+  "OP_VM_CONTEXT_PREPARE": 85,
+  "OP_VM_OVERLAY_SET_MAP": 86,
+  "OP_VM_FADE": 87,
+  "OP_VM_TIMER_PREPARE": 88,
+  "OP_VM_TIMER_SET": 89,
+  "OP_VM_TIMER_STOP": 114,
+  "OP_VM_TIMER_RESET": 115,
+  "OP_VM_GET_TILE_XY": 90,
+  "OP_VM_REPLACE_TILE": 91,
+  "OP_VM_POLL": 92,
+  "OP_VM_SET_SPRITE_MODE": 93,
+  "OP_VM_REPLACE_TILE_XY": 94,
+  "OP_VM_INPUT_DETACH": 95,
+  "OP_VM_MUSIC_PLAY": 96,
+  "OP_VM_MUSIC_STOP": 97,
+  "OP_VM_MUSIC_MUTE": 98,
+  "OP_VM_SOUND_MASTERVOL": 99,
+  "OP_VM_MUSIC_ROUTINE": 101,
+  "OP_VM_SFX_PLAY": 102,
+  "OP_VM_MUSIC_SETPOS": 103,
+  "OP_VM_SCENE_PUSH": 104,
+  "OP_VM_SCENE_POP": 105,
+  "OP_VM_SCENE_POP_ALL": 106,
+  "OP_VM_SCENE_STACK_RESET": 107,
+  "OP_VM_SIO_SET_MODE": 108,
+  "OP_VM_SIO_EXCHANGE": 109,
+  "OP_VM_CAMERA_MOVE_TO": 112,
+  "OP_VM_CAMERA_SET_POS": 113,
+  "OP_VM_RTC_LATCH": 120,
+  "OP_VM_RTC_GET": 121,
+  "OP_VM_RTC_SET": 122,
+  "OP_VM_RTC_START": 123,
+  "OP_VM_LOAD_PALETTE": 124,
+  "OP_VM_SGB_TRANSFER": 126,
+  "OP_VM_RUMBLE": 127,
+  "OP_VM_PROJECTILE_LAUNCH": 128,
+  "OP_VM_PROJECTILE_LOAD_TYPE": 129,
+  "OP_VM_SIN_SCALE": 137,
+  "OP_VM_COS_SCALE": 138,
+  "OP_VM_SET_TEXT_SOUND": 139,
+  "OP_VM_PRINTER_DETECT": 140,
+  "OP_VM_PRINT_OVERLAY": 141
+ },
+ "instructions": {
+  "OP_VM_PUSH_CONST": {
+   "handler": "vm_push",
+   "args": 2,
+   "opcode": 1
+  },
+  "OP_VM_POP": {
+   "handler": "vm_pop",
+   "args": 1,
+   "opcode": 2
+  },
+  "OP_VM_CALL": {
+   "handler": "vm_call",
+   "args": 2,
+   "opcode": 4
+  },
+  "OP_VM_RET": {
+   "handler": "vm_ret",
+   "args": 1,
+   "opcode": 5
+  },
+  "OP_VM_GET_FAR": {
+   "handler": "vm_get_far",
+   "args": 6,
+   "opcode": 6
+  },
+  "OP_VM_LOOP": {
+   "handler": "vm_loop",
+   "args": 5,
+   "opcode": 7
+  },
+  "OP_VM_SWITCH": {
+   "handler": "vm_switch",
+   "args": 4,
+   "opcode": 8
+  },
+  "OP_VM_JUMP": {
+   "handler": "vm_jump",
+   "args": 2,
+   "opcode": 9
+  },
+  "OP_VM_CALL_FAR": {
+   "handler": "vm_call_far",
+   "args": 3,
+   "opcode": 10
+  },
+  "OP_VM_RET_FAR": {
+   "handler": "vm_ret_far",
+   "args": 1,
+   "opcode": 11
+  },
+  "OP_VM_INVOKE": {
+   "handler": "vm_invoke",
+   "args": 6,
+   "opcode": 13
+  },
+  "OP_VM_BEGINTHREAD": {
+   "handler": "vm_beginthread",
+   "args": 6,
+   "opcode": 14
+  },
+  "OP_VM_IF": {
+   "handler": "vm_if",
+   "args": 8,
+   "opcode": 15
+  },
+  "OP_VM_PUSH_VALUE_IND": {
+   "handler": "vm_push_value_ind",
+   "args": 2,
+   "opcode": 16
+  },
+  "OP_VM_PUSH_VALUE": {
+   "handler": "vm_push_value",
+   "args": 2,
+   "opcode": 17
+  },
+  "OP_VM_RESERVE": {
+   "handler": "vm_reserve",
+   "args": 1,
+   "opcode": 18
+  },
+  "OP_VM_SET": {
+   "handler": "vm_set",
+   "args": 4,
+   "opcode": 19
+  },
+  "OP_VM_SET_CONST": {
+   "handler": "vm_set_const",
+   "args": 4,
+   "opcode": 20
+  },
+  "OP_VM_RPN": {
+   "handler": "vm_rpn",
+   "args": 0,
+   "opcode": 21
+  },
+  "OP_VM_JOIN": {
+   "handler": "vm_join",
+   "args": 2,
+   "opcode": 22
+  },
+  "OP_VM_TERMINATE": {
+   "handler": "vm_terminate",
+   "args": 2,
+   "opcode": 23
+  },
+  "OP_VM_IDLE": {
+   "handler": "vm_idle",
+   "args": 0,
+   "opcode": 24
+  },
+  "OP_VM_GET_TLOCAL": {
+   "handler": "vm_get_tlocal",
+   "args": 4,
+   "opcode": 25
+  },
+  "OP_VM_IF_CONST": {
+   "handler": "vm_if_const",
+   "args": 8,
+   "opcode": 26
+  },
+  "OP_VM_ASM": {
+   "handler": "vm_asm",
+   "args": 0,
+   "opcode": 27
+  },
+  "OP_VM_RATE_LIMIT_CONST": {
+   "handler": "vm_rate_limit_const",
+   "args": 6,
+   "opcode": 28
+  },
+  "OP_VM_INIT_RNG": {
+   "handler": "vm_init_rng",
+   "args": 2,
+   "opcode": 35
+  },
+  "OP_VM_RAND": {
+   "handler": "vm_rand",
+   "args": 6,
+   "opcode": 36
+  },
+  "OP_VM_LOCK": {
+   "handler": "vm_lock",
+   "args": 0,
+   "opcode": 37
+  },
+  "OP_VM_UNLOCK": {
+   "handler": "vm_unlock",
+   "args": 0,
+   "opcode": 38
+  },
+  "OP_VM_RAISE": {
+   "handler": "vm_raise",
+   "args": 2,
+   "opcode": 39
+  },
+  "OP_VM_SET_INDIRECT": {
+   "handler": "vm_set_indirect",
+   "args": 4,
+   "opcode": 40
+  },
+  "OP_VM_GET_INDIRECT": {
+   "handler": "vm_get_indirect",
+   "args": 4,
+   "opcode": 41
+  },
+  "OP_VM_TEST_TERMINATE": {
+   "handler": "vm_test_terminate",
+   "args": 1,
+   "opcode": 42
+  },
+  "OP_VM_POLL_LOADED": {
+   "handler": "vm_poll_loaded",
+   "args": 2,
+   "opcode": 43
+  },
+  "OP_VM_PUSH_REFERENCE": {
+   "handler": "vm_push_reference",
+   "args": 2,
+   "opcode": 44
+  },
+  "OP_VM_CALL_NATIVE": {
+   "handler": "vm_call_native",
+   "args": 3,
+   "opcode": 45
+  },
+  "OP_VM_SAVE_PEEK": {
+   "handler": "vm_save_peek",
+   "args": 9,
+   "opcode": 46
+  },
+  "OP_VM_SAVE_CLEAR": {
+   "handler": "vm_save_clear",
+   "args": 1,
+   "opcode": 47
+  },
+  "OP_VM_ACTOR_MOVE_TO": {
+   "handler": "vm_actor_move_to",
+   "args": 2,
+   "opcode": 48
+  },
+  "OP_VM_ACTOR_ACTIVATE": {
+   "handler": "vm_actor_activate",
+   "args": 2,
+   "opcode": 49
+  },
+  "OP_VM_ACTOR_SET_DIR": {
+   "handler": "vm_actor_set_dir",
+   "args": 3,
+   "opcode": 50
+  },
+  "OP_VM_ACTOR_DEACTIVATE": {
+   "handler": "vm_actor_deactivate",
+   "args": 2,
+   "opcode": 51
+  },
+  "OP_VM_ACTOR_SET_ANIM": {
+   "handler": "vm_actor_set_anim",
+   "args": 4,
+   "opcode": 52
+  },
+  "OP_VM_ACTOR_SET_POS": {
+   "handler": "vm_actor_set_pos",
+   "args": 2,
+   "opcode": 53
+  },
+  "OP_VM_ACTOR_EMOTE": {
+   "handler": "vm_actor_emote",
+   "args": 5,
+   "opcode": 54
+  },
+  "OP_VM_ACTOR_SET_BOUNDS": {
+   "handler": "vm_actor_set_bounds",
+   "args": 2,
+   "opcode": 55
+  },
+  "OP_VM_ACTOR_SET_SPRITESHEET": {
+   "handler": "vm_actor_set_spritesheet",
+   "args": 5,
+   "opcode": 56
+  },
+  "OP_VM_ACTOR_REPLACE_TILE": {
+   "handler": "vm_actor_replace_tile",
+   "args": 8,
+   "opcode": 57
+  },
+  "OP_VM_ACTOR_GET_POS": {
+   "handler": "vm_actor_get_pos",
+   "args": 2,
+   "opcode": 58
+  },
+  "OP_VM_ACTOR_GET_DIR": {
+   "handler": "vm_actor_get_dir",
+   "args": 4,
+   "opcode": 60
+  },
+  "OP_VM_ACTOR_SET_ANIM_TICK": {
+   "handler": "vm_actor_set_anim_tick",
+   "args": 3,
+   "opcode": 61
+  },
+  "OP_VM_ACTOR_SET_MOVE_SPEED": {
+   "handler": "vm_actor_set_move_speed",
+   "args": 3,
+   "opcode": 62
+  },
+  "OP_VM_ACTOR_SET_FLAGS": {
+   "handler": "vm_actor_set_flags",
+   "args": 4,
+   "opcode": 63
+  },
+  "OP_VM_LOAD_TEXT": {
+   "handler": "vm_load_text",
+   "args": 1,
+   "opcode": 64
+  },
+  "OP_VM_DISPLAY_TEXT": {
+   "handler": "vm_display_text",
+   "args": 2,
+   "opcode": 65
+  },
+  "OP_VM_OVERLAY_SETPOS": {
+   "handler": "vm_overlay_setpos",
+   "args": 2,
+   "opcode": 66
+  },
+  "OP_VM_LOAD_TEXT_EX": {
+   "handler": "vm_load_text_ex",
+   "args": 1,
+   "opcode": 67
+  },
+  "OP_VM_OVERLAY_WAIT": {
+   "handler": "vm_overlay_wait",
+   "args": 2,
+   "opcode": 68
+  },
+  "OP_VM_OVERLAY_MOVE_TO": {
+   "handler": "vm_overlay_move_to",
+   "args": 3,
+   "opcode": 69
+  },
+  "OP_VM_OVERLAY_SHOW": {
+   "handler": "vm_overlay_show",
+   "args": 4,
+   "opcode": 70
+  },
+  "OP_VM_OVERLAY_CLEAR": {
+   "handler": "vm_overlay_clear",
+   "args": 6,
+   "opcode": 71
+  },
+  "OP_VM_CHOICE": {
+   "handler": "vm_choice",
+   "args": 4,
+   "opcode": 72
+  },
+  "OP_VM_SET_FONT": {
+   "handler": "vm_set_font",
+   "args": 1,
+   "opcode": 75
+  },
+  "OP_VM_OVERLAY_SET_SUBMAP_EX": {
+   "handler": "vm_overlay_set_submap_ex",
+   "args": 2,
+   "opcode": 76
+  },
+  "OP_VM_OVERLAY_SCROLL": {
+   "handler": "vm_overlay_scroll",
+   "args": 5,
+   "opcode": 77
+  },
+  "OP_VM_OVERLAY_SET_SCROLL": {
+   "handler": "vm_overlay_set_scroll",
+   "args": 5,
+   "opcode": 78
+  },
+  "OP_VM_OVERLAY_SET_SUBMAP": {
+   "handler": "vm_overlay_set_submap",
+   "args": 6,
+   "opcode": 79
+  },
+  "OP_VM_LOAD_TILESET": {
+   "handler": "vm_load_tileset",
+   "args": 5,
+   "opcode": 80
+  },
+  "OP_VM_SET_SPRITE_VISIBLE": {
+   "handler": "vm_set_sprites_visible",
+   "args": 1,
+   "opcode": 81
+  },
+  "OP_VM_INPUT_WAIT": {
+   "handler": "vm_input_wait",
+   "args": 1,
+   "opcode": 82
+  },
+  "OP_VM_INPUT_ATTACH": {
+   "handler": "vm_input_attach",
+   "args": 2,
+   "opcode": 83
+  },
+  "OP_VM_INPUT_GET": {
+   "handler": "vm_input_get",
+   "args": 3,
+   "opcode": 84
+  },
+  "OP_VM_CONTEXT_PREPARE": {
+   "handler": "vm_context_prepare",
+   "args": 4,
+   "opcode": 85
+  },
+  "OP_VM_OVERLAY_SET_MAP": {
+   "handler": "vm_overlay_set_map",
+   "args": 9,
+   "opcode": 86
+  },
+  "OP_VM_FADE": {
+   "handler": "vm_fade",
+   "args": 1,
+   "opcode": 87
+  },
+  "OP_VM_TIMER_PREPARE": {
+   "handler": "vm_timer_prepare",
+   "args": 4,
+   "opcode": 88
+  },
+  "OP_VM_TIMER_SET": {
+   "handler": "vm_timer_set",
+   "args": 2,
+   "opcode": 89
+  },
+  "OP_VM_GET_TILE_XY": {
+   "handler": "vm_get_tile_xy",
+   "args": 6,
+   "opcode": 90
+  },
+  "OP_VM_REPLACE_TILE": {
+   "handler": "vm_replace_tile",
+   "args": 8,
+   "opcode": 91
+  },
+  "OP_VM_POLL": {
+   "handler": "vm_poll",
+   "args": 5,
+   "opcode": 92
+  },
+  "OP_VM_SET_SPRITE_MODE": {
+   "handler": "vm_set_sprite_mode",
+   "args": 1,
+   "opcode": 93
+  },
+  "OP_VM_REPLACE_TILE_XY": {
+   "handler": "vm_replace_tile_xy",
+   "args": 7,
+   "opcode": 94
+  },
+  "OP_VM_INPUT_DETACH": {
+   "handler": "vm_input_detach",
+   "args": 1,
+   "opcode": 95
+  },
+  "OP_VM_MUSIC_PLAY": {
+   "handler": "vm_music_play",
+   "args": 3,
+   "opcode": 96
+  },
+  "OP_VM_MUSIC_STOP": {
+   "handler": "vm_music_stop",
+   "args": 0,
+   "opcode": 97
+  },
+  "OP_VM_MUSIC_MUTE": {
+   "handler": "vm_music_mute",
+   "args": 1,
+   "opcode": 98
+  },
+  "OP_VM_SOUND_MASTERVOL": {
+   "handler": "vm_sound_mastervol",
+   "args": 1,
+   "opcode": 99
+  },
+  "OP_VM_MUSIC_ROUTINE": {
+   "handler": "vm_music_routine",
+   "args": 4,
+   "opcode": 101
+  },
+  "OP_VM_SFX_PLAY": {
+   "handler": "vm_sfx_play",
+   "args": 5,
+   "opcode": 102
+  },
+  "OP_VM_MUSIC_SETPOS": {
+   "handler": "vm_music_setpos",
+   "args": 2,
+   "opcode": 103
+  },
+  "OP_VM_SCENE_PUSH": {
+   "handler": "vm_scene_push",
+   "args": 0,
+   "opcode": 104
+  },
+  "OP_VM_SCENE_POP": {
+   "handler": "vm_scene_pop",
+   "args": 0,
+   "opcode": 105
+  },
+  "OP_VM_SCENE_POP_ALL": {
+   "handler": "vm_scene_pop_all",
+   "args": 0,
+   "opcode": 106
+  },
+  "OP_VM_SCENE_STACK_RESET": {
+   "handler": "vm_scene_stack_reset",
+   "args": 0,
+   "opcode": 107
+  },
+  "OP_VM_SIO_SET_MODE": {
+   "handler": "vm_sio_set_mode",
+   "args": 1,
+   "opcode": 108
+  },
+  "OP_VM_SIO_EXCHANGE": {
+   "handler": "vm_sio_exchange",
+   "args": 5,
+   "opcode": 109
+  },
+  "OP_VM_CAMERA_MOVE_TO": {
+   "handler": "vm_camera_move_to",
+   "args": 4,
+   "opcode": 112
+  },
+  "OP_VM_CAMERA_SET_POS": {
+   "handler": "vm_camera_set_pos",
+   "args": 2,
+   "opcode": 113
+  },
+  "OP_VM_TIMER_STOP": {
+   "handler": "vm_timer_stop",
+   "args": 1,
+   "opcode": 114
+  },
+  "OP_VM_TIMER_RESET": {
+   "handler": "vm_timer_reset",
+   "args": 1,
+   "opcode": 115
+  },
+  "OP_VM_ACTOR_TERMINATE_UPDATE": {
+   "handler": "vm_actor_terminate_update",
+   "args": 2,
+   "opcode": 116
+  },
+  "OP_VM_ACTOR_SET_ANIM_FRAME": {
+   "handler": "vm_actor_set_anim_frame",
+   "args": 2,
+   "opcode": 117
+  },
+  "OP_VM_MEMSET": {
+   "handler": "vm_memset",
+   "args": 6,
+   "opcode": 118
+  },
+  "OP_VM_MEMCPY": {
+   "handler": "vm_memcpy",
+   "args": 6,
+   "opcode": 119
+  },
+  "OP_VM_RTC_LATCH": {
+   "handler": "vm_rtc_latch",
+   "args": 0,
+   "opcode": 120
+  },
+  "OP_VM_RTC_GET": {
+   "handler": "vm_rtc_get",
+   "args": 3,
+   "opcode": 121
+  },
+  "OP_VM_RTC_SET": {
+   "handler": "vm_rtc_set",
+   "args": 3,
+   "opcode": 122
+  },
+  "OP_VM_RTC_START": {
+   "handler": "vm_rtc_start",
+   "args": 1,
+   "opcode": 123
+  },
+  "OP_VM_LOAD_PALETTE": {
+   "handler": "vm_load_palette",
+   "args": 2,
+   "opcode": 124
+  },
+  "OP_VM_SGB_TRANSFER": {
+   "handler": "vm_sgb_transfer",
+   "args": 0,
+   "opcode": 126
+  },
+  "OP_VM_RUMBLE": {
+   "handler": "vm_rumble",
+   "args": 1,
+   "opcode": 127
+  },
+  "OP_VM_PROJECTILE_LAUNCH": {
+   "handler": "vm_projectile_launch",
+   "args": 3,
+   "opcode": 128
+  },
+  "OP_VM_PROJECTILE_LOAD_TYPE": {
+   "handler": "vm_projectile_load_type",
+   "args": 5,
+   "opcode": 129
+  },
+  "OP_VM_ACTOR_GET_ANIM_FRAME": {
+   "handler": "vm_actor_get_anim_frame",
+   "args": 2,
+   "opcode": 131
+  },
+  "OP_VM_ACTOR_SET_ANIM_SET": {
+   "handler": "vm_actor_set_anim_set",
+   "args": 4,
+   "opcode": 132
+  },
+  "OP_VM_SWITCH_TEXT_LAYER": {
+   "handler": "vm_switch_text_layer",
+   "args": 1,
+   "opcode": 133
+  },
+  "OP_VM_ACTOR_GET_ANGLE": {
+   "handler": "vm_actor_get_angle",
+   "args": 4,
+   "opcode": 134
+  },
+  "OP_VM_ACTOR_SET_SPRITESHEET_BY_REF": {
+   "handler": "vm_actor_set_spritesheet_by_ref",
+   "args": 4,
+   "opcode": 135
+  },
+  "OP_VM_ACTOR_MOVE_CANCEL": {
+   "handler": "vm_actor_move_cancel",
+   "args": 2,
+   "opcode": 136
+  },
+  "OP_VM_SIN_SCALE": {
+   "handler": "vm_sin_scale",
+   "args": 5,
+   "opcode": 137
+  },
+  "OP_VM_COS_SCALE": {
+   "handler": "vm_cos_scale",
+   "args": 5,
+   "opcode": 138
+  },
+  "OP_VM_SET_TEXT_SOUND": {
+   "handler": "vm_set_text_sound",
+   "args": 4,
+   "opcode": 139
+  },
+  "OP_VM_PRINTER_DETECT": {
+   "handler": "vm_print_detect",
+   "args": 3,
+   "opcode": 140
+  },
+  "OP_VM_PRINT_OVERLAY": {
+   "handler": "vm_print_overlay",
+   "args": 5,
+   "opcode": 141
+  },
+  "OP_VM_ACTOR_BEGIN_UPDATE": {
+   "handler": "vm_actor_begin_update",
+   "args": 2,
+   "opcode": 142
+  },
+  "OP_VM_ACTOR_MOVE_TO_INIT": {
+   "handler": "vm_actor_move_to_init",
+   "args": 3,
+   "opcode": 143
+  },
+  "OP_VM_ACTOR_MOVE_TO_X": {
+   "handler": "vm_actor_move_to_x",
+   "args": 3,
+   "opcode": 144
+  },
+  "OP_VM_ACTOR_MOVE_TO_Y": {
+   "handler": "vm_actor_move_to_y",
+   "args": 3,
+   "opcode": 145
+  },
+  "OP_VM_ACTOR_MOVE_TO_XY": {
+   "handler": "vm_actor_move_to_xy",
+   "args": 3,
+   "opcode": 146
+  },
+  "OP_VM_ACTOR_MOVE_TO_SET_DIR_X": {
+   "handler": "vm_actor_move_to_set_dir_x",
+   "args": 2,
+   "opcode": 147
+  },
+  "OP_VM_ACTOR_MOVE_TO_SET_DIR_Y": {
+   "handler": "vm_actor_move_to_set_dir_y",
+   "args": 2,
+   "opcode": 148
+  },
+  "OP_VM_ACTOR_SET_ANIM_MOVING": {
+   "handler": "vm_actor_set_anim_moving",
+   "args": 2,
+   "opcode": 149
+  }
+ },
+ "constants": {
+  "EXCEPTION_RESET": 1,
+  "EXCEPTION_CHANGE_SCENE": 2,
+  "EXCEPTION_SAVE": 3,
+  "EXCEPTION_LOAD": 4,
+  ".ARG0": -1,
+  ".ARG1": -2,
+  ".ARG2": -3,
+  ".ARG3": -4,
+  ".ARG4": -5,
+  ".ARG5": -6,
+  ".ARG6": -7,
+  ".ARG7": -8,
+  ".ARG8": -9,
+  ".ARG9": -10,
+  ".ARG10": -11,
+  ".ARG11": -12,
+  ".ARG12": -13,
+  ".ARG13": -14,
+  ".ARG14": -15,
+  ".ARG15": -16,
+  ".ARG16": -17,
+  ".PARAM0": -3,
+  ".PARAM1": -4,
+  ".PARAM2": -5,
+  ".PARAM3": -6,
+  ".PARAM4": -7,
+  ".PARAM5": -8,
+  ".PARAM6": -9,
+  ".PARAM7": -10,
+  ".PARAM8": -11,
+  ".PARAM9": -12,
+  ".PARAM10": -13,
+  ".PARAM11": -14,
+  ".PARAM12": -15,
+  ".PARAM13": -16,
+  ".PARAM14": -17,
+  ".PARAM15": -18,
+  ".PARAM16": -19,
+  ".GET_BYTE": 0,
+  ".GET_WORD": 1,
+  ".EQ": 1,
+  ".LT": 2,
+  ".LTE": 3,
+  ".GT": 4,
+  ".GTE": 5,
+  ".NE": 6,
+  ".STOP": 0,
+  ".AND": 7,
+  ".OR": 8,
+  ".NOT": 9,
+  ".ADD": 10,
+  ".SUB": 11,
+  ".MUL": 12,
+  ".DIV": 13,
+  ".MOD": 14,
+  ".B_AND": 15,
+  ".B_OR": 16,
+  ".B_XOR": 17,
+  ".SHL": 18,
+  ".SHR": 19,
+  ".MIN": 20,
+  ".MAX": 21,
+  ".ATAN2": 22,
+  ".ABS": 23,
+  ".B_NOT": 24,
+  ".NEG": 25,
+  ".ISQRT": 26,
+  ".RND": 27,
+  ".INT8": -1,
+  ".INT16": -2,
+  ".REF": -3,
+  ".REF_IND": -4,
+  ".REF_SET": -5,
+  ".REF_SET_IND": -6,
+  ".REF_MEM": -7,
+  ".REF_MEM_SET": -8,
+  ".REF_MEM_IND": -9,
+  ".MEM_I8": 105,
+  ".MEM_U8": 117,
+  ".MEM_I16": 73,
+  ".TEST_WAIT_VBL": 1,
+  ".ACTOR_ATTR_H_FIRST": 1,
+  ".ACTOR_ATTR_CHECK_COLL": 34,
+  ".ACTOR_ATTR_CHECK_COLL_WALLS": 2,
+  ".ACTOR_ATTR_CHECK_COLL_ACTORS": 32,
+  ".ACTOR_ATTR_DIAGONAL": 4,
+  ".ACTOR_ATTR_RELATIVE_SNAP_PX": 8,
+  ".ACTOR_ATTR_RELATIVE_SNAP_TILE": 16,
+  ".DIR_DOWN": 0,
+  ".DIR_RIGHT": 1,
+  ".DIR_UP": 2,
+  ".DIR_LEFT": 3,
+  ".ACTOR_FLAG_PINNED": 1,
+  ".ACTOR_FLAG_HIDDEN": 2,
+  ".ACTOR_FLAG_ANIM_NOLOOP": 4,
+  ".ACTOR_FLAG_COLLISION": 8,
+  ".ACTOR_FLAG_PERSISTENT": 16,
+  ".ACTOR_VISIBLE": 0,
+  ".ACTOR_HIDDEN": 1,
+  ".ACTOR_COLLISION_DISABLED": 0,
+  ".ACTOR_COLLISION_ENABLED": 1,
+  ".DISPLAY_DEFAULT": 0,
+  ".DISPLAY_PRESERVE_POS": 1,
+  ".TEXT_TILE_CONTINUE": 255,
+  ".TEXT_LAYER_BKG": 0,
+  ".TEXT_LAYER_WIN": 1,
+  ".MENU_CLOSED_Y": 18,
+  ".UI_NONMODAL": 0,
+  ".UI_MODAL": 1,
+  ".UI_WAIT_NONE": 0,
+  ".UI_WAIT_WINDOW": 1,
+  ".UI_WAIT_TEXT": 2,
+  ".UI_WAIT_BTN_A": 4,
+  ".UI_WAIT_BTN_B": 8,
+  ".UI_WAIT_BTN_ANY": 16,
+  ".OVERLAY_IN_SPEED": -1,
+  ".OVERLAY_TEXT_IN_SPEED": -1,
+  ".OVERLAY_OUT_SPEED": -2,
+  ".OVERLAY_TEXT_OUT_SPEED": -2,
+  ".OVERLAY_SPEED_INSTANT": -3,
+  ".UI_COLOR_BLACK": 0,
+  ".UI_COLOR_WHITE": 1,
+  ".UI_DRAW_FRAME": 1,
+  ".UI_AUTO_SCROLL": 2,
+  ".UI_MENU_STANDARD": 0,
+  ".UI_MENU_LAST_0": 1,
+  ".UI_MENU_CANCEL_B": 2,
+  ".UI_MENU_SET_START": 4,
+  ".UI_PRINT_LEFTTORIGHT": 0,
+  ".UI_PRINT_RIGHTTOLEFT": 1,
+  ".SPRITES_SHOW": 0,
+  ".SPRITES_HIDE": 1,
+  ".OVERRIDE_DEFAULT": 128,
+  ".JOY0": 0,
+  ".JOY1": 1,
+  ".JOY2": 2,
+  ".JOY3": 3,
+  ".FADE_NONMODAL": 0,
+  ".FADE_MODAL": 1,
+  ".FADE_OUT": 0,
+  ".FADE_IN": 2,
+  ".FRAME_TILE_ID": 192,
+  ".FRAME_LENGTH": 9,
+  ".CURSOR_TILE_ID": 203,
+  ".CURSOR_LENGTH": 1,
+  ".POLL_EVENT_INPUT": 1,
+  ".POLL_EVENT_MUSIC": 2,
+  ".MODE_8X8": 0,
+  ".MODE_8X16": 1,
+  ".MUSIC_NO_LOOP": 0,
+  ".MUSIC_LOOP": 1,
+  ".MUTE_CH1": 1,
+  ".MUTE_DUTY1": 1,
+  ".MUTE_CH2": 2,
+  ".MUTE_DUTY2": 2,
+  ".MUTE_CH3": 4,
+  ".MUTE_WAVE": 4,
+  ".MUTE_CH4": 8,
+  ".MUTE_NOISE": 8,
+  ".SFX_PRIORITY_MINIMAL": 0,
+  ".SFX_PRIORITY_NORMAL": 4,
+  ".SFX_PRIORITY_HIGH": 8,
+  ".SIO_MODE_NONE": 0,
+  ".SIO_MODE_MASTER": 1,
+  ".SIO_MODE_SLAVE": 2,
+  ".CAMERA_LOCK": 3,
+  ".CAMERA_LOCK_X": 1,
+  ".CAMERA_LOCK_Y": 2,
+  ".CAMERA_LOCK_X_MIN": 4,
+  ".CAMERA_LOCK_X_MAX": 8,
+  ".CAMERA_LOCK_Y_MIN": 16,
+  ".CAMERA_LOCK_Y_MAX": 32,
+  ".CAMERA_UNLOCK": 0,
+  ".CAMERA_SHAKE_X": 1,
+  ".CAMERA_SHAKE_Y": 2,
+  ".RTC_SECONDS": 0,
+  ".RTC_MINUTES": 1,
+  ".RTC_HOURS": 2,
+  ".RTC_DAYS": 3,
+  ".RTC_STOP": 0,
+  ".RTC_START": 1,
+  ".PALETTE_COMMIT": 1,
+  ".PALETTE_BKG": 2,
+  ".PALETTE_SPRITE": 4
+ },
+ "macros": {
+  "VM_STOP": {
+   "params": [],
+   "bytes": [
+    {
+     "opcode": "OP_VM_STOP"
+    }
+   ]
+  },
+  "VM_PUSH_CONST": {
+   "params": [
+    "VAL"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_PUSH_CONST"
+    },
+    {
+     "param": "VAL",
+     "part": "high"
+    },
+    {
+     "param": "VAL",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_POP": {
+   "params": [
+    "N"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_POP"
+    },
+    {
+     "param": "N",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_CALL": {
+   "params": [
+    "ADDR"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_CALL"
+    },
+    {
+     "param": "ADDR",
+     "part": "high"
+    },
+    {
+     "param": "ADDR",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_RET": {
+   "params": [],
+   "bytes": [
+    {
+     "opcode": "OP_VM_RET"
+    },
+    {
+     "byte": 0
+    }
+   ]
+  },
+  "VM_RET_N": {
+   "params": [
+    "N"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_RET"
+    },
+    {
+     "param": "N",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_GET_FAR": {
+   "params": [
+    "IDX",
+    "SIZE",
+    "BANK",
+    "ADDR"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_GET_FAR"
+    },
+    {
+     "param": "ADDR",
+     "part": "high"
+    },
+    {
+     "param": "ADDR",
+     "part": "low"
+    },
+    {
+     "param": "BANK",
+     "part": "low"
+    },
+    {
+     "param": "SIZE",
+     "part": "low"
+    },
+    {
+     "param": "IDX",
+     "part": "high"
+    },
+    {
+     "param": "IDX",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_LOOP": {
+   "params": [
+    "IDX",
+    "LABEL",
+    "N"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_LOOP"
+    },
+    {
+     "param": "N",
+     "part": "low"
+    },
+    {
+     "param": "LABEL",
+     "part": "high"
+    },
+    {
+     "param": "LABEL",
+     "part": "low"
+    },
+    {
+     "param": "IDX",
+     "part": "high"
+    },
+    {
+     "param": "IDX",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_SWITCH": {
+   "params": [
+    "IDX",
+    "SIZE",
+    "N"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_SWITCH"
+    },
+    {
+     "param": "N",
+     "part": "low"
+    },
+    {
+     "param": "SIZE",
+     "part": "low"
+    },
+    {
+     "param": "IDX",
+     "part": "high"
+    },
+    {
+     "param": "IDX",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_JUMP": {
+   "params": [
+    "LABEL"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_JUMP"
+    },
+    {
+     "param": "LABEL",
+     "part": "high"
+    },
+    {
+     "param": "LABEL",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_RATE_LIMIT_CONST": {
+   "params": [
+    "N",
+    "IDX",
+    "LABEL"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_RATE_LIMIT_CONST"
+    },
+    {
+     "param": "LABEL",
+     "part": "high"
+    },
+    {
+     "param": "LABEL",
+     "part": "low"
+    },
+    {
+     "param": "IDX",
+     "part": "high"
+    },
+    {
+     "param": "IDX",
+     "part": "low"
+    },
+    {
+     "param": "N",
+     "part": "high"
+    },
+    {
+     "param": "N",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_CALL_FAR": {
+   "params": [
+    "BANK",
+    "ADDR"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_CALL_FAR"
+    },
+    {
+     "param": "ADDR",
+     "part": "high"
+    },
+    {
+     "param": "ADDR",
+     "part": "low"
+    },
+    {
+     "param": "BANK",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_RET_FAR": {
+   "params": [],
+   "bytes": [
+    {
+     "opcode": "OP_VM_RET_FAR"
+    },
+    {
+     "byte": 0
+    }
+   ]
+  },
+  "VM_RET_FAR_N": {
+   "params": [
+    "N"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_RET_FAR"
+    },
+    {
+     "param": "N",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_INVOKE": {
+   "params": [
+    "BANK",
+    "ADDR",
+    "N",
+    "PARAMS"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_INVOKE"
+    },
+    {
+     "param": "PARAMS",
+     "part": "high"
+    },
+    {
+     "param": "PARAMS",
+     "part": "low"
+    },
+    {
+     "param": "N",
+     "part": "low"
+    },
+    {
+     "param": "ADDR",
+     "part": "high"
+    },
+    {
+     "param": "ADDR",
+     "part": "low"
+    },
+    {
+     "param": "BANK",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_BEGINTHREAD": {
+   "params": [
+    "BANK",
+    "THREADPROC",
+    "HTHREAD",
+    "NARGS"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_BEGINTHREAD"
+    },
+    {
+     "param": "NARGS",
+     "part": "low"
+    },
+    {
+     "param": "HTHREAD",
+     "part": "high"
+    },
+    {
+     "param": "HTHREAD",
+     "part": "low"
+    },
+    {
+     "param": "THREADPROC",
+     "part": "high"
+    },
+    {
+     "param": "THREADPROC",
+     "part": "low"
+    },
+    {
+     "param": "BANK",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_IF": {
+   "params": [
+    "CONDITION",
+    "IDXA",
+    "IDXB",
+    "LABEL",
+    "N"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_IF"
+    },
+    {
+     "param": "N",
+     "part": "low"
+    },
+    {
+     "param": "LABEL",
+     "part": "high"
+    },
+    {
+     "param": "LABEL",
+     "part": "low"
+    },
+    {
+     "param": "IDXB",
+     "part": "high"
+    },
+    {
+     "param": "IDXB",
+     "part": "low"
+    },
+    {
+     "param": "IDXA",
+     "part": "high"
+    },
+    {
+     "param": "IDXA",
+     "part": "low"
+    },
+    {
+     "param": "CONDITION",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_PUSH_VALUE_IND": {
+   "params": [
+    "IDX"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_PUSH_VALUE_IND"
+    },
+    {
+     "param": "IDX",
+     "part": "high"
+    },
+    {
+     "param": "IDX",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_PUSH_VALUE": {
+   "params": [
+    "IDX"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_PUSH_VALUE"
+    },
+    {
+     "param": "IDX",
+     "part": "high"
+    },
+    {
+     "param": "IDX",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_RESERVE": {
+   "params": [
+    "N"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_RESERVE"
+    },
+    {
+     "param": "N",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_SET": {
+   "params": [
+    "IDXA",
+    "IDXB"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_SET"
+    },
+    {
+     "param": "IDXB",
+     "part": "high"
+    },
+    {
+     "param": "IDXB",
+     "part": "low"
+    },
+    {
+     "param": "IDXA",
+     "part": "high"
+    },
+    {
+     "param": "IDXA",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_SET_CONST": {
+   "params": [
+    "IDX",
+    "VAL"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_SET_CONST"
+    },
+    {
+     "param": "VAL",
+     "part": "high"
+    },
+    {
+     "param": "VAL",
+     "part": "low"
+    },
+    {
+     "param": "IDX",
+     "part": "high"
+    },
+    {
+     "param": "IDX",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_RPN": {
+   "params": [],
+   "bytes": [
+    {
+     "opcode": "OP_VM_RPN"
+    }
+   ]
+  },
+  "VM_JOIN": {
+   "params": [
+    "IDX"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_JOIN"
+    },
+    {
+     "param": "IDX",
+     "part": "high"
+    },
+    {
+     "param": "IDX",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_TERMINATE": {
+   "params": [
+    "IDX"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_TERMINATE"
+    },
+    {
+     "param": "IDX",
+     "part": "high"
+    },
+    {
+     "param": "IDX",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_IDLE": {
+   "params": [],
+   "bytes": [
+    {
+     "opcode": "OP_VM_IDLE"
+    }
+   ]
+  },
+  "VM_GET_TLOCAL": {
+   "params": [
+    "IDXA",
+    "IDXB"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_GET_TLOCAL"
+    },
+    {
+     "param": "IDXB",
+     "part": "high"
+    },
+    {
+     "param": "IDXB",
+     "part": "low"
+    },
+    {
+     "param": "IDXA",
+     "part": "high"
+    },
+    {
+     "param": "IDXA",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_IF_CONST": {
+   "params": [
+    "CONDITION",
+    "IDXA",
+    "B",
+    "LABEL",
+    "N"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_IF_CONST"
+    },
+    {
+     "param": "N",
+     "part": "low"
+    },
+    {
+     "param": "LABEL",
+     "part": "high"
+    },
+    {
+     "param": "LABEL",
+     "part": "low"
+    },
+    {
+     "param": "B",
+     "part": "high"
+    },
+    {
+     "param": "B",
+     "part": "low"
+    },
+    {
+     "param": "IDXA",
+     "part": "high"
+    },
+    {
+     "param": "IDXA",
+     "part": "low"
+    },
+    {
+     "param": "CONDITION",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_ASM": {
+   "params": [],
+   "bytes": [
+    {
+     "opcode": "OP_VM_ASM"
+    }
+   ]
+  },
+  "VM_INIT_RNG": {
+   "params": [
+    "IDX"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_INIT_RNG"
+    },
+    {
+     "param": "IDX",
+     "part": "high"
+    },
+    {
+     "param": "IDX",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_RAND": {
+   "params": [
+    "IDX",
+    "MIN",
+    "LIMIT"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_RAND"
+    },
+    {
+     "param": "LIMIT",
+     "part": "high"
+    },
+    {
+     "param": "LIMIT",
+     "part": "low"
+    },
+    {
+     "param": "MIN",
+     "part": "high"
+    },
+    {
+     "param": "MIN",
+     "part": "low"
+    },
+    {
+     "param": "IDX",
+     "part": "high"
+    },
+    {
+     "param": "IDX",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_LOCK": {
+   "params": [],
+   "bytes": [
+    {
+     "opcode": "OP_VM_LOCK"
+    }
+   ]
+  },
+  "VM_UNLOCK": {
+   "params": [],
+   "bytes": [
+    {
+     "opcode": "OP_VM_UNLOCK"
+    }
+   ]
+  },
+  "VM_RAISE": {
+   "params": [
+    "CODE",
+    "SIZE"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_RAISE"
+    },
+    {
+     "param": "SIZE",
+     "part": "low"
+    },
+    {
+     "param": "CODE",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_SET_INDIRECT": {
+   "params": [
+    "IDXA",
+    "IDXB"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_SET_INDIRECT"
+    },
+    {
+     "param": "IDXB",
+     "part": "high"
+    },
+    {
+     "param": "IDXB",
+     "part": "low"
+    },
+    {
+     "param": "IDXA",
+     "part": "high"
+    },
+    {
+     "param": "IDXA",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_GET_INDIRECT": {
+   "params": [
+    "IDXA",
+    "IDXB"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_GET_INDIRECT"
+    },
+    {
+     "param": "IDXB",
+     "part": "high"
+    },
+    {
+     "param": "IDXB",
+     "part": "low"
+    },
+    {
+     "param": "IDXA",
+     "part": "high"
+    },
+    {
+     "param": "IDXA",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_TEST_TERMINATE": {
+   "params": [
+    "FLAGS"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_TEST_TERMINATE"
+    },
+    {
+     "param": "FLAGS",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_POLL_LOADED": {
+   "params": [
+    "IDX"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_POLL_LOADED"
+    },
+    {
+     "param": "IDX",
+     "part": "high"
+    },
+    {
+     "param": "IDX",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_PUSH_REFERENCE": {
+   "params": [
+    "IDX"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_PUSH_REFERENCE"
+    },
+    {
+     "param": "IDX",
+     "part": "high"
+    },
+    {
+     "param": "IDX",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_CALL_NATIVE": {
+   "params": [
+    "BANK",
+    "PTR"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_CALL_NATIVE"
+    },
+    {
+     "param": "PTR",
+     "part": "high"
+    },
+    {
+     "param": "PTR",
+     "part": "low"
+    },
+    {
+     "param": "BANK",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_MEMSET": {
+   "params": [
+    "DEST",
+    "VALUE",
+    "COUNT"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_MEMSET"
+    },
+    {
+     "param": "COUNT",
+     "part": "high"
+    },
+    {
+     "param": "COUNT",
+     "part": "low"
+    },
+    {
+     "param": "VALUE",
+     "part": "high"
+    },
+    {
+     "param": "VALUE",
+     "part": "low"
+    },
+    {
+     "param": "DEST",
+     "part": "high"
+    },
+    {
+     "param": "DEST",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_MEMCPY": {
+   "params": [
+    "DEST",
+    "SOUR",
+    "COUNT"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_MEMCPY"
+    },
+    {
+     "param": "COUNT",
+     "part": "high"
+    },
+    {
+     "param": "COUNT",
+     "part": "low"
+    },
+    {
+     "param": "SOUR",
+     "part": "high"
+    },
+    {
+     "param": "SOUR",
+     "part": "low"
+    },
+    {
+     "param": "DEST",
+     "part": "high"
+    },
+    {
+     "param": "DEST",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_SAVE_PEEK": {
+   "params": [
+    "RES",
+    "DEST",
+    "SOUR",
+    "COUNT",
+    "SLOT"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_SAVE_PEEK"
+    },
+    {
+     "param": "SLOT",
+     "part": "low"
+    },
+    {
+     "param": "COUNT",
+     "part": "high"
+    },
+    {
+     "param": "COUNT",
+     "part": "low"
+    },
+    {
+     "param": "SOUR",
+     "part": "high"
+    },
+    {
+     "param": "SOUR",
+     "part": "low"
+    },
+    {
+     "param": "DEST",
+     "part": "high"
+    },
+    {
+     "param": "DEST",
+     "part": "low"
+    },
+    {
+     "param": "RES",
+     "part": "high"
+    },
+    {
+     "param": "RES",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_SAVE_CLEAR": {
+   "params": [
+    "SLOT"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_SAVE_CLEAR"
+    },
+    {
+     "param": "SLOT",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_ACTOR_MOVE_TO": {
+   "params": [
+    "IDX"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_ACTOR_MOVE_TO"
+    },
+    {
+     "param": "IDX",
+     "part": "high"
+    },
+    {
+     "param": "IDX",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_ACTOR_MOVE_TO_INIT": {
+   "params": [
+    "IDX",
+    "ATTR"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_ACTOR_MOVE_TO_INIT"
+    },
+    {
+     "param": "ATTR",
+     "part": "low"
+    },
+    {
+     "param": "IDX",
+     "part": "high"
+    },
+    {
+     "param": "IDX",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_ACTOR_MOVE_TO_X": {
+   "params": [
+    "IDX",
+    "ATTR"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_ACTOR_MOVE_TO_X"
+    },
+    {
+     "param": "ATTR",
+     "part": "low"
+    },
+    {
+     "param": "IDX",
+     "part": "high"
+    },
+    {
+     "param": "IDX",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_ACTOR_MOVE_TO_Y": {
+   "params": [
+    "IDX",
+    "ATTR"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_ACTOR_MOVE_TO_Y"
+    },
+    {
+     "param": "ATTR",
+     "part": "low"
+    },
+    {
+     "param": "IDX",
+     "part": "high"
+    },
+    {
+     "param": "IDX",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_ACTOR_MOVE_TO_XY": {
+   "params": [
+    "IDX",
+    "ATTR"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_ACTOR_MOVE_TO_XY"
+    },
+    {
+     "param": "ATTR",
+     "part": "low"
+    },
+    {
+     "param": "IDX",
+     "part": "high"
+    },
+    {
+     "param": "IDX",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_ACTOR_MOVE_TO_SET_DIR_X": {
+   "params": [
+    "IDX"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_ACTOR_MOVE_TO_SET_DIR_X"
+    },
+    {
+     "param": "IDX",
+     "part": "high"
+    },
+    {
+     "param": "IDX",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_ACTOR_MOVE_TO_SET_DIR_Y": {
+   "params": [
+    "IDX"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_ACTOR_MOVE_TO_SET_DIR_Y"
+    },
+    {
+     "param": "IDX",
+     "part": "high"
+    },
+    {
+     "param": "IDX",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_ACTOR_SET_ANIM_MOVING": {
+   "params": [
+    "IDX"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_ACTOR_SET_ANIM_MOVING"
+    },
+    {
+     "param": "IDX",
+     "part": "high"
+    },
+    {
+     "param": "IDX",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_ACTOR_MOVE_CANCEL": {
+   "params": [
+    "ACTOR"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_ACTOR_MOVE_CANCEL"
+    },
+    {
+     "param": "ACTOR",
+     "part": "high"
+    },
+    {
+     "param": "ACTOR",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_ACTOR_ACTIVATE": {
+   "params": [
+    "ACTOR"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_ACTOR_ACTIVATE"
+    },
+    {
+     "param": "ACTOR",
+     "part": "high"
+    },
+    {
+     "param": "ACTOR",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_ACTOR_SET_DIR": {
+   "params": [
+    "ACTOR",
+    "DIR"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_ACTOR_SET_DIR"
+    },
+    {
+     "param": "DIR",
+     "part": "low"
+    },
+    {
+     "param": "ACTOR",
+     "part": "high"
+    },
+    {
+     "param": "ACTOR",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_ACTOR_DEACTIVATE": {
+   "params": [
+    "ACTOR"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_ACTOR_DEACTIVATE"
+    },
+    {
+     "param": "ACTOR",
+     "part": "high"
+    },
+    {
+     "param": "ACTOR",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_ACTOR_SET_ANIM": {
+   "params": [
+    "ACTOR",
+    "ANIM"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_ACTOR_SET_ANIM"
+    },
+    {
+     "param": "ANIM",
+     "part": "high"
+    },
+    {
+     "param": "ANIM",
+     "part": "low"
+    },
+    {
+     "param": "ACTOR",
+     "part": "high"
+    },
+    {
+     "param": "ACTOR",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_ACTOR_SET_POS": {
+   "params": [
+    "IDX"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_ACTOR_SET_POS"
+    },
+    {
+     "param": "IDX",
+     "part": "high"
+    },
+    {
+     "param": "IDX",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_ACTOR_EMOTE": {
+   "params": [
+    "ACTOR",
+    "AVATAR_BANK",
+    "AVATAR"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_ACTOR_EMOTE"
+    },
+    {
+     "param": "AVATAR",
+     "part": "high"
+    },
+    {
+     "param": "AVATAR",
+     "part": "low"
+    },
+    {
+     "param": "AVATAR_BANK",
+     "part": "low"
+    },
+    {
+     "param": "ACTOR",
+     "part": "high"
+    },
+    {
+     "param": "ACTOR",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_ACTOR_SET_BOUNDS": {
+   "params": [
+    "IDX"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_ACTOR_SET_BOUNDS"
+    },
+    {
+     "param": "IDX",
+     "part": "high"
+    },
+    {
+     "param": "IDX",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_ACTOR_SET_SPRITESHEET": {
+   "params": [
+    "ACTOR",
+    "SHEET_BANK",
+    "SHEET"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_ACTOR_SET_SPRITESHEET"
+    },
+    {
+     "param": "SHEET",
+     "part": "high"
+    },
+    {
+     "param": "SHEET",
+     "part": "low"
+    },
+    {
+     "param": "SHEET_BANK",
+     "part": "low"
+    },
+    {
+     "param": "ACTOR",
+     "part": "high"
+    },
+    {
+     "param": "ACTOR",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_ACTOR_SET_SPRITESHEET_BY_REF": {
+   "params": [
+    "ACTOR",
+    "FAR_PTR"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_ACTOR_SET_SPRITESHEET_BY_REF"
+    },
+    {
+     "param": "FAR_PTR",
+     "part": "high"
+    },
+    {
+     "param": "FAR_PTR",
+     "part": "low"
+    },
+    {
+     "param": "ACTOR",
+     "part": "high"
+    },
+    {
+     "param": "ACTOR",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_ACTOR_REPLACE_TILE": {
+   "params": [
+    "ACTOR",
+    "TARGET_TILE",
+    "TILEDATA_BANK",
+    "TILEDATA",
+    "START",
+    "LEN"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_ACTOR_REPLACE_TILE"
+    },
+    {
+     "param": "LEN",
+     "part": "low"
+    },
+    {
+     "param": "START",
+     "part": "low"
+    },
+    {
+     "param": "TILEDATA",
+     "part": "high"
+    },
+    {
+     "param": "TILEDATA",
+     "part": "low"
+    },
+    {
+     "param": "TILEDATA_BANK",
+     "part": "low"
+    },
+    {
+     "param": "TARGET_TILE",
+     "part": "low"
+    },
+    {
+     "param": "ACTOR",
+     "part": "high"
+    },
+    {
+     "param": "ACTOR",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_ACTOR_GET_POS": {
+   "params": [
+    "IDX"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_ACTOR_GET_POS"
+    },
+    {
+     "param": "IDX",
+     "part": "high"
+    },
+    {
+     "param": "IDX",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_ACTOR_GET_DIR": {
+   "params": [
+    "IDX",
+    "DEST"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_ACTOR_GET_DIR"
+    },
+    {
+     "param": "DEST",
+     "part": "high"
+    },
+    {
+     "param": "DEST",
+     "part": "low"
+    },
+    {
+     "param": "IDX",
+     "part": "high"
+    },
+    {
+     "param": "IDX",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_ACTOR_GET_ANGLE": {
+   "params": [
+    "IDX",
+    "DEST"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_ACTOR_GET_ANGLE"
+    },
+    {
+     "param": "DEST",
+     "part": "high"
+    },
+    {
+     "param": "DEST",
+     "part": "low"
+    },
+    {
+     "param": "IDX",
+     "part": "high"
+    },
+    {
+     "param": "IDX",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_ACTOR_SET_ANIM_TICK": {
+   "params": [
+    "ACTOR",
+    "TICK"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_ACTOR_SET_ANIM_TICK"
+    },
+    {
+     "param": "TICK",
+     "part": "low"
+    },
+    {
+     "param": "ACTOR",
+     "part": "high"
+    },
+    {
+     "param": "ACTOR",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_ACTOR_SET_MOVE_SPEED": {
+   "params": [
+    "ACTOR",
+    "SPEED"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_ACTOR_SET_MOVE_SPEED"
+    },
+    {
+     "param": "SPEED",
+     "part": "low"
+    },
+    {
+     "param": "ACTOR",
+     "part": "high"
+    },
+    {
+     "param": "ACTOR",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_ACTOR_SET_FLAGS": {
+   "params": [
+    "ACTOR",
+    "FLAGS",
+    "MASK"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_ACTOR_SET_FLAGS"
+    },
+    {
+     "param": "MASK",
+     "part": "low"
+    },
+    {
+     "param": "FLAGS",
+     "part": "low"
+    },
+    {
+     "param": "ACTOR",
+     "part": "high"
+    },
+    {
+     "param": "ACTOR",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_ACTOR_BEGIN_UPDATE": {
+   "params": [
+    "ACTOR"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_ACTOR_BEGIN_UPDATE"
+    },
+    {
+     "param": "ACTOR",
+     "part": "high"
+    },
+    {
+     "param": "ACTOR",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_ACTOR_TERMINATE_UPDATE": {
+   "params": [
+    "ACTOR"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_ACTOR_TERMINATE_UPDATE"
+    },
+    {
+     "param": "ACTOR",
+     "part": "high"
+    },
+    {
+     "param": "ACTOR",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_ACTOR_SET_ANIM_FRAME": {
+   "params": [
+    "ACTOR"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_ACTOR_SET_ANIM_FRAME"
+    },
+    {
+     "param": "ACTOR",
+     "part": "high"
+    },
+    {
+     "param": "ACTOR",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_ACTOR_GET_ANIM_FRAME": {
+   "params": [
+    "ACTOR"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_ACTOR_GET_ANIM_FRAME"
+    },
+    {
+     "param": "ACTOR",
+     "part": "high"
+    },
+    {
+     "param": "ACTOR",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_ACTOR_SET_ANIM_SET": {
+   "params": [
+    "ACTOR",
+    "OFFSET"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_ACTOR_SET_ANIM_SET"
+    },
+    {
+     "param": "OFFSET",
+     "part": "high"
+    },
+    {
+     "param": "OFFSET",
+     "part": "low"
+    },
+    {
+     "param": "ACTOR",
+     "part": "high"
+    },
+    {
+     "param": "ACTOR",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_LOAD_TEXT": {
+   "params": [
+    "NARGS"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_LOAD_TEXT"
+    },
+    {
+     "param": "NARGS",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_DISPLAY_TEXT_EX": {
+   "params": [
+    "OPTIONS",
+    "START_TILE"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_DISPLAY_TEXT"
+    },
+    {
+     "param": "START_TILE",
+     "part": "low"
+    },
+    {
+     "param": "OPTIONS",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_SWITCH_TEXT_LAYER": {
+   "params": [
+    "LAYER"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_SWITCH_TEXT_LAYER"
+    },
+    {
+     "param": "LAYER",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_OVERLAY_SETPOS": {
+   "params": [
+    "X",
+    "Y"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_OVERLAY_SETPOS"
+    },
+    {
+     "param": "Y",
+     "part": "low"
+    },
+    {
+     "param": "X",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_LOAD_TEXT_EX": {
+   "params": [
+    "N"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_LOAD_TEXT_EX"
+    },
+    {
+     "param": "N",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_OVERLAY_WAIT": {
+   "params": [
+    "IS_MODAL",
+    "WAIT_FLAGS"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_OVERLAY_WAIT"
+    },
+    {
+     "param": "WAIT_FLAGS",
+     "part": "low"
+    },
+    {
+     "param": "IS_MODAL",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_OVERLAY_MOVE_TO": {
+   "params": [
+    "X",
+    "Y",
+    "SPEED"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_OVERLAY_MOVE_TO"
+    },
+    {
+     "param": "SPEED",
+     "part": "low"
+    },
+    {
+     "param": "Y",
+     "part": "low"
+    },
+    {
+     "param": "X",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_OVERLAY_SHOW": {
+   "params": [
+    "X",
+    "Y",
+    "COLOR",
+    "OPTIONS"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_OVERLAY_SHOW"
+    },
+    {
+     "param": "OPTIONS",
+     "part": "low"
+    },
+    {
+     "param": "COLOR",
+     "part": "low"
+    },
+    {
+     "param": "Y",
+     "part": "low"
+    },
+    {
+     "param": "X",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_OVERLAY_CLEAR": {
+   "params": [
+    "X",
+    "Y",
+    "W",
+    "H",
+    "COLOR",
+    "OPTIONS"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_OVERLAY_CLEAR"
+    },
+    {
+     "param": "OPTIONS",
+     "part": "low"
+    },
+    {
+     "param": "COLOR",
+     "part": "low"
+    },
+    {
+     "param": "H",
+     "part": "low"
+    },
+    {
+     "param": "W",
+     "part": "low"
+    },
+    {
+     "param": "Y",
+     "part": "low"
+    },
+    {
+     "param": "X",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_CHOICE": {
+   "params": [
+    "IDX",
+    "OPTIONS",
+    "COUNT"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_CHOICE"
+    },
+    {
+     "param": "COUNT",
+     "part": "low"
+    },
+    {
+     "param": "OPTIONS",
+     "part": "low"
+    },
+    {
+     "param": "IDX",
+     "part": "high"
+    },
+    {
+     "param": "IDX",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_SET_FONT": {
+   "params": [
+    "FONT_INDEX"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_SET_FONT"
+    },
+    {
+     "param": "FONT_INDEX",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_OVERLAY_SET_SUBMAP_EX": {
+   "params": [
+    "PARAMS_IDX"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_OVERLAY_SET_SUBMAP_EX"
+    },
+    {
+     "param": "PARAMS_IDX",
+     "part": "high"
+    },
+    {
+     "param": "PARAMS_IDX",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_OVERLAY_SCROLL": {
+   "params": [
+    "X",
+    "Y",
+    "W",
+    "H",
+    "COLOR"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_OVERLAY_SCROLL"
+    },
+    {
+     "param": "COLOR",
+     "part": "low"
+    },
+    {
+     "param": "H",
+     "part": "low"
+    },
+    {
+     "param": "W",
+     "part": "low"
+    },
+    {
+     "param": "Y",
+     "part": "low"
+    },
+    {
+     "param": "X",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_OVERLAY_SET_SCROLL": {
+   "params": [
+    "X",
+    "Y",
+    "W",
+    "H",
+    "COLOR"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_OVERLAY_SET_SCROLL"
+    },
+    {
+     "param": "COLOR",
+     "part": "low"
+    },
+    {
+     "param": "H",
+     "part": "low"
+    },
+    {
+     "param": "W",
+     "part": "low"
+    },
+    {
+     "param": "Y",
+     "part": "low"
+    },
+    {
+     "param": "X",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_OVERLAY_SET_SUBMAP": {
+   "params": [
+    "X",
+    "Y",
+    "W",
+    "H",
+    "SX",
+    "SY"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_OVERLAY_SET_SUBMAP"
+    },
+    {
+     "param": "SY",
+     "part": "low"
+    },
+    {
+     "param": "SX",
+     "part": "low"
+    },
+    {
+     "param": "H",
+     "part": "low"
+    },
+    {
+     "param": "W",
+     "part": "low"
+    },
+    {
+     "param": "Y",
+     "part": "low"
+    },
+    {
+     "param": "X",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_LOAD_TILESET": {
+   "params": [
+    "IDX",
+    "BANK",
+    "BKG"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_LOAD_TILESET"
+    },
+    {
+     "param": "BKG",
+     "part": "high"
+    },
+    {
+     "param": "BKG",
+     "part": "low"
+    },
+    {
+     "param": "BANK",
+     "part": "low"
+    },
+    {
+     "param": "IDX",
+     "part": "high"
+    },
+    {
+     "param": "IDX",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_SET_SPRITE_VISIBLE": {
+   "params": [
+    "MODE"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_SET_SPRITE_VISIBLE"
+    },
+    {
+     "param": "MODE",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_INPUT_WAIT": {
+   "params": [
+    "MASK"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_INPUT_WAIT"
+    },
+    {
+     "param": "MASK",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_INPUT_ATTACH": {
+   "params": [
+    "MASK",
+    "SLOT"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_INPUT_ATTACH"
+    },
+    {
+     "param": "SLOT",
+     "part": "low"
+    },
+    {
+     "param": "MASK",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_INPUT_GET": {
+   "params": [
+    "IDX",
+    "JOYID"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_INPUT_GET"
+    },
+    {
+     "param": "JOYID",
+     "part": "low"
+    },
+    {
+     "param": "IDX",
+     "part": "high"
+    },
+    {
+     "param": "IDX",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_CONTEXT_PREPARE": {
+   "params": [
+    "SLOT",
+    "BANK",
+    "ADDR"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_CONTEXT_PREPARE"
+    },
+    {
+     "param": "ADDR",
+     "part": "high"
+    },
+    {
+     "param": "ADDR",
+     "part": "low"
+    },
+    {
+     "param": "BANK",
+     "part": "low"
+    },
+    {
+     "param": "SLOT",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_OVERLAY_SET_MAP": {
+   "params": [
+    "IDX",
+    "X_IDX",
+    "Y_IDX",
+    "BANK",
+    "BKG"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_OVERLAY_SET_MAP"
+    },
+    {
+     "param": "BKG",
+     "part": "high"
+    },
+    {
+     "param": "BKG",
+     "part": "low"
+    },
+    {
+     "param": "BANK",
+     "part": "low"
+    },
+    {
+     "param": "Y_IDX",
+     "part": "high"
+    },
+    {
+     "param": "Y_IDX",
+     "part": "low"
+    },
+    {
+     "param": "X_IDX",
+     "part": "high"
+    },
+    {
+     "param": "X_IDX",
+     "part": "low"
+    },
+    {
+     "param": "IDX",
+     "part": "high"
+    },
+    {
+     "param": "IDX",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_FADE": {
+   "params": [
+    "FLAGS"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_FADE"
+    },
+    {
+     "param": "FLAGS",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_TIMER_PREPARE": {
+   "params": [
+    "TIMER",
+    "BANK",
+    "ADDR"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_TIMER_PREPARE"
+    },
+    {
+     "param": "ADDR",
+     "part": "high"
+    },
+    {
+     "param": "ADDR",
+     "part": "low"
+    },
+    {
+     "param": "BANK",
+     "part": "low"
+    },
+    {
+     "param": "TIMER",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_TIMER_SET": {
+   "params": [
+    "TIMER",
+    "INTERVAL"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_TIMER_SET"
+    },
+    {
+     "param": "INTERVAL",
+     "part": "low"
+    },
+    {
+     "param": "TIMER",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_TIMER_STOP": {
+   "params": [
+    "TIMER"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_TIMER_STOP"
+    },
+    {
+     "param": "TIMER",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_TIMER_RESET": {
+   "params": [
+    "TIMER"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_TIMER_RESET"
+    },
+    {
+     "param": "TIMER",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_GET_TILE_XY": {
+   "params": [
+    "TILE_IDX",
+    "X_IDX",
+    "Y_IDX"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_GET_TILE_XY"
+    },
+    {
+     "param": "Y_IDX",
+     "part": "high"
+    },
+    {
+     "param": "Y_IDX",
+     "part": "low"
+    },
+    {
+     "param": "X_IDX",
+     "part": "high"
+    },
+    {
+     "param": "X_IDX",
+     "part": "low"
+    },
+    {
+     "param": "TILE_IDX",
+     "part": "high"
+    },
+    {
+     "param": "TILE_IDX",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_REPLACE_TILE": {
+   "params": [
+    "TARGET_TILE_IDX",
+    "TILEDATA_BANK",
+    "TILEDATA",
+    "START_IDX",
+    "LEN"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_REPLACE_TILE"
+    },
+    {
+     "param": "LEN",
+     "part": "low"
+    },
+    {
+     "param": "START_IDX",
+     "part": "high"
+    },
+    {
+     "param": "START_IDX",
+     "part": "low"
+    },
+    {
+     "param": "TILEDATA",
+     "part": "high"
+    },
+    {
+     "param": "TILEDATA",
+     "part": "low"
+    },
+    {
+     "param": "TILEDATA_BANK",
+     "part": "low"
+    },
+    {
+     "param": "TARGET_TILE_IDX",
+     "part": "high"
+    },
+    {
+     "param": "TARGET_TILE_IDX",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_POLL": {
+   "params": [
+    "IDX_EVENT",
+    "IDX_VALUE",
+    "MASK"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_POLL"
+    },
+    {
+     "param": "MASK",
+     "part": "low"
+    },
+    {
+     "param": "IDX_VALUE",
+     "part": "high"
+    },
+    {
+     "param": "IDX_VALUE",
+     "part": "low"
+    },
+    {
+     "param": "IDX_EVENT",
+     "part": "high"
+    },
+    {
+     "param": "IDX_EVENT",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_SET_SPRITE_MODE": {
+   "params": [
+    "MODE"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_SET_SPRITE_MODE"
+    },
+    {
+     "param": "MODE",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_REPLACE_TILE_XY": {
+   "params": [
+    "X",
+    "Y",
+    "TILEDATA_BANK",
+    "TILEDATA",
+    "START_IDX"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_REPLACE_TILE_XY"
+    },
+    {
+     "param": "START_IDX",
+     "part": "high"
+    },
+    {
+     "param": "START_IDX",
+     "part": "low"
+    },
+    {
+     "param": "TILEDATA",
+     "part": "high"
+    },
+    {
+     "param": "TILEDATA",
+     "part": "low"
+    },
+    {
+     "param": "TILEDATA_BANK",
+     "part": "low"
+    },
+    {
+     "param": "Y",
+     "part": "low"
+    },
+    {
+     "param": "X",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_INPUT_DETACH": {
+   "params": [
+    "MASK"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_INPUT_DETACH"
+    },
+    {
+     "param": "MASK",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_MUSIC_PLAY": {
+   "params": [
+    "TRACK_BANK",
+    "TRACK",
+    "LOOP"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_MUSIC_PLAY"
+    },
+    {
+     "param": "TRACK",
+     "part": "high"
+    },
+    {
+     "param": "TRACK",
+     "part": "low"
+    },
+    {
+     "param": "TRACK_BANK",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_MUSIC_STOP": {
+   "params": [],
+   "bytes": [
+    {
+     "opcode": "OP_VM_MUSIC_STOP"
+    }
+   ]
+  },
+  "VM_MUSIC_MUTE": {
+   "params": [
+    "MASK"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_MUSIC_MUTE"
+    },
+    {
+     "param": "MASK",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_SOUND_MASTERVOL": {
+   "params": [
+    "VOL"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_SOUND_MASTERVOL"
+    },
+    {
+     "param": "VOL",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_MUSIC_ROUTINE": {
+   "params": [
+    "ROUTINE",
+    "BANK",
+    "ADDR"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_MUSIC_ROUTINE"
+    },
+    {
+     "param": "ADDR",
+     "part": "high"
+    },
+    {
+     "param": "ADDR",
+     "part": "low"
+    },
+    {
+     "param": "BANK",
+     "part": "low"
+    },
+    {
+     "param": "ROUTINE",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_SFX_PLAY": {
+   "params": [
+    "BANK",
+    "ADDR",
+    "MASK",
+    "PRIO"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_SFX_PLAY"
+    },
+    {
+     "param": "PRIO",
+     "part": "low"
+    },
+    {
+     "param": "MASK",
+     "part": "low"
+    },
+    {
+     "param": "ADDR",
+     "part": "high"
+    },
+    {
+     "param": "ADDR",
+     "part": "low"
+    },
+    {
+     "param": "BANK",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_MUSIC_SETPOS": {
+   "params": [
+    "PATTERN",
+    "ROW"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_MUSIC_SETPOS"
+    },
+    {
+     "param": "ROW",
+     "part": "low"
+    },
+    {
+     "param": "PATTERN",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_SCENE_PUSH": {
+   "params": [],
+   "bytes": [
+    {
+     "opcode": "OP_VM_SCENE_PUSH"
+    }
+   ]
+  },
+  "VM_SCENE_POP": {
+   "params": [],
+   "bytes": [
+    {
+     "opcode": "OP_VM_SCENE_POP"
+    }
+   ]
+  },
+  "VM_SCENE_POP_ALL": {
+   "params": [],
+   "bytes": [
+    {
+     "opcode": "OP_VM_SCENE_POP_ALL"
+    }
+   ]
+  },
+  "VM_SCENE_STACK_RESET": {
+   "params": [],
+   "bytes": [
+    {
+     "opcode": "OP_VM_SCENE_STACK_RESET"
+    }
+   ]
+  },
+  "VM_SIO_SET_MODE": {
+   "params": [
+    "MODE"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_SIO_SET_MODE"
+    },
+    {
+     "param": "MODE",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_CAMERA_MOVE_TO": {
+   "params": [
+    "IDX",
+    "SPEED",
+    "AFTER_LOCK"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_CAMERA_MOVE_TO"
+    },
+    {
+     "param": "AFTER_LOCK",
+     "part": "low"
+    },
+    {
+     "param": "SPEED",
+     "part": "low"
+    },
+    {
+     "param": "IDX",
+     "part": "high"
+    },
+    {
+     "param": "IDX",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_CAMERA_SET_POS": {
+   "params": [
+    "IDX"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_CAMERA_SET_POS"
+    },
+    {
+     "param": "IDX",
+     "part": "high"
+    },
+    {
+     "param": "IDX",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_RTC_LATCH": {
+   "params": [],
+   "bytes": [
+    {
+     "opcode": "OP_VM_RTC_LATCH"
+    }
+   ]
+  },
+  "VM_RTC_GET": {
+   "params": [
+    "IDX",
+    "WHAT"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_RTC_GET"
+    },
+    {
+     "param": "WHAT",
+     "part": "low"
+    },
+    {
+     "param": "IDX",
+     "part": "high"
+    },
+    {
+     "param": "IDX",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_RTC_SET": {
+   "params": [
+    "IDX",
+    "WHAT"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_RTC_SET"
+    },
+    {
+     "param": "WHAT",
+     "part": "low"
+    },
+    {
+     "param": "IDX",
+     "part": "high"
+    },
+    {
+     "param": "IDX",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_RTC_START": {
+   "params": [
+    "START"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_RTC_START"
+    },
+    {
+     "param": "START",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_LOAD_PALETTE": {
+   "params": [
+    "MASK",
+    "OPTIONS"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_LOAD_PALETTE"
+    },
+    {
+     "param": "OPTIONS",
+     "part": "low"
+    },
+    {
+     "param": "MASK",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_SGB_TRANSFER": {
+   "params": [],
+   "bytes": [
+    {
+     "opcode": "OP_VM_SGB_TRANSFER"
+    }
+   ]
+  },
+  "VM_RUMBLE": {
+   "params": [
+    "ENABLE"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_RUMBLE"
+    },
+    {
+     "param": "ENABLE",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_PROJECTILE_LAUNCH": {
+   "params": [
+    "TYPE",
+    "IDX"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_PROJECTILE_LAUNCH"
+    },
+    {
+     "param": "IDX",
+     "part": "high"
+    },
+    {
+     "param": "IDX",
+     "part": "low"
+    },
+    {
+     "param": "TYPE",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_PROJECTILE_LOAD_TYPE": {
+   "params": [
+    "DEST_TYPE",
+    "SRC_TYPE",
+    "BANK",
+    "ADDR"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_PROJECTILE_LOAD_TYPE"
+    },
+    {
+     "param": "ADDR",
+     "part": "high"
+    },
+    {
+     "param": "ADDR",
+     "part": "low"
+    },
+    {
+     "param": "BANK",
+     "part": "low"
+    },
+    {
+     "param": "SRC_TYPE",
+     "part": "low"
+    },
+    {
+     "param": "DEST_TYPE",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_SIN_SCALE": {
+   "params": [
+    "IDX",
+    "IDX_ANGLE",
+    "SCALE"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_SIN_SCALE"
+    },
+    {
+     "param": "SCALE",
+     "part": "low"
+    },
+    {
+     "param": "IDX_ANGLE",
+     "part": "high"
+    },
+    {
+     "param": "IDX_ANGLE",
+     "part": "low"
+    },
+    {
+     "param": "IDX",
+     "part": "high"
+    },
+    {
+     "param": "IDX",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_COS_SCALE": {
+   "params": [
+    "IDX",
+    "IDX_ANGLE",
+    "SCALE"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_COS_SCALE"
+    },
+    {
+     "param": "SCALE",
+     "part": "low"
+    },
+    {
+     "param": "IDX_ANGLE",
+     "part": "high"
+    },
+    {
+     "param": "IDX_ANGLE",
+     "part": "low"
+    },
+    {
+     "param": "IDX",
+     "part": "high"
+    },
+    {
+     "param": "IDX",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_SET_TEXT_SOUND": {
+   "params": [
+    "BANK",
+    "ADDR",
+    "MASK"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_SET_TEXT_SOUND"
+    },
+    {
+     "param": "MASK",
+     "part": "low"
+    },
+    {
+     "param": "ADDR",
+     "part": "high"
+    },
+    {
+     "param": "ADDR",
+     "part": "low"
+    },
+    {
+     "param": "BANK",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_PRINTER_DETECT": {
+   "params": [
+    "ERROR",
+    "DELAY"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_PRINTER_DETECT"
+    },
+    {
+     "param": "DELAY",
+     "part": "low"
+    },
+    {
+     "param": "ERROR",
+     "part": "high"
+    },
+    {
+     "param": "ERROR",
+     "part": "low"
+    }
+   ]
+  },
+  "VM_PRINT_OVERLAY": {
+   "params": [
+    "ERROR",
+    "START",
+    "HEIGHT",
+    "MARGIN"
+   ],
+   "bytes": [
+    {
+     "opcode": "OP_VM_PRINT_OVERLAY"
+    },
+    {
+     "param": "MARGIN",
+     "part": "low"
+    },
+    {
+     "param": "HEIGHT",
+     "part": "low"
+    },
+    {
+     "param": "START",
+     "part": "low"
+    },
+    {
+     "param": "ERROR",
+     "part": "high"
+    },
+    {
+     "param": "ERROR",
+     "part": "low"
+    }
+   ]
+  }
+ },
+ "composite_macros": {
+  ".CASE": {
+   "params": [
+    "VAL",
+    "LABEL"
+   ],
+   "lines": [
+    ".dw #VAL, #LABEL"
+   ]
+  },
+  ".CGB_PAL": {
+   "params": [
+    "R1",
+    "G1",
+    "B1",
+    "R2",
+    "G2",
+    "B2",
+    "R3",
+    "G3",
+    "B3",
+    "R4",
+    "G4",
+    "B4"
+   ],
+   "lines": [
+    ".dw #((R1 & 0x1F) | ((G1 & 0x1F) << 5) | ((B1 & 0x1F) << 10))",
+    ".dw #((R2 & 0x1F) | ((G2 & 0x1F) << 5) | ((B2 & 0x1F) << 10))",
+    ".dw #((R3 & 0x1F) | ((G3 & 0x1F) << 5) | ((B3 & 0x1F) << 10))",
+    ".dw #((R4 & 0x1F) | ((G4 & 0x1F) << 5) | ((B4 & 0x1F) << 10))"
+   ]
+  },
+  ".DMG_PAL": {
+   "params": [
+    "COL1",
+    "COL2",
+    "COL3",
+    "COL4"
+   ],
+   "lines": [
+    ".dw #((COL1 & 0x03) | ((COL2 & 0x03) << 2) | ((COL3 & 0x03) << 4) | ((COL4 & 0x03) << 6))",
+    ".dw 0,0,0"
+   ]
+  },
+  ".MENUITEM": {
+   "params": [
+    "X",
+    "Y",
+    "iL",
+    "iR",
+    "iU",
+    "iD"
+   ],
+   "lines": [
+    ".db #<X, #<Y, #<iL, #<iR, #<iU, #<iD"
+   ]
+  },
+  ".R_INT16": {
+   "params": [
+    "ARG0"
+   ],
+   "lines": [
+    ".db .INT16",
+    ".dw #ARG0"
+   ]
+  },
+  ".R_INT8": {
+   "params": [
+    "ARG0"
+   ],
+   "lines": [
+    ".db .INT8",
+    ".db #<ARG0"
+   ]
+  },
+  ".R_OPERATOR": {
+   "params": [
+    "ARG0"
+   ],
+   "lines": [
+    ".db ARG0"
+   ]
+  },
+  ".R_REF": {
+   "params": [
+    "ARG0"
+   ],
+   "lines": [
+    ".db .REF",
+    ".dw #ARG0"
+   ]
+  },
+  ".R_REF_IND": {
+   "params": [
+    "ARG0"
+   ],
+   "lines": [
+    ".db .REF_IND",
+    ".dw #ARG0"
+   ]
+  },
+  ".R_REF_MEM": {
+   "params": [
+    "TYP",
+    "ADDR"
+   ],
+   "lines": [
+    ".db .REF_MEM",
+    ".db #<TYP",
+    ".dw #ADDR"
+   ]
+  },
+  ".R_REF_MEM_IND": {
+   "params": [
+    "TYP",
+    "ARG0"
+   ],
+   "lines": [
+    ".db .REF_MEM_IND",
+    ".db #<TYP",
+    ".dw #ARG0"
+   ]
+  },
+  ".R_REF_MEM_SET": {
+   "params": [
+    "TYP",
+    "ADDR"
+   ],
+   "lines": [
+    ".db .REF_MEM_SET",
+    ".db #<TYP",
+    ".dw #ADDR"
+   ]
+  },
+  ".R_REF_SET": {
+   "params": [
+    "ARG0"
+   ],
+   "lines": [
+    ".db .REF_SET",
+    ".dw #ARG0"
+   ]
+  },
+  ".R_REF_SET_IND": {
+   "params": [
+    "ARG0"
+   ],
+   "lines": [
+    ".db .REF_SET_IND",
+    ".dw #ARG0"
+   ]
+  },
+  ".R_STOP": {
+   "params": [],
+   "lines": [
+    ".db .STOP"
+   ]
+  },
+  ".SAVE_SLOT": {
+   "params": [
+    "SLOT"
+   ],
+   "lines": [
+    ".db #<SLOT"
+   ]
+  },
+  "VM_ACTOR_SET_COLL_ENABLED": {
+   "params": [
+    "ACTOR",
+    "ENABLED"
+   ],
+   "lines": [
+    "VM_ACTOR_SET_FLAGS ACTOR, ^/(ENABLED << 3)/, .ACTOR_FLAG_COLLISION"
+   ]
+  },
+  "VM_ACTOR_SET_HIDDEN": {
+   "params": [
+    "ACTOR",
+    "HIDDEN"
+   ],
+   "lines": [
+    "VM_ACTOR_SET_FLAGS ACTOR, ^/(HIDDEN << 1)/, .ACTOR_FLAG_HIDDEN"
+   ]
+  },
+  "VM_DISPLAY_TEXT": {
+   "params": [],
+   "lines": [
+    "VM_DISPLAY_TEXT_EX .DISPLAY_DEFAULT, .TEXT_TILE_CONTINUE"
+   ]
+  },
+  "VM_ENDASM": {
+   "params": [],
+   "lines": [
+    "pop hl",
+    "rst 0x20"
+   ]
+  },
+  "VM_FADE_IN": {
+   "params": [
+    "IS_MODAL"
+   ],
+   "lines": [
+    ".if IS_MODAL",
+    "VM_FADE ^/(.FADE_IN | .FADE_MODAL)/",
+    ".else",
+    "VM_FADE ^/(.FADE_IN)/",
+    ".endif"
+   ]
+  },
+  "VM_FADE_OUT": {
+   "params": [
+    "IS_MODAL"
+   ],
+   "lines": [
+    ".if IS_MODAL",
+    "VM_FADE ^/(.FADE_OUT | .FADE_MODAL)/",
+    ".else",
+    "VM_FADE ^/(.FADE_OUT)/",
+    ".endif"
+   ]
+  },
+  "VM_GET_INT16": {
+   "params": [
+    "IDXA",
+    "ADDR"
+   ],
+   "lines": [
+    "VM_RPN",
+    ".R_REF_MEM .MEM_I16, ^!ADDR!",
+    ".R_REF_SET ^!IDXA!",
+    ".R_STOP"
+   ]
+  },
+  "VM_GET_INT8": {
+   "params": [
+    "IDXA",
+    "ADDR"
+   ],
+   "lines": [
+    "VM_RPN",
+    ".R_REF_MEM .MEM_I8, ^!ADDR!",
+    ".R_REF_SET ^!IDXA!",
+    ".R_STOP"
+   ]
+  },
+  "VM_GET_UINT8": {
+   "params": [
+    "IDXA",
+    "ADDR"
+   ],
+   "lines": [
+    "VM_RPN",
+    ".R_REF_MEM .MEM_U8, ^!ADDR!",
+    ".R_REF_SET ^!IDXA!",
+    ".R_STOP"
+   ]
+  },
+  "VM_HIDE_SPRITES": {
+   "params": [],
+   "lines": [
+    "VM_SET_SPRITE_VISIBLE .SPRITES_HIDE"
+   ]
+  },
+  "VM_OVERLAY_HIDE": {
+   "params": [],
+   "lines": [
+    "VM_OVERLAY_SETPOS 0, .MENU_CLOSED_Y"
+   ]
+  },
+  "VM_RANDOMIZE": {
+   "params": [],
+   "lines": [
+    "VM_RPN",
+    ".R_REF_MEM .MEM_U8, _DIV_REG",
+    ".R_REF_MEM .MEM_U8, _game_time",
+    ".R_INT16    256",
+    ".R_OPERATOR .MUL",
+    ".R_OPERATOR .ADD",
+    ".R_STOP",
+    "VM_INIT_RNG     .ARG0",
+    "VM_POP          1"
+   ]
+  },
+  "VM_SET_CONST_INT16": {
+   "params": [
+    "ADDR",
+    "VAL"
+   ],
+   "lines": [
+    "VM_RPN",
+    ".R_INT16 ^!VAL!",
+    ".R_REF_MEM_SET .MEM_I16, ^!ADDR!",
+    ".R_STOP"
+   ]
+  },
+  "VM_SET_CONST_INT8": {
+   "params": [
+    "ADDR",
+    "VAL"
+   ],
+   "lines": [
+    "VM_RPN",
+    ".R_INT8 ^!VAL!",
+    ".R_REF_MEM_SET .MEM_I8, ^!ADDR!",
+    ".R_STOP"
+   ]
+  },
+  "VM_SET_CONST_UINT8": {
+   "params": [
+    "ADDR",
+    "VAL"
+   ],
+   "lines": [
+    "VM_RPN",
+    ".R_INT8 ^!VAL!",
+    ".R_REF_MEM_SET .MEM_U8, ^!ADDR!",
+    ".R_STOP"
+   ]
+  },
+  "VM_SET_INT16": {
+   "params": [
+    "ADDR",
+    "IDXA"
+   ],
+   "lines": [
+    "VM_RPN",
+    ".R_REF ^!IDXA!",
+    ".R_REF_MEM_SET .MEM_I16, ^!ADDR!",
+    ".R_STOP"
+   ]
+  },
+  "VM_SET_INT8": {
+   "params": [
+    "ADDR",
+    "IDXA"
+   ],
+   "lines": [
+    "VM_RPN",
+    ".R_REF ^!IDXA!",
+    ".R_REF_MEM_SET .MEM_I8, ^!ADDR!",
+    ".R_STOP"
+   ]
+  },
+  "VM_SET_PRINT_DIR": {
+   "params": [
+    "DIRECTION"
+   ],
+   "lines": [
+    "VM_SET_CONST_UINT8 _vwf_direction, ^/DIRECTION & 1/"
+   ]
+  },
+  "VM_SET_UINT8": {
+   "params": [
+    "ADDR",
+    "IDXA"
+   ],
+   "lines": [
+    "VM_RPN",
+    ".R_REF ^!IDXA!",
+    ".R_REF_MEM_SET .MEM_U8, ^!ADDR!",
+    ".R_STOP"
+   ]
+  },
+  "VM_SHOW_SPRITES": {
+   "params": [],
+   "lines": [
+    "VM_SET_SPRITE_VISIBLE .SPRITES_SHOW"
+   ]
+  },
+  "VM_SIO_EXCHANGE": {
+   "params": [
+    "SOUR",
+    "DEST",
+    "SIZE"
+   ],
+   "lines": [
+    ".db OP_VM_SIO_EXCHANGE, #<(SIZE << 1), #>DEST, #<DEST, #>SOUR, #<SOUR"
+   ]
+  }
+ }
+}

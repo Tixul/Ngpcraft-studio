@@ -36,6 +36,12 @@ import { useDebounce } from "ui/hooks/use-debounce";
 import { ScriptEditorContext } from "./ScriptEditorContext";
 import { defaultVariableForContext } from "shared/lib/scripts/context";
 import { EVENT_CALL_CUSTOM_EVENT, EVENT_COMMENT, EVENT_TEXT } from "consts";
+import { useNgpcCatalogue } from "components/ngpcraft/useNgpcCatalogue";
+import {
+  isNgpcEventBuildable,
+  NgpcCatalogue,
+  ngpcEventNote,
+} from "shared/lib/ngpcraft/catalogue";
 import { selectScriptEventDefsWithPresets } from "store/features/scriptEventDefs/scriptEventDefsState";
 import type { ScriptEventDef } from "lib/scriptEventsHandlers/handlerTypes";
 import { useAppDispatch, useAppSelector } from "store/hooks";
@@ -248,7 +254,7 @@ const instanciateScriptEvent = (
 };
 
 const eventToOption =
-  (favorites: string[], group?: string) =>
+  (favorites: string[], group?: string, ngpcCatalogue?: NgpcCatalogue) =>
   (event: ScriptEventDef): EventOption => {
     const localisedKey = l10n(event.id as L10NKey); //.replace(/[^:*]*:[ ]*/g, "");
     const name =
@@ -260,6 +266,10 @@ const eventToOption =
       group && event.subGroups?.[group]
         ? l10n(event.subGroups?.[group] as L10NKey)
         : undefined;
+    // NgpCraft: tooltip also explains how the NGPC build differs, if it does.
+    const ngpcNote = ngpcCatalogue
+      ? ngpcEventNote(ngpcCatalogue, event.id)
+      : "";
     return {
       label: name,
       group: groupName,
@@ -267,6 +277,9 @@ const eventToOption =
       event,
       isFavorite: favorites.includes(event.id),
       subGroup,
+      ...(ngpcNote && {
+        description: [event.description, ngpcNote].filter(Boolean).join("\n\n"),
+      }),
     };
   };
 
@@ -597,6 +610,13 @@ const AddScriptEventMenu = ({
   const disabledSceneTypeIds = useAppSelector(
     (state) => state.project.present.settings.disabledSceneTypeIds,
   );
+  const ngpcCatalogue = useNgpcCatalogue();
+  // NgpCraft: events the V3 refuses cannot be added.
+  const isBuildable = useCallback(
+    (event: ScriptEventDef) =>
+      !ngpcCatalogue || isNgpcEventBuildable(ngpcCatalogue, event.id),
+    [ngpcCatalogue],
+  );
 
   useEffect(() => {
     if (selectedCategoryIndex === -1) {
@@ -616,10 +636,12 @@ const AddScriptEventMenu = ({
             (t) => !disabledSceneTypeIds.includes(t),
           );
         }) as ScriptEventDef[]
-    ).filter(notDeprecated);
+    )
+      .filter(notDeprecated)
+      .filter(isBuildable);
 
     const allEvents = ([] as EventOption[]).concat(
-      eventList.map(eventToOption(favoriteEvents)),
+      eventList.map(eventToOption(favoriteEvents, undefined, ngpcCatalogue)),
       customEventsLookup.map(customEventToOption(scriptEventDefs)),
     );
 
@@ -668,7 +690,8 @@ const AddScriptEventMenu = ({
           .map((id: string) => scriptEventDefs[id])
           .filter(identity) as ScriptEventDef[]
       )
-        .map(eventToOption(favoriteEvents))
+        .filter(isBuildable)
+        .map(eventToOption(favoriteEvents, undefined, ngpcCatalogue))
         .sort(sortAlphabeticallyByLabel)
         .map((option, optionIndex) => {
           if (optionIndex === 0) {
@@ -683,7 +706,7 @@ const AddScriptEventMenu = ({
         .map((key: string) => ({
           label: key === "" ? l10n("EVENT_GROUP_MISC") : l10n(key as L10NKey),
           options: (groupedEvents[key] || [])
-            .map(eventToOption(favoriteEvents, key))
+            .map(eventToOption(favoriteEvents, key, ngpcCatalogue))
             .sort(sortAlphabeticallyBySubGroupThenLabel)
             .map((item, index, array) => {
               if (index === 0 || item.subGroup !== array[index - 1].subGroup) {
@@ -714,6 +737,8 @@ const AddScriptEventMenu = ({
     favoriteEvents,
     favoritesCache,
     scriptEventDefs,
+    isBuildable,
+    ngpcCatalogue,
   ]);
 
   const updateOptions = useCallback(() => {

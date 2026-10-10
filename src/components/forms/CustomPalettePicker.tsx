@@ -4,7 +4,6 @@ import ColorSlider from "./ColorSlider";
 import { paletteSelectors } from "store/features/entities/entitiesSelectors";
 import entitiesActions from "store/features/entities/entitiesActions";
 import { Button } from "ui/buttons/Button";
-import { hexDec } from "shared/lib/helpers/8bit";
 import clamp from "shared/lib/helpers/clamp";
 import styled, { css } from "styled-components";
 import { TextField } from "ui/form/TextField";
@@ -12,16 +11,23 @@ import { NumberField } from "ui/form/NumberField";
 import { FixedSpacer, FlexRow } from "ui/spacing/Spacing";
 import API from "renderer/lib/api";
 import { useAppDispatch, useAppSelector } from "store/hooks";
+import { CanonicalRawHex } from "shared/lib/helpers/color";
+// NgpCraft: NGPC colours, 4 bits per channel, no colour correction.
 import {
-  hex2GBChex,
-  rgb5BitToGBCHex,
-  rawHexToCorrectedHex,
-  rawHexToClosestRepresentableRawHex,
-  CorrectedHex,
-  CanonicalRawHex,
-} from "shared/lib/helpers/color";
-import { getSettings } from "store/features/settings/settingsState";
-import { correctedHexToCanonicalHex } from "shared/lib/color/reverseColorCorrection";
+  NGPC_CHANNEL_MAX,
+  ngpc4ToHex,
+  rawHexToNgpc4,
+  rawHexToNgpcHex,
+  rgb8ToNgpc4,
+} from "shared/lib/ngpcraft/color";
+
+const CHANNEL_MAX = NGPC_CHANNEL_MAX;
+
+// A stored colour snapped to what the NGPC can show.
+const toNgpcHex = (hex: string) => rawHexToNgpcHex(hex) as CanonicalRawHex;
+
+const ngpcSwatch = (r: number, g: number, b: number) =>
+  `#${ngpc4ToHex(r, g, b)}`;
 
 const DEFAULT_WHITE = "E8F8E0";
 const DEFAULT_LIGHT = "B0F088";
@@ -114,15 +120,8 @@ const ColorButton = styled.button<ColorButtonProps>`
       : ""}
 `;
 
-const hexToDecimal = hexDec;
-
-const clamp31 = (value: number) => {
-  return clamp(value, 0, 31);
-};
-
-const decimalToHexString = (number: number) => {
-  const ret = number.toString(16).toUpperCase();
-  return ret.length === 1 ? `0${ret}` : ret;
+const clampChannel = (value: number) => {
+  return clamp(value, 0, CHANNEL_MAX);
 };
 
 const HSVtoRGB = (h: number, s: number, v: number) => {
@@ -226,10 +225,6 @@ const CustomPalettePicker = ({ paletteId }: CustomPalettePickerProps) => {
     paletteSelectors.selectById(state, paletteId),
   );
 
-  const colorCorrection = useAppSelector(
-    (state) => getSettings(state).colorCorrection,
-  );
-
   const [selectedColor, setSelectedColor] = useState<ColorIndex>(0);
   const [colorR, setColorR] = useState(0);
   const [colorG, setColorG] = useState(0);
@@ -238,7 +233,6 @@ const CustomPalettePicker = ({ paletteId }: CustomPalettePickerProps) => {
   const [colorS, setColorS] = useState(0);
   const [colorV, setColorV] = useState(0);
   const [colorHex, setColorHex] = useState("000000");
-  const [colorCorrectedHex, setColorCorrectedHex] = useState("000000");
 
   const updateCurrentColor = useCallback(
     (newHex: CanonicalRawHex) => {
@@ -256,20 +250,15 @@ const CustomPalettePicker = ({ paletteId }: CustomPalettePickerProps) => {
 
   const updateHexInputs = useCallback((hex: CanonicalRawHex) => {
     setColorHex(hex);
-    setColorCorrectedHex(rawHexToCorrectedHex(hex));
   }, []);
 
   const updateColorFromRGB = useCallback(
     (r: number, g: number, b: number) => {
-      const hexString = rawHexToClosestRepresentableRawHex(
-        decimalToHexString(Math.round((r / 31) * 255)) +
-          decimalToHexString(Math.round((g / 31) * 255)) +
-          decimalToHexString(Math.round((b / 31) * 255)),
-      );
+      const hexString = ngpc4ToHex(r, g, b) as CanonicalRawHex;
 
       updateCurrentColor(hexString);
 
-      const hsv = RGBtoHSV(r * 8, g * 8, b * 8);
+      const hsv = RGBtoHSV(r * 17, g * 17, b * 17);
 
       setColorH(Math.floor(hsv.h * 360));
       setColorS(Math.floor(hsv.s * 100));
@@ -283,19 +272,9 @@ const CustomPalettePicker = ({ paletteId }: CustomPalettePickerProps) => {
     (h: number, s: number, v: number) => {
       const rgb = HSVtoRGB(h / 360, s / 100, v / 100);
 
-      let r = Math.round(rgb.r / 8);
-      let g = Math.round(rgb.g / 8);
-      let b = Math.round(rgb.b / 8);
+      const { r, g, b } = rgb8ToNgpc4(rgb.r, rgb.g, rgb.b);
 
-      if (r > 31) r = 31;
-      if (g > 31) g = 31;
-      if (b > 31) b = 31;
-
-      const hexString = rawHexToClosestRepresentableRawHex(
-        decimalToHexString(r * 8) +
-          decimalToHexString(g * 8) +
-          decimalToHexString(b * 8),
-      );
+      const hexString = ngpc4ToHex(r, g, b) as CanonicalRawHex;
 
       updateCurrentColor(hexString);
       setColorR(r);
@@ -307,19 +286,9 @@ const CustomPalettePicker = ({ paletteId }: CustomPalettePickerProps) => {
   );
 
   const applyHexToState = useCallback((hex: CanonicalRawHex) => {
-    let r = hexToDecimal(hex.substring(0, 2)) / 8;
-    let g = hexToDecimal(hex.substring(2, 4)) / 8;
-    let b = hexToDecimal(hex.substring(4)) / 8;
+    const { r, g, b } = rawHexToNgpc4(hex);
 
-    if (r > 31) r = 31;
-    if (g > 31) g = 31;
-    if (b > 31) b = 31;
-
-    const hsv = RGBtoHSV(r * 8, g * 8, b * 8);
-
-    r = Math.floor(r);
-    g = Math.floor(g);
-    b = Math.floor(b);
+    const hsv = RGBtoHSV(r * 17, g * 17, b * 17);
 
     setColorR(r);
     setColorG(g);
@@ -331,7 +300,7 @@ const CustomPalettePicker = ({ paletteId }: CustomPalettePickerProps) => {
 
   const onColorSelect = useCallback(
     (colorIndex: ColorIndex) => {
-      const editHex = rawHexToClosestRepresentableRawHex(
+      const editHex = toNgpcHex(
         palette?.colors[colorIndex] || defaultColors[colorIndex],
       );
       setSelectedColor(colorIndex);
@@ -351,27 +320,7 @@ const CustomPalettePicker = ({ paletteId }: CustomPalettePickerProps) => {
         hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
       }
       if (hex.length === 6) {
-        const canonicalHex = rawHexToClosestRepresentableRawHex(hex);
-        setColorCorrectedHex(rawHexToCorrectedHex(canonicalHex));
-        applyHexToState(canonicalHex);
-        updateCurrentColor(canonicalHex);
-      }
-    },
-    [applyHexToState, updateCurrentColor],
-  );
-
-  const onChangeCorrectedHex = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const parsedValue = e.target.value.replace(/[^A-Fa-f0-9]/g, "");
-      const croppedValue = parsedValue.substring(0, 6);
-      setColorCorrectedHex(croppedValue);
-      let hex = croppedValue.replace("#", "");
-      if (hex.length === 3) {
-        hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
-      }
-      if (hex.length === 6) {
-        const canonicalHex = correctedHexToCanonicalHex(hex as CorrectedHex);
-        setColorHex(canonicalHex);
+        const canonicalHex = toNgpcHex(hex);
         applyHexToState(canonicalHex);
         updateCurrentColor(canonicalHex);
       }
@@ -385,7 +334,7 @@ const CustomPalettePicker = ({ paletteId }: CustomPalettePickerProps) => {
         typeof e === "number"
           ? e
           : Number(e.currentTarget ? e.currentTarget.value : e);
-      const value = clamp31(newValue);
+      const value = clampChannel(newValue);
       setColorR(value);
       updateColorFromRGB(value, colorG, colorB);
     },
@@ -398,7 +347,7 @@ const CustomPalettePicker = ({ paletteId }: CustomPalettePickerProps) => {
         typeof e === "number"
           ? e
           : Number(e.currentTarget ? e.currentTarget.value : e);
-      const value = clamp31(newValue);
+      const value = clampChannel(newValue);
       setColorG(value);
       updateColorFromRGB(colorR, value, colorB);
     },
@@ -411,7 +360,7 @@ const CustomPalettePicker = ({ paletteId }: CustomPalettePickerProps) => {
         typeof e === "number"
           ? e
           : Number(e.currentTarget ? e.currentTarget.value : e);
-      const value = clamp31(newValue);
+      const value = clampChannel(newValue);
       setColorB(value);
       updateColorFromRGB(colorR, colorG, value);
     },
@@ -481,9 +430,7 @@ const CustomPalettePicker = ({ paletteId }: CustomPalettePickerProps) => {
 
   const initialiseColorValues = useCallback(
     (color: string | undefined, paletteIndex: number) => {
-      const editHex = rawHexToClosestRepresentableRawHex(
-        color || defaultColors[paletteIndex],
-      );
+      const editHex = toNgpcHex(color || defaultColors[paletteIndex]);
       updateHexInputs(editHex);
       applyHexToState(editHex);
     },
@@ -501,7 +448,7 @@ const CustomPalettePicker = ({ paletteId }: CustomPalettePickerProps) => {
         const clipboardData = await API.clipboard.readText();
         const hexString = clipboardData.replace(/[^A-Fa-f0-9]*/g, "");
         if (hexString.length === 6) {
-          updateCurrentColor(rawHexToClosestRepresentableRawHex(hexString));
+          updateCurrentColor(toNgpcHex(hexString));
         }
         initialiseColorValues(hexString, selectedColor);
       } catch (err) {
@@ -546,7 +493,7 @@ const CustomPalettePicker = ({ paletteId }: CustomPalettePickerProps) => {
       previousSelectionRef.current?.paletteId !== paletteId ||
       previousSelectionRef.current?.selectedColor !== selectedColor;
 
-    const canonicalSelectedColor = rawHexToClosestRepresentableRawHex(
+    const canonicalSelectedColor = toNgpcHex(
       selectedPaletteColor || defaultColors[selectedColor],
     );
 
@@ -577,10 +524,7 @@ const CustomPalettePicker = ({ paletteId }: CustomPalettePickerProps) => {
             className="focus-visible"
             onClick={() => onColorSelect(index)}
             style={{
-              background: `#${hex2GBChex(
-                palette.colors[index],
-                colorCorrection,
-              )}`,
+              background: `#${rawHexToNgpcHex(palette.colors[index])}`,
             }}
           >
             {index === 0 && <span>{l10n("FIELD_COLOR_LIGHTEST")}</span>}
@@ -593,25 +537,27 @@ const CustomPalettePicker = ({ paletteId }: CustomPalettePickerProps) => {
         <ColorValueFormItem>
           <NumberField
             name="colorR"
-            label={`${l10n("FIELD_CUSTOM_RED")} (0-31)`}
+            label={`${l10n("FIELD_CUSTOM_RED")} (0-${CHANNEL_MAX})`}
             id="colorR"
             type="number"
             value={colorR}
             min={0}
-            max={31}
+            max={CHANNEL_MAX}
             placeholder="0"
             onChange={onChangeR}
           />
           <ColorSlider
             steps={11}
-            value={(colorR || 0) / 31}
-            onChange={(value) => onChangeR(Math.round(Number(value) * 31))}
+            value={(colorR || 0) / CHANNEL_MAX}
+            onChange={(value) =>
+              onChangeR(Math.round(Number(value) * CHANNEL_MAX))
+            }
             colorAtValue={(value) => {
-              return `#${rgb5BitToGBCHex(
-                Math.round(value * 31),
+              return ngpcSwatch(
+                Math.round(value * CHANNEL_MAX),
                 colorG,
                 colorB,
-              )}`;
+              );
             }}
           />
         </ColorValueFormItem>
@@ -619,25 +565,25 @@ const CustomPalettePicker = ({ paletteId }: CustomPalettePickerProps) => {
         <ColorValueFormItem>
           <NumberField
             name="colorG"
-            label={`${l10n("FIELD_CUSTOM_GREEN")} (0-31)`}
+            label={`${l10n("FIELD_CUSTOM_GREEN")} (0-${CHANNEL_MAX})`}
             id="colorG"
             type="number"
             value={colorG}
             min={0}
-            max={31}
+            max={CHANNEL_MAX}
             placeholder="0"
             onChange={onChangeG}
           />
           <ColorSlider
             steps={11}
-            value={(colorG || 0) / 31}
-            onChange={(value) => onChangeG(Math.round(value * 31))}
+            value={(colorG || 0) / CHANNEL_MAX}
+            onChange={(value) => onChangeG(Math.round(value * CHANNEL_MAX))}
             colorAtValue={(value) => {
-              return `#${rgb5BitToGBCHex(
+              return ngpcSwatch(
                 colorR,
-                Math.round(value * 31),
+                Math.round(value * CHANNEL_MAX),
                 colorB,
-              )}`;
+              );
             }}
           />
         </ColorValueFormItem>
@@ -645,25 +591,25 @@ const CustomPalettePicker = ({ paletteId }: CustomPalettePickerProps) => {
         <ColorValueFormItem>
           <NumberField
             name="colorB"
-            label={`${l10n("FIELD_CUSTOM_BLUE")} (0-31)`}
+            label={`${l10n("FIELD_CUSTOM_BLUE")} (0-${CHANNEL_MAX})`}
             id="colorB"
             type="number"
             value={colorB}
             min={0}
-            max={31}
+            max={CHANNEL_MAX}
             placeholder="0"
             onChange={onChangeB}
           />
           <ColorSlider
             steps={11}
-            value={(colorB || 0) / 31}
-            onChange={(value) => onChangeB(Math.round(value * 31))}
+            value={(colorB || 0) / CHANNEL_MAX}
+            onChange={(value) => onChangeB(Math.round(value * CHANNEL_MAX))}
             colorAtValue={(value) => {
-              return `#${rgb5BitToGBCHex(
+              return ngpcSwatch(
                 colorR,
                 colorG,
-                Math.round(value * 31),
-              )}`;
+                Math.round(value * CHANNEL_MAX),
+              );
             }}
           />
         </ColorValueFormItem>
@@ -709,13 +655,8 @@ const CustomPalettePicker = ({ paletteId }: CustomPalettePickerProps) => {
             onChange={(value) => onChangeS(Math.round(value * 100))}
             colorAtValue={(value) => {
               const rgb = HSVtoRGB(colorH / 360, value, colorV / 100);
-              let r = Math.round(rgb.r / 8);
-              let g = Math.round(rgb.g / 8);
-              let b = Math.round(rgb.b / 8);
-              if (r > 31) r = 31;
-              if (g > 31) g = 31;
-              if (b > 31) b = 31;
-              return `#${rgb5BitToGBCHex(r, g, b)}`;
+              const { r, g, b } = rgb8ToNgpc4(rgb.r, rgb.g, rgb.b);
+              return ngpcSwatch(r, g, b);
             }}
           />
         </ColorValueFormItem>
@@ -738,40 +679,23 @@ const CustomPalettePicker = ({ paletteId }: CustomPalettePickerProps) => {
             onChange={(value) => onChangeV(Math.round(value * 100))}
             colorAtValue={(value) => {
               const rgb = HSVtoRGB(colorH / 360, colorS / 100, value);
-              let r = Math.round(rgb.r / 8);
-              let g = Math.round(rgb.g / 8);
-              let b = Math.round(rgb.b / 8);
-              if (r > 31) r = 31;
-              if (g > 31) g = 31;
-              if (b > 31) b = 31;
-              return `#${rgb5BitToGBCHex(r, g, b)}`;
+              const { r, g, b } = rgb8ToNgpc4(rgb.r, rgb.g, rgb.b);
+              return ngpcSwatch(r, g, b);
             }}
           />
         </ColorValueFormItem>
       </ColorValueForm>
 
       <FlexRow>
-        {colorCorrection === "none" ? (
-          <TextField
-            name="colorHex"
-            label={`${l10n("FIELD_HEX_COLOR")} (${l10n("FIELD_CLOSEST_MATCH")})`}
-            size="large"
-            maxLength={7}
-            placeholder="#000000"
-            value={`#${colorHex.toLowerCase()}`}
-            onChange={onChangeHex}
-          />
-        ) : (
-          <TextField
-            name="colorCorrection"
-            label={`${l10n("FIELD_HEX_COLOR")} (${l10n("FIELD_CLOSEST_MATCH")})`}
-            size="large"
-            maxLength={7}
-            placeholder="#000000"
-            value={`#${colorCorrectedHex.toLowerCase()}`}
-            onChange={onChangeCorrectedHex}
-          />
-        )}
+        <TextField
+          name="colorHex"
+          label={`${l10n("FIELD_HEX_COLOR")} (${l10n("FIELD_CLOSEST_MATCH")})`}
+          size="large"
+          maxLength={7}
+          placeholder="#000000"
+          value={`#${colorHex.toLowerCase()}`}
+          onChange={onChangeHex}
+        />
       </FlexRow>
       <FixedSpacer height={20} />
       <div>

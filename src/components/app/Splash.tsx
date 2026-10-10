@@ -32,6 +32,7 @@ import inbuiltPatrons from "patrons.json";
 import gbs2Preview from "assets/templatePreview/gbs2.png";
 import gbhtmlPreview from "assets/templatePreview/gbhtml.png";
 import blankPreview from "assets/templatePreview/blank.png";
+import ngpcPreview from "assets/templatePreview/ngpc.png";
 import useWindowFocus from "ui/hooks/use-window-focus";
 import l10n from "shared/lib/lang/l10n";
 import API from "renderer/lib/api";
@@ -161,6 +162,14 @@ const Splash = () => {
         preview: gbhtmlPreview,
         videoPreview: false,
         description: l10n("SPLASH_SAMPLE_PROJECT_ORIGINAL_DESCRIPTION"),
+      },
+      {
+        // NgpCraft: the blank project with a first 160x152 scene, ready to play.
+        id: "ngpc",
+        name: l10n("SPLASH_NGPC_PROJECT"),
+        preview: ngpcPreview,
+        videoPreview: false,
+        description: l10n("SPLASH_NGPC_PROJECT_DESCRIPTION"),
       },
       {
         id: "blank",
@@ -297,7 +306,7 @@ const Splash = () => {
       <SplashWindow focus={windowFocus}>
         <SplashSidebar>
           <SplashLogo>
-            <img src={logoFile} alt="GB Studio" draggable={false} />
+            <img src={logoFile} alt="NgpCraft Studio" draggable={false} />
             <SplashEasterEggButton
               onClick={() => setOpenCredits(true)}
               tabIndex={-1}

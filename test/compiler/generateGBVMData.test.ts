@@ -1,4 +1,8 @@
-import { SCREEN_HEIGHT, SCREEN_WIDTH } from "consts";
+// NgpCraft: GB Studio's GBVM compiler keeps the Game Boy screen.
+import {
+  GB_SCREEN_HEIGHT as SCREEN_HEIGHT,
+  GB_SCREEN_WIDTH as SCREEN_WIDTH,
+} from "consts";
 import {
   compileGameGlobalsHeader,
   compileScrollBounds,

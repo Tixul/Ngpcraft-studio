@@ -21,6 +21,7 @@ import { initialState as initialDocumentState } from "../src/store/features/docu
 import { initialState as initialErrorState } from "../src/store/features/error/errorState";
 import { initialState as initialAssetsState } from "../src/store/features/assets/assetsState";
 import { initialState as initialWebTemplatesState } from "../src/store/features/webTemplates/webTemplatesState";
+import { initialState as initialNgpcraftState } from "../src/store/features/ngpcraft/ngpcraftState";
 import {
   EngineFieldSchema,
   initialState as initialEngineState,
@@ -887,6 +888,9 @@ export const dummyRootState: RootState = {
   },
   webTemplates: {
     ...initialWebTemplatesState,
+  },
+  ngpcraft: {
+    ...initialNgpcraftState,
   },
   engine: {
     ...initialEngineState,

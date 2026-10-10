@@ -11,6 +11,11 @@ import MetaspriteCanvasWorker, {
 } from "./MetaspriteCanvas.worker";
 import { assetURL } from "shared/lib/helpers/assets";
 import { getSettings } from "store/features/settings/settingsState";
+import { getNgpcResourceSetting } from "shared/lib/ngpcraft/projectExtension";
+import {
+  NGPC_COLOR_KEY,
+  NGPC_COLOR_NATIVE,
+} from "shared/lib/ngpcraft/palettePlan";
 import {
   MetaspriteTile,
   MonoOBJPalette,
@@ -57,6 +62,15 @@ export const MetaspriteCanvas = memo(
     );
     const { colorCorrection, spriteMode: defaultSpriteMode } = useAppSelector(
       (state) => getSettings(state),
+    );
+    // NgpCraft: "NGPC native" sheets are drawn with their own colours.
+    const native = useAppSelector(
+      (state) =>
+        getNgpcResourceSetting(
+          state.ngpcraft.extension,
+          spriteSheetId,
+          NGPC_COLOR_KEY,
+        ) === NGPC_COLOR_NATIVE,
     );
 
     const width = spriteSheet?.canvasWidth || 0;
@@ -130,6 +144,7 @@ export const MetaspriteCanvas = memo(
         previewAsMono,
         monoPalettes,
         colorCorrection,
+        native,
         spriteMode:
           spriteMode ?? spriteSheet.spriteMode ?? defaultSpriteMode ?? "8x16",
       });
@@ -145,6 +160,7 @@ export const MetaspriteCanvas = memo(
       previewAsMono,
       monoPalettes,
       colorCorrection,
+      native,
       spriteMode,
       defaultSpriteMode,
     ]);

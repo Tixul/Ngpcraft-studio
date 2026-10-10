@@ -6,6 +6,7 @@ import React, {
   useRef,
   useState,
 } from "react";
+import { NgpcEventBadge } from "components/ngpcraft/NgpcEventBadge";
 import {
   DragSourceMonitor,
   DropTargetMonitor,
@@ -538,10 +539,13 @@ const ScriptEditorEvent = React.memo(
                       </ScriptEventRenameInputCompleteButton>
                     </>
                   ) : (
-                    <ScriptEventTitle
-                      command={scriptEvent.command}
-                      args={scriptEvent.args}
-                    />
+                    <>
+                      <ScriptEventTitle
+                        command={scriptEvent.command}
+                        args={scriptEvent.args}
+                      />
+                      <NgpcEventBadge command={scriptEvent.command} />
+                    </>
                   )}
                 </>
               )}

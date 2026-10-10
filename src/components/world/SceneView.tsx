@@ -36,6 +36,14 @@ import { SceneContext } from "components/script/SceneContext";
 import { WarningIcon } from "ui/icons/Icons";
 import { useEnabledSceneTypeIds } from "components/settings/useEnabledSceneTypeIds";
 import SceneScreenGrid from "components/world/SceneScreenGrid";
+import {
+  isNgpcNativeBackground,
+  NgpcPaletteErrorsOverlay,
+} from "components/ngpcraft/NgpcNativePalettes";
+import { NgpcNativeImage } from "components/ngpcraft/NgpcNativeImage";
+import { NgpcSecondBackgroundPreview } from "components/ngpcraft/NgpcSecondBackgroundPreview";
+import { useSecondBackground } from "components/ngpcraft/useSecondBackground";
+import { NgpcCameraWindow } from "components/ngpcraft/NgpcCameraWindow";
 import { MonoOBJPalette } from "shared/lib/resources/types";
 import { useContextMenu } from "ui/hooks/use-context-menu";
 
@@ -323,7 +331,24 @@ const SceneView = memo(({ id, index, editable }: SceneViewProps) => {
     (state) => state.project.present.settings.showSceneScreenGrid,
   );
   const zoom = useAppSelector((state) => state.editor.zoom);
+  // NgpCraft: background drawn in "NGPC native" colours.
+  const ngpcNative = useAppSelector((state) =>
+    isNgpcNativeBackground(state.ngpcraft.extension, scene?.backgroundId),
+  );
   const zoomRatio = zoom / 100;
+  // NgpCraft: NGPC planes (advanced mode = a second background on SCR1).
+  const secondBackground = useSecondBackground(id);
+  const hideMainPlane = useAppSelector(
+    (state) => !!secondBackground && !state.ngpcraft.planeVisibility.scr2,
+  );
+  const storedCamera = useAppSelector(
+    (state) => state.ngpcraft.cameraPreview[id],
+  );
+  const cameraWindow = useMemo(
+    () =>
+      selected && secondBackground ? storedCamera ?? { x: 0, y: 0 } : undefined,
+    [selected, secondBackground, storedCamera],
+  );
 
   const visible = useAppSelector((state) => {
     const worldScrollX = state.editor.worldScrollX;
@@ -707,7 +732,13 @@ const SceneView = memo(({ id, index, editable }: SceneViewProps) => {
       >
         {background && (
           <>
-            {gbcEnabled && background.autoColor ? (
+            {!hideMainPlane && ngpcNative ? (
+              <NgpcNativeImage
+                width={scene.width * TILE_SIZE}
+                height={scene.height * TILE_SIZE}
+                src={assetURL("backgrounds", background)}
+              />
+            ) : hideMainPlane ? null : gbcEnabled && background.autoColor ? (
               <AutoColorizedImage
                 width={scene.width * TILE_SIZE}
                 height={scene.height * TILE_SIZE}
@@ -738,6 +769,15 @@ const SceneView = memo(({ id, index, editable }: SceneViewProps) => {
                 monoBGP={monoBGP}
               />
             )}
+            <NgpcSecondBackgroundPreview
+              sceneId={scene.id}
+              width={scene.width}
+              height={scene.height}
+              palettes={palettes}
+              previewAsMono={previewAsMono}
+              monoBGP={monoBGP}
+              camera={cameraWindow}
+            />
           </>
         )}
         {showCollisions && (
@@ -765,6 +805,11 @@ const SceneView = memo(({ id, index, editable }: SceneViewProps) => {
               height={scene.height}
               scrollBounds={scene.scrollBounds}
             />
+          </SceneOverlay>
+        )}
+        {selected && scene.backgroundId && (
+          <SceneOverlay $noPointerEvents>
+            <NgpcPaletteErrorsOverlay backgroundId={scene.backgroundId} />
           </SceneOverlay>
         )}
         {showSceneScreenGrid && selected && (
@@ -876,6 +921,15 @@ const SceneView = memo(({ id, index, editable }: SceneViewProps) => {
         {selected && (
           <SceneOverlay $noPointerEvents>
             <SceneEventHelper scene={scene} />
+          </SceneOverlay>
+        )}
+        {cameraWindow && (
+          <SceneOverlay $noPointerEvents>
+            <NgpcCameraWindow
+              sceneId={scene.id}
+              width={scene.width * TILE_SIZE}
+              height={scene.height * TILE_SIZE}
+            />
           </SceneOverlay>
         )}
       </SceneContent>

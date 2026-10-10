@@ -5,14 +5,16 @@ import {
   Settings,
 } from "shared/lib/resources/types";
 
+// NgpCraft: Windows paths use "\", so the CLI test runs on a "/" copy.
+const dirnameSlash = __dirname.replace(/\\/g, "/");
 const isDist = __dirname.indexOf(".webpack") > -1;
-const isCli = __dirname.indexOf("out/cli") > -1;
+const isCli = dirnameSlash.indexOf("out/cli") > -1;
 
 let rootDir = __dirname.substring(0, __dirname.lastIndexOf("node_modules"));
 if (isDist) {
   rootDir = __dirname.substring(0, __dirname.lastIndexOf(".webpack"));
 } else if (isCli) {
-  rootDir = __dirname.substring(0, __dirname.lastIndexOf("out/cli"));
+  rootDir = __dirname.substring(0, dirnameSlash.lastIndexOf("out/cli"));
 } else if (process.env.NODE_ENV === "test") {
   rootDir = normalize(`${__dirname}/../`);
 }
@@ -33,6 +35,21 @@ export const localesRoot = normalize(`${rootDir}/src/lang`);
 export const eventsRoot = normalize(`${rootDir}/src/lib/events`);
 export const assetsRoot = normalize(`${rootDir}/src/assets`);
 
+// NgpCraft: application identity (the fork is not GB Studio; MIT covers the
+// code, not the name or logo). Project and plugin formats keep GB Studio's
+// version so existing projects and plugins stay compatible.
+export const APP_NAME = "NgpCraft Studio";
+export const APP_REPO_OWNER = "Tixul";
+export const APP_REPO_NAME = "Ngpcraft-studio";
+
+// NgpCraft: default V3 compiler location, the ngpcraft-v3 folder of this
+// repository (see lib/ngpcraft/v3Build.ts for the environment overrides).
+export const ngpcraftDefaultV3Root = normalize(`${rootDir}/ngpcraft-v3`);
+// NgpCraft: web player (NgpCraft_web_emulator public/, copied) for Play.
+export const ngpcraftWebPlayerRoot = normalize(
+  `${rootDir}/appData/wasm/ngpcraft-web`,
+);
+
 // Plugin Manager
 export const OFFICIAL_REPO_URL = "https://plugins.gbstudio.dev/repository.json";
 export const OFFICIAL_REPO_GITHUB =
@@ -51,7 +68,8 @@ export const NUM_SUBPIXEL_BITS = 5;
 export const MAX_ACTORS = 20;
 export const MAX_ACTORS_SMALL = 10;
 export const MAX_TRIGGERS = 30;
-export const MAX_ONSCREEN = 10;
+// NgpCraft: 64 hardware sprites / 4 per 16x16 actor (GB Studio: 40 / 4).
+export const MAX_ONSCREEN = 16;
 export const MAX_PROJECTILES = 5;
 
 export const MIN_WORLD_ENTITY_X = 60;
@@ -62,12 +80,22 @@ export const MAX_BACKGROUND_TILES = 16 * 12;
 export const MAX_BACKGROUND_TILES_CGB = 16 * 12 * 2;
 
 // Screen
+// NgpCraft: Neo Geo Pocket Color screen, 160x152 (20x19 tiles). Scenes of
+// 144 px from GB Studio projects stay valid: the V3 shows them with black
+// bands and warns.
 export const SCREEN_WIDTH = 20;
-export const SCREEN_HEIGHT = 18;
+export const SCREEN_HEIGHT = 19;
 export const TILE_SIZE = 8;
 
 export const SCREEN_WIDTH_PX = SCREEN_WIDTH * TILE_SIZE;
 export const SCREEN_HEIGHT_PX = SCREEN_HEIGHT * TILE_SIZE;
+
+// NgpCraft: Game Boy screen, kept for GB Studio's own GBVM compiler
+// (lib/compiler), which must stay identical to GB Studio 4.3.2.
+export const GB_SCREEN_WIDTH = 20;
+export const GB_SCREEN_HEIGHT = 18;
+export const GB_SCREEN_WIDTH_PX = GB_SCREEN_WIDTH * TILE_SIZE;
+export const GB_SCREEN_HEIGHT_PX = GB_SCREEN_HEIGHT * TILE_SIZE;
 
 export const SCENE_MAX_SIZE_PX = 2040;
 

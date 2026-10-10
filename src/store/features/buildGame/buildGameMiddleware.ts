@@ -28,6 +28,7 @@ const buildGameMiddleware: Middleware<Dispatch, RootState> =
         startSceneId,
         startX,
         startY,
+        ngpcMusicPreviewId,
       } = action.payload;
 
       if (state.console.status === "cancelled") {
@@ -75,6 +76,8 @@ const buildGameMiddleware: Middleware<Dispatch, RootState> =
             engineSchema,
             exportBuild,
             debugEnabled,
+            ngpcraftExtension: state.ngpcraft.extension,
+            ngpcMusicPreviewId,
           },
         );
       } catch (e) {

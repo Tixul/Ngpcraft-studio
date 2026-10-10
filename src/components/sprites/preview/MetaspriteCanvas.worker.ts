@@ -32,12 +32,16 @@ workerCtx.onmessage = async (evt) => {
     [0, 2, 3],
   ];
   const colorCorrection = evt.data.colorCorrection;
+  // NgpCraft: an "NGPC native" sheet shows its own PNG colours, rounded to
+  // 4 bits per channel as the V3 compiles them, whatever the tile palette.
+  const native = !!evt.data.native;
   const key = JSON.stringify({
     src,
     palettes,
     previewAsMono,
     monoPalettes,
     colorCorrection,
+    native,
   });
   const spriteMode = evt.data.spriteMode ?? "8x16";
 
@@ -114,6 +118,27 @@ workerCtx.onmessage = async (evt) => {
         );
         ctx.putImageData(imageDataCopy, 0, 0);
       });
+    }
+
+    if (native) {
+      const nativeCanvas = new OffscreenCanvas(img.width, img.height);
+      const nativeCtx = nativeCanvas.getContext("2d");
+      if (nativeCtx) {
+        const data = new Uint8ClampedArray(tileImageData.data);
+        for (let i = 0; i < data.length; i += 4) {
+          data[i] = (data[i] >> 4) * 17;
+          data[i + 1] = (data[i + 1] >> 4) * 17;
+          data[i + 2] = (data[i + 2] >> 4) * 17;
+        }
+        nativeCtx.putImageData(
+          new ImageData(data, tileImageData.width, tileImageData.height),
+          0,
+          0,
+        );
+        for (const k of ["OBP0", "OBP1", 0, 1, 2, 3, 4, 5, 6, 7]) {
+          tilesCanvases[k as ObjPalette | number] = nativeCanvas;
+        }
+      }
     }
 
     cache[key] = {

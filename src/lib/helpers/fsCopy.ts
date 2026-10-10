@@ -41,7 +41,14 @@ const copyFile = async (
       outputStream.close();
       reject(new Error(`Could not write file ${dest}: ${err}`));
     });
-    inputStream.once("end", () => {
+    // NgpCraft: resolve once the copy is written, not when reading ends (the
+    // "end" of the input came before the output was flushed: createProject
+    // could then read a truncated project.gbsproj under load).
+    outputStream.once("error", (err) => {
+      inputStream.destroy();
+      reject(new Error(`Could not write file ${dest}: ${err}`));
+    });
+    outputStream.once("finish", () => {
       resolve();
     });
     inputStream.pipe(outputStream);

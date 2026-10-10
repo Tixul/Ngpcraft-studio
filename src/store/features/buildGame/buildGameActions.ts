@@ -14,6 +14,7 @@ const buildGame = createAction(
       startX,
       startY,
       onlySelection,
+      ngpcMusicPreviewId,
     }: {
       buildType?: BuildType;
       exportBuild?: boolean;
@@ -22,6 +23,8 @@ const buildGame = createAction(
       startX?: number;
       startY?: number;
       onlySelection?: boolean;
+      // NgpCraft: a ROM that only plays this song (V3 preview-music).
+      ngpcMusicPreviewId?: string;
     } = {
       buildType: "web",
       exportBuild: false,
@@ -37,6 +40,7 @@ const buildGame = createAction(
         startX,
         startY,
         onlySelection,
+        ngpcMusicPreviewId,
       },
     };
   },

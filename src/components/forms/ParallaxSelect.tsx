@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { SCREEN_HEIGHT } from "consts";
 import styled from "styled-components";
 import l10n from "shared/lib/lang/l10n";
 import { CoordinateInput } from "ui/form/CoordinateInput";
@@ -88,7 +89,8 @@ export const defaultValues: SceneParallaxLayer[] = [
   },
 ];
 
-const MAX_PARALLAX_HEIGHT = 17;
+// NgpCraft: NGPC screen rows minus one (GB Studio: 18 - 1 = 17).
+const MAX_PARALLAX_HEIGHT = SCREEN_HEIGHT - 1;
 
 const sliceLayers = (
   value: SceneParallaxLayer[] | undefined,

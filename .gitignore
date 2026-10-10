@@ -35,3 +35,14 @@ flamegraph.html
 !.yarn/releases
 !.yarn/sdks
 !.yarn/versions
+
+# NgpCraft: WebAssembly build folder of the Play window emulator
+ngpcraft-player/build/
+# NgpCraft: V3 compiler assembled for packaging
+.bundle/
+
+# NgpCraft: working notes, kept locally, not published
+/DEVLOG.md
+/ROADMAP.md
+/NGPCRAFT_FORK.md
+/docs/

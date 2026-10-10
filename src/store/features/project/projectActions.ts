@@ -217,6 +217,8 @@ const saveProject = createAsyncThunk<void>(
 
       thunkApi.dispatch(setSaveStep("writing"));
       await API.project.saveProject(patch);
+      // NgpCraft: ngpcraft.json is saved with the project.
+      await API.ngpcraft.writeExtension(state.ngpcraft.extension);
 
       thunkApi.dispatch(setSaveStep("complete"));
     } catch (e) {

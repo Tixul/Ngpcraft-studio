@@ -1,0 +1,24 @@
+/*
+ * NgpCraft: what the V3 used for one scene at the last build, read from its
+ * export report (scene_engine.scenes). Shown in the scene sidebar.
+ */
+
+// Tile slots shared by backgrounds and sprites (512 tiles of 8×8).
+export const NGPC_TILE_SLOTS = 512;
+// Hardware palettes of a background plane.
+export const NGPC_BACKGROUND_PALETTES = 16;
+
+export interface NgpcSceneBudget {
+  // GB Studio scene id.
+  id: string;
+  name: string;
+  usedTiles: number;
+  backgroundTiles: number;
+  spriteTiles: number;
+  backgroundPalettes: number;
+  actors: number;
+  // Height of the shown view: 152, or 144 for a scene drawn between bands.
+  viewHeight: number;
+  // Warnings of the V3 for this scene, in English.
+  warnings: string[];
+}

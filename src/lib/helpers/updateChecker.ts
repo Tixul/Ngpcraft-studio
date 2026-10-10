@@ -9,6 +9,7 @@ declare const VERSION: string;
 
 const github = new Octokit();
 const oneHour = 60 * 60 * 1000;
+const UPDATE_CHECK_ENABLED = false;
 
 const cache = {
   latest: {
@@ -55,6 +56,11 @@ const needsUpdate = (latestVersion: string) => {
 };
 
 export const checkForUpdate = async (force?: boolean) => {
+  // NgpCraft: no release feed yet. Never ask GB Studio's GitHub, whose
+  // versions say nothing about this fork. The menu entry is removed too.
+  if (!UPDATE_CHECK_ENABLED) {
+    return;
+  }
   if (force) {
     // If manually checking for updates using menu, clear previous settings
     settings.set("dontCheckForUpdates", false);

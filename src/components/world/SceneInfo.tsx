@@ -2,7 +2,6 @@ import {
   EVENT_ACTOR_SET_SPRITE,
   EVENT_PLAYER_SET_SPRITE,
   MAX_ACTORS,
-  MAX_ACTORS_SMALL,
   MAX_NESTED_SCRIPT_DEPTH,
   MAX_ONSCREEN,
   MAX_TRIGGERS,
@@ -28,7 +27,8 @@ import { actorName } from "shared/lib/entities/entitiesHelpers";
 import { SpriteSheetNormalized } from "shared/lib/entities/entitiesTypes";
 import clamp from "shared/lib/helpers/clamp";
 import { useDebounce } from "ui/hooks/use-debounce";
-import { maxSpriteTilesForBackgroundTilesLength } from "shared/lib/helpers/sprites";
+import { ngpcMaxSpriteTiles } from "shared/lib/helpers/sprites";
+import { getNgpcProjectSettings } from "shared/lib/ngpcraft/projectExtension";
 import { walkNormalizedSceneScripts } from "shared/lib/scripts/walk";
 
 interface SceneInfoWrapperProps {
@@ -96,6 +96,11 @@ const SceneInfoButton = styled.div<SceneInfoButtonProps>`
 `;
 
 const SceneInfo = () => {
+  const ngpcActorCapacity = useAppSelector(
+    (state) =>
+      getNgpcProjectSettings(state.ngpcraft.extension).actor_capacity ??
+      MAX_ACTORS,
+  );
   const store = useAppStore();
 
   const selectedSceneId = useAppSelector((state) => state.editor.scene);
@@ -430,13 +435,15 @@ const SceneInfo = () => {
     return <></>;
   }
 
-  let maxActors = MAX_ACTORS;
+  // NgpCraft: the V3 refuses a scene above the project's actor capacity
+  // (ngpcraft.json, 20 to 30) or above 30 triggers.
+  const maxActors = ngpcActorCapacity;
   let maxTriggers = MAX_TRIGGERS;
 
+  // NgpCraft: no smaller actor limit for one-screen scenes; that Game Boy
+  // rule came from its VRAM split, absent on NGPC.
   if (scene.type === "LOGO") {
     maxTriggers = 0;
-  } else if (scene.width <= SCREEN_WIDTH && scene.height <= SCREEN_HEIGHT) {
-    maxActors = MAX_ACTORS_SMALL;
   }
 
   const actorCount = scene.actors.length;
@@ -445,11 +452,7 @@ const SceneInfo = () => {
   const triggerCount = scene.triggers.length;
   const maxSpriteTiles =
     scene.type !== "LOGO"
-      ? maxSpriteTilesForBackgroundTilesLength(
-          backgroundNumTiles,
-          isCGBOnly,
-          spriteMode,
-        )
+      ? ngpcMaxSpriteTiles(backgroundNumTiles, spriteMode)
       : MAX_LOGO_SPRITE_TILES;
 
   return (

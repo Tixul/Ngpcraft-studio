@@ -1,121 +1,96 @@
-# GB Studio
+# NgpCraft Studio
 
-[![Github Actions Status](https://github.com/chrismaltby/gb-studio/actions/workflows/main.yml/badge.svg?branch=develop)](https://github.com/chrismaltby/gb-studio/actions?query=branch%3Adevelop) [![Storybook](https://img.shields.io/badge/Storybook-FF4785?logo=storybook&logoColor=white)](https://chrismaltby.github.io/gb-studio/storybook) [![Code Coverage](https://img.shields.io/badge/Coverage-blue?logo=jest&logoColor=white)](https://chrismaltby.github.io/gb-studio/coverage)
+NgpCraft Studio makes **Neo Geo Pocket Color** games with the
+[GB Studio](https://www.gbstudio.dev) editor. It is a fork of GB Studio
+4.3.2: you build scenes, actors and scripts exactly as in GB Studio, and the
+project is compiled into an NGPC ROM by the **NgpCraft V3 compiler**
+(`ngpcraft-v3/`), which turns each game into C code made only of what that
+game uses, then builds it with the Toshiba TLCS-900 toolchain.
 
-Copyright (c) 2019-2026 Chris Maltby, released under the [MIT license](https://opensource.org/licenses/MIT).
+> Work in progress. Not affiliated with GB Studio, Chris Maltby or SNK.
 
-Patreon: [gbstudiodev](https://www.patreon.com/gbstudiodev)  
-Twitter: [@maltby](https://www.twitter.com/maltby)  
-Reddit: [/r/gbstudio](https://www.reddit.com/r/gbstudio)  
-Discord: [Join Chat](https://discord.gg/bxerKnc)
+## What works
 
-GB Studio is a quick and easy to use retro adventure game creator for Game Boy available for Mac, Linux and Windows.
-For more information see the [GB Studio](https://www.gbstudio.dev) site
+- **GB Studio 4.3.2 compatibility**: projects open and save in the GB Studio
+  format. All 151 events of GB Studio 4.3.2 are classified: 95 behave
+  identically, 52 are adapted to the NGPC, 4 are refused (printer, Super
+  Game Boy colours, *Weapon Attack*). The 128 engine fields are supported.
+  GB Studio event plugins are compiled; engine plugins (Game Boy C code)
+  are not. *Help → NGPC differences from GB Studio* lists every adaptation.
+- **NGPC screen and hardware**: 160 × 152 scenes (144 px GB Studio scenes
+  are shown between thin bands), 4-bit colours, a native colour mode with up
+  to 16 palettes taken from the PNG, a per-scene NGPC budget (tiles,
+  palettes, actors).
+- **NGPC planes (advanced mode)**: an optional second background on the
+  front plane, with its own scroll speed (fixed, fractions or a percentage
+  of the camera) and looping, previewed in the scene view through a movable
+  camera window.
+- **Audio**: GB Studio songs (`.uge`, `.mod`) and sound effects (FX Hammer
+  `.sav`, `.vgm`) are converted for the NGPC sound chip from the editor,
+  with a report of what could not be kept; NGPCraft Sound Creator songs
+  (`.ngps`) can be linked directly. *Listen* builds a ROM that only plays a
+  song.
+- **Play and debug**: the Play window runs the ROM in a built-in NGPC
+  emulator (WebAssembly), with the GB Studio debugger (breakpoints on
+  events, variables, script contexts).
+- **Templates**: *NGPC Starter* (a first 160 × 152 scene with the player) and the two GB
+  Studio samples, converted (audio and 152 px backgrounds), which build and
+  run as they are.
 
-![GB Studio](gbstudio.gif)
+## Requirements
 
-GB Studio consists of an [Electron](https://electronjs.org/) game builder application and a C based game engine using [GBDK](http://gbdk.sourceforge.net/).
+- **Toshiba TLCS-900 toolchain** (`cc900`, `asm900`, `tulink`, `tuconv`), not
+  distributed: set its folder in *Preferences → NgpCraft* (asked at first
+  start). Linux and macOS run it with Wine.
+- **Python 3.10 or later** to run the compiler from source (standard library
+  only). The Windows package embeds Python.
+- To work on the editor: **Node 21.7.1** (see `.nvmrc`) with Corepack
+  (Yarn 4.4.1).
 
-## Installation
-
-Download a release for your operating system from the [GB Studio Downloads](https://www.gbstudio.dev/download) page.
-
-Or to run from source, clone this repo then:
-
-- Install [NodeJS](https://nodejs.org/) (required version is given in [.nvmrc](.nvmrc))
-
-```bash
-> cd gb-studio
-> corepack enable
-> yarn
-> npm run fetch-deps
-> npm start
-```
-
-After checking out a new version you may also need to fetch dependencies again to ensure you have the latest version of GBVM + GBDK etc.
-
-```bash
-> cd gb-studio
-> npm run fetch-deps
-```
-
-GB Studio currently uses Node 21.7.1. If you have [NVM](https://github.com/nvm-sh/nvm) installed you can use the included `.nvmrc` to switch to the supported Node version.
-
-```bash
-> cd gb-studio
-> nvm use
-```
-
-## GB Studio CLI
-
-Install GB Studio from source as above then
-
-```bash
-> npm run make:cli
-> yarn link
-# From any folder you can now run gb-studio-cli
-> $(yarn bin gb-studio-cli) -V
-4.1.2
-> $(yarn bin gb-studio-cli) --help
-```
-
-### Update the CLI
-
-Pull the latest code and run make:cli again, yarn link is only needed for the first run.
+## Running from source
 
 ```bash
-> npm run make:cli
+corepack enable
+yarn install
+yarn start
 ```
 
-### CLI Examples
+The editor finds the compiler in `ngpcraft-v3/`. Packages:
+`yarn make:win`, `yarn make:linux`, `yarn make:mac`, `yarn make:mac-intel`
+(the packaging step embeds the compiler, and Python on Windows).
 
-- **Export Project**
+## Tests
 
-  ```bash
-  > $(yarn bin gb-studio-cli) export path/to/project.gbsproj out/
-  ```
+- Editor: `yarn test` (Jest). The NgpCraft tests are in `test/ngpcraft/`;
+  those that build ROMs need the compiler and the Toshiba toolchain
+  (`NGPC_TOSHIBA_HOME`, default `C:\t900`) and are skipped otherwise.
+- Compiler: `cd ngpcraft-v3 && python -m unittest discover -s tests`. Tests
+  that build and run ROMs need `NGC_TEST_TOSHIBA`, `NGC_TEST_EMULATOR`
+  (NgpCraft emulator checkout) and `NGC_TEST_BIOS` (your own BIOS dump, not
+  distributed); tests that compare with GB Studio need the released GB
+  Studio 4.3.2 sources (`NGPCRAFT_GBSTUDIO_REFERENCE`, see
+  `ngpcraft-v3/tools/locations.py`). Without them, those tests are skipped.
 
-  Export GBDK project from gbsproj to out directory
+## Repository layout
 
-- **Export Data**
-  ```bash
-  > $(yarn bin gb-studio-cli) export -d path/to/project.gbsproj out/
-  ```
-  Export only src/data and include/data from gbsproj to out directory
-- **Make ROM**
+| Path | Content |
+|---|---|
+| `src/`, `test/`, `appData/` | the editor (GB Studio 4.3.2 with the NgpCraft changes); NgpCraft code is mostly under `src/**/ngpcraft/` |
+| `ngpcraft-v3/` | the NgpCraft V3 compiler (Python), its tests and labs |
+| `ngpcraft-player/` | sources of the Play window emulator build (`appData/wasm/ngpcraft-web` is the built copy) |
+| `appData/templates/ngpc/` | the *NGPC Starter* template |
 
-  ```bash
-  > $(yarn bin gb-studio-cli) make:rom path/to/project.gbsproj out/game.gb
-  ```
+Branches: `ngpcraft` is NgpCraft Studio, based on the GB Studio 4.3.2
+release; `develop` follows GB Studio's own development (future 5.0, new
+project format) and is not used by NgpCraft.
 
-  Make a ROM file from gbsproj
+## License and credits
 
-- **Make Pocket**
+MIT. GB Studio is Copyright (c) 2019-2026 Chris Maltby and its contributors
+(`LICENSE`); the NgpCraft additions are released under the same license
+(`ngpcraft-v3/LICENSE`). Third-party notices: `ngpcraft-v3/ngpcraft/*LICENSE*.txt`,
+`ngpcraft-v3/ngpcraft/MUSIC_NOTICE.txt`,
+`appData/wasm/ngpcraft-web/THIRD_PARTY_NOTICES.txt`.
 
-  ```bash
-  > $(yarn bin gb-studio-cli) make:pocket path/to/project.gbsproj out/game.pocket
-  ```
-
-  Make a Pocket file from gbsproj
-
-- **Make Web**
-  ```bash
-  > $(yarn bin gb-studio-cli) make:web path/to/project.gbsproj out/
-  ```
-  Make a Web build from gbsproj
-
-## Documentation
-
-[GB Studio Documentation](https://www.gbstudio.dev/docs)
-
-## Note For Translators
-
-If you'd like to help contribute new language localisations to GB Studio you can do so by submitting pull requests adding or updating the JSON files found here https://github.com/chrismaltby/gb-studio/tree/develop/src/lang
-
-If you're looking to update an existing translation with content that is missing, there is a handy script that lists keys found in the English localisation that are not found and copies them to your localisation
-
-```bash
-npm run missing-translations lang
-# e.g. npm run missing-translations de
-# e.g. npm run missing-translations en-GB
-```
+GB Studio: [gbstudio.dev](https://www.gbstudio.dev) ·
+[source](https://github.com/chrismaltby/gb-studio).

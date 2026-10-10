@@ -25,6 +25,8 @@ export interface RootState {
   error: typeof import("./features/error/errorState").initialState;
   assets: import("./features/assets/assetsState").AssetsState;
   webTemplates: import("./features/webTemplates/webTemplatesState").WebTemplatesState;
+  // NgpCraft: ngpcraft.json of the open project.
+  ngpcraft: import("./features/ngpcraft/ngpcraftState").NgpcraftState;
 }
 
 export type AppThunk<ReturnType = void> = ThunkAction<

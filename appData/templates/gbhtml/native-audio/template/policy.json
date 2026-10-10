@@ -1,0 +1,17 @@
+{
+  "schema": "ngpcraft-uge-conversion-policy/1",
+  "tick_mapping": "one-huge-call-per-vblank",
+  "source_huge_hz": 64,
+  "wave": "square",
+  "volume": "relative-amplitude-2db-attenuation",
+  "hardware_envelope_length_sweep": "discard",
+  "stereo": "mono",
+  "ngps_updates": "retrigger",
+  "intra_tick": "last-state",
+  "transpose_semitones": [
+    12,
+    12,
+    12
+  ],
+  "noise_setting": 5
+}

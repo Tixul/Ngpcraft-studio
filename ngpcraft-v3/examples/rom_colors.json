@@ -1,0 +1,18 @@
+{
+  "schema": "ngpcraft-ir/0.1",
+  "start": "colors",
+  "palettes": {"unused": [0, 1, 2, 3]},
+  "scenes": [
+    {"id": "colors", "on_init": [
+      {"op": "backdrop", "value": 15},
+      {"op": "wait", "frames": 60},
+      {"op": "backdrop", "value": 240},
+      {"op": "wait", "frames": 60},
+      {"op": "backdrop", "value": 3840},
+      {"op": "wait", "frames": 60},
+      {"op": "scene", "target": "white"}
+    ]},
+    {"id": "white", "on_init": [{"op": "backdrop", "value": 4095}]},
+    {"id": "unreachable", "on_init": [{"op": "palette", "asset": "unused", "slot": 0}]}
+  ]
+}

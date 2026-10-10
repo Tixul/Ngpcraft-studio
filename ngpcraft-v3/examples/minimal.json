@@ -1,0 +1,5 @@
+{
+  "schema": "ngpcraft-ir/0.1",
+  "start": "room",
+  "scenes": [{"id": "room", "on_init": [{"op": "backdrop", "value": 15}]}]
+}

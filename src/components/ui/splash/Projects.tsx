@@ -78,7 +78,7 @@ const SplashProjectWrapper = styled.button`
 
   &:focus {
     background: transparent;
-    box-shadow: inset 0 0 0px 2px #c92c61;
+    box-shadow: inset 0 0 0px 2px ${(props) => props.theme.colors.highlight};
   }
 
   &:last-child {

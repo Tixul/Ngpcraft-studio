@@ -1,0 +1,3571 @@
+{
+ "events": {
+  "EVENT_ACTOR_ACTIVATE": {
+   "conditional": false,
+   "fields": {
+    "actorId": {
+     "type": "actor"
+    }
+   },
+   "file": "eventActorActivate.js"
+  },
+  "EVENT_ACTOR_COLLISIONS_DISABLE": {
+   "conditional": false,
+   "fields": {
+    "actorId": {
+     "type": "actor"
+    }
+   },
+   "file": "eventActorCollisionsDisable.js"
+  },
+  "EVENT_ACTOR_COLLISIONS_ENABLE": {
+   "conditional": false,
+   "fields": {
+    "actorId": {
+     "type": "actor"
+    }
+   },
+   "file": "eventActorCollisionsEnable.js"
+  },
+  "EVENT_ACTOR_DEACTIVATE": {
+   "conditional": false,
+   "fields": {
+    "actorId": {
+     "type": "actor"
+    }
+   },
+   "file": "eventActorDeactivate.js"
+  },
+  "EVENT_ACTOR_EFFECTS": {
+   "conditional": false,
+   "fields": {
+    "actorId": {
+     "type": "actor"
+    },
+    "distance": {
+     "conditions": [
+      {
+       "in": [
+        "splitIn",
+        "splitOut"
+       ],
+       "key": "effect"
+      }
+     ],
+     "type": "number"
+    },
+    "effect": {
+     "type": "select"
+    },
+    "frames": {
+     "conditions": [
+      {
+       "in": [
+        "flicker"
+       ],
+       "key": "effect"
+      },
+      {
+       "eq": "frames",
+       "key": "timeUnits"
+      }
+     ],
+     "type": "number"
+    },
+    "speed": {
+     "conditions": [
+      {
+       "in": [
+        "splitIn",
+        "splitOut"
+       ],
+       "key": "effect"
+      }
+     ],
+     "type": "moveSpeed"
+    },
+    "time": {
+     "conditions": [
+      {
+       "in": [
+        "flicker"
+       ],
+       "key": "effect"
+      },
+      {
+       "key": "timeUnits",
+       "ne": "frames"
+      }
+     ],
+     "type": "number"
+    }
+   },
+   "file": "eventActorEffects.js"
+  },
+  "EVENT_ACTOR_EMOTE": {
+   "conditional": false,
+   "fields": {
+    "actorId": {
+     "type": "actor"
+    },
+    "emoteId": {
+     "type": "emote"
+    }
+   },
+   "file": "eventActorEmote.js"
+  },
+  "EVENT_ACTOR_GET_DIRECTION": {
+   "conditional": false,
+   "fields": {
+    "actorId": {
+     "type": "actor"
+    },
+    "direction": {
+     "type": "variable"
+    }
+   },
+   "file": "eventActorGetDirection.js"
+  },
+  "EVENT_ACTOR_GET_POSITION": {
+   "conditional": false,
+   "fields": {
+    "actorId": {
+     "type": "actor"
+    },
+    "vectorX": {
+     "type": "variable"
+    },
+    "vectorY": {
+     "type": "variable"
+    }
+   },
+   "file": "eventActorGetPosition.js"
+  },
+  "EVENT_ACTOR_HIDE": {
+   "conditional": false,
+   "fields": {
+    "actorId": {
+     "type": "actor"
+    }
+   },
+   "file": "eventActorHide.js"
+  },
+  "EVENT_ACTOR_INVOKE": {
+   "conditional": false,
+   "fields": {
+    "actorId": {
+     "type": "actor"
+    }
+   },
+   "file": "eventActorInvoke.js"
+  },
+  "EVENT_ACTOR_MOVE_CANCEL": {
+   "conditional": false,
+   "fields": {
+    "actorId": {
+     "type": "actor"
+    }
+   },
+   "file": "eventActorMoveCancel.js"
+  },
+  "EVENT_ACTOR_MOVE_RELATIVE": {
+   "conditional": false,
+   "fields": {
+    "__section": {
+     "type": "tabs"
+    },
+    "actorId": {
+     "type": "actor"
+    },
+    "collideWith": {
+     "type": "togglebuttons"
+    },
+    "lockDirection": {
+     "type": "togglebuttons"
+    },
+    "moveType": {
+     "type": "moveType"
+    },
+    "x": {
+     "type": "value"
+    },
+    "y": {
+     "type": "value"
+    }
+   },
+   "file": "eventActorMoveRelative.js"
+  },
+  "EVENT_ACTOR_MOVE_TO": {
+   "conditional": false,
+   "fields": {
+    "__section": {
+     "type": "tabs"
+    },
+    "actorId": {
+     "type": "actor"
+    },
+    "collideWith": {
+     "type": "togglebuttons"
+    },
+    "lockDirection": {
+     "type": "togglebuttons"
+    },
+    "moveType": {
+     "type": "moveType"
+    },
+    "x": {
+     "type": "value"
+    },
+    "y": {
+     "type": "value"
+    }
+   },
+   "file": "eventActorMoveTo.js"
+  },
+  "EVENT_ACTOR_MOVE_TO_VALUE": {
+   "conditional": false,
+   "fields": {
+    "actorId": {
+     "type": "actor"
+    },
+    "vectorX": {
+     "type": "variable"
+    },
+    "vectorY": {
+     "type": "variable"
+    }
+   },
+   "file": "eventActorMoveToVariables.js"
+  },
+  "EVENT_ACTOR_PUSH": {
+   "conditional": false,
+   "fields": {
+    "continue": {
+     "type": "checkbox"
+    }
+   },
+   "file": "eventActorPush.js"
+  },
+  "EVENT_ACTOR_SET_ANIMATE": {
+   "conditional": false,
+   "fields": {
+    "actorId": {
+     "type": "actor"
+    },
+    "animate": {
+     "type": "checkbox"
+    }
+   },
+   "file": "eventActorSetAnimate.js"
+  },
+  "EVENT_ACTOR_SET_ANIMATION_SPEED": {
+   "conditional": false,
+   "fields": {
+    "actorId": {
+     "type": "actor"
+    },
+    "speed": {
+     "type": "animSpeed"
+    }
+   },
+   "file": "eventActorSetAnimationSpeed.js"
+  },
+  "EVENT_ACTOR_SET_COLLISION_BOX": {
+   "conditional": false,
+   "fields": {
+    "actorId": {
+     "type": "actor"
+    },
+    "height": {
+     "type": "value"
+    },
+    "width": {
+     "type": "value"
+    },
+    "x": {
+     "type": "value"
+    },
+    "y": {
+     "type": "value"
+    }
+   },
+   "file": "eventActorSetCollisionBox.js"
+  },
+  "EVENT_ACTOR_SET_DIRECTION": {
+   "conditional": false,
+   "fields": {
+    "actorId": {
+     "type": "actor"
+    },
+    "direction": {
+     "type": "value"
+    }
+   },
+   "file": "eventActorSetDirection.js"
+  },
+  "EVENT_ACTOR_SET_FRAME": {
+   "conditional": false,
+   "fields": {
+    "actorId": {
+     "type": "actor"
+    },
+    "frame": {
+     "type": "value"
+    }
+   },
+   "file": "eventActorSetFrame.js"
+  },
+  "EVENT_ACTOR_SET_FRAME_TO_VALUE": {
+   "conditional": false,
+   "fields": {
+    "actorId": {
+     "type": "actor"
+    },
+    "variable": {
+     "type": "variable"
+    }
+   },
+   "file": "eventActorSetFrameToVariable.js"
+  },
+  "EVENT_ACTOR_SET_MOVEMENT_SPEED": {
+   "conditional": false,
+   "fields": {
+    "actorId": {
+     "type": "actor"
+    },
+    "speed": {
+     "type": "moveSpeed"
+    }
+   },
+   "file": "eventActorSetMovementSpeed.js"
+  },
+  "EVENT_ACTOR_SET_POSITION": {
+   "conditional": false,
+   "fields": {
+    "actorId": {
+     "type": "actor"
+    },
+    "x": {
+     "type": "value"
+    },
+    "y": {
+     "type": "value"
+    }
+   },
+   "file": "eventActorSetPosition.js"
+  },
+  "EVENT_ACTOR_SET_POSITION_RELATIVE": {
+   "conditional": false,
+   "fields": {
+    "actorId": {
+     "type": "actor"
+    },
+    "x": {
+     "type": "value"
+    },
+    "y": {
+     "type": "value"
+    }
+   },
+   "file": "eventActorSetPositionRelative.js"
+  },
+  "EVENT_ACTOR_SET_POSITION_TO_VALUE": {
+   "conditional": false,
+   "fields": {
+    "actorId": {
+     "type": "actor"
+    },
+    "vectorX": {
+     "type": "variable"
+    },
+    "vectorY": {
+     "type": "variable"
+    }
+   },
+   "file": "eventActorSetPositionToVariables.js"
+  },
+  "EVENT_ACTOR_SET_SPRITE": {
+   "conditional": false,
+   "fields": {
+    "actorId": {
+     "type": "actor"
+    },
+    "spriteSheetId": {
+     "type": "sprite"
+    }
+   },
+   "file": "eventActorSetSprite.js"
+  },
+  "EVENT_ACTOR_SET_STATE": {
+   "conditional": false,
+   "fields": {
+    "actorId": {
+     "type": "actor"
+    },
+    "loopAnim": {
+     "type": "checkbox"
+    },
+    "spriteStateId": {
+     "type": "animationstate"
+    }
+   },
+   "file": "eventActorSetState.js"
+  },
+  "EVENT_ACTOR_SHOW": {
+   "conditional": false,
+   "fields": {
+    "actorId": {
+     "type": "actor"
+    }
+   },
+   "file": "eventActorShow.js"
+  },
+  "EVENT_ACTOR_START_UPDATE": {
+   "conditional": false,
+   "fields": {
+    "actorId": {
+     "type": "actor"
+    }
+   },
+   "file": "eventActorStartUpdateScript.js"
+  },
+  "EVENT_ACTOR_STOP_UPDATE": {
+   "conditional": false,
+   "fields": {
+    "actorId": {
+     "type": "actor"
+    }
+   },
+   "file": "eventActorStopUpdateScript.js"
+  },
+  "EVENT_ADD_FLAGS": {
+   "conditional": false,
+   "fields": {
+    "flag1": {
+     "type": "flag"
+    },
+    "flag10": {
+     "type": "flag"
+    },
+    "flag11": {
+     "type": "flag"
+    },
+    "flag12": {
+     "type": "flag"
+    },
+    "flag13": {
+     "type": "flag"
+    },
+    "flag14": {
+     "type": "flag"
+    },
+    "flag15": {
+     "type": "flag"
+    },
+    "flag16": {
+     "type": "flag"
+    },
+    "flag2": {
+     "type": "flag"
+    },
+    "flag3": {
+     "type": "flag"
+    },
+    "flag4": {
+     "type": "flag"
+    },
+    "flag5": {
+     "type": "flag"
+    },
+    "flag6": {
+     "type": "flag"
+    },
+    "flag7": {
+     "type": "flag"
+    },
+    "flag8": {
+     "type": "flag"
+    },
+    "flag9": {
+     "type": "flag"
+    },
+    "variable": {
+     "type": "variable"
+    }
+   },
+   "file": "eventVariableAddFlags.js"
+  },
+  "EVENT_ADVENTURE_STATE_SET": {
+   "conditional": false,
+   "fields": {
+    "state": {
+     "type": "select"
+    }
+   },
+   "file": "eventAdventureStateSet.js"
+  },
+  "EVENT_AWAIT_INPUT": {
+   "conditional": false,
+   "fields": {
+    "input": {
+     "type": "input"
+    }
+   },
+   "file": "eventInputAwait.js"
+  },
+  "EVENT_CALL_CUSTOM_EVENT": {
+   "conditional": false,
+   "fields": {
+    "customEventId": {
+     "type": "customEvent"
+    }
+   },
+   "file": "eventCallCustomEvent.js"
+  },
+  "EVENT_CAMERA_LOCK": {
+   "conditional": false,
+   "fields": {
+    "axis": {
+     "type": "togglebuttons"
+    },
+    "preventScroll": {
+     "type": "direction"
+    },
+    "speed": {
+     "type": "moveSpeed"
+    }
+   },
+   "file": "eventCameraLock.js"
+  },
+  "EVENT_CAMERA_MOVE_TO": {
+   "conditional": false,
+   "fields": {
+    "speed": {
+     "type": "moveSpeed"
+    },
+    "x": {
+     "type": "value"
+    },
+    "y": {
+     "type": "value"
+    }
+   },
+   "file": "eventCameraMoveTo.js"
+  },
+  "EVENT_CAMERA_PROPERTY_SET": {
+   "conditional": false,
+   "fields": {
+    "property": {
+     "type": "select"
+    },
+    "value": {
+     "type": "value"
+    }
+   },
+   "file": "eventCameraPropertySet.js"
+  },
+  "EVENT_CAMERA_SET_BOUNDS": {
+   "conditional": false,
+   "fields": {
+    "height": {
+     "type": "value"
+    },
+    "width": {
+     "type": "value"
+    },
+    "x": {
+     "type": "value"
+    },
+    "y": {
+     "type": "value"
+    }
+   },
+   "file": "eventCameraSetBounds.js"
+  },
+  "EVENT_CAMERA_SET_LOCK": {
+   "conditional": false,
+   "fields": {
+    "axis": {
+     "type": "togglebuttons"
+    },
+    "preventScroll": {
+     "type": "direction"
+    }
+   },
+   "file": "eventCameraSetLock.js"
+  },
+  "EVENT_CAMERA_SET_POSITION": {
+   "conditional": false,
+   "fields": {
+    "x": {
+     "type": "value"
+    },
+    "y": {
+     "type": "value"
+    }
+   },
+   "file": "eventCameraSetPosition.js"
+  },
+  "EVENT_CAMERA_SHAKE": {
+   "conditional": false,
+   "fields": {
+    "frames": {
+     "conditions": [
+      {
+       "eq": "frames",
+       "key": "units"
+      }
+     ],
+     "type": "number"
+    },
+    "magnitude": {
+     "type": "value"
+    },
+    "shakeDirection": {
+     "type": "moveType"
+    },
+    "time": {
+     "conditions": [
+      {
+       "key": "units",
+       "ne": "frames"
+      }
+     ],
+     "type": "number"
+    }
+   },
+   "file": "eventCameraShake.js"
+  },
+  "EVENT_CHOICE": {
+   "conditional": false,
+   "fields": {
+    "falseText": {
+     "type": "textarea"
+    },
+    "trueText": {
+     "type": "textarea"
+    },
+    "variable": {
+     "type": "variable"
+    }
+   },
+   "file": "eventTextChoice.js"
+  },
+  "EVENT_CLEAR_DATA": {
+   "conditional": false,
+   "fields": {
+    "saveSlot": {
+     "type": "togglebuttons"
+    }
+   },
+   "file": "eventDataClear.js"
+  },
+  "EVENT_CLEAR_FLAGS": {
+   "conditional": false,
+   "fields": {
+    "flag1": {
+     "type": "flag"
+    },
+    "flag10": {
+     "type": "flag"
+    },
+    "flag11": {
+     "type": "flag"
+    },
+    "flag12": {
+     "type": "flag"
+    },
+    "flag13": {
+     "type": "flag"
+    },
+    "flag14": {
+     "type": "flag"
+    },
+    "flag15": {
+     "type": "flag"
+    },
+    "flag16": {
+     "type": "flag"
+    },
+    "flag2": {
+     "type": "flag"
+    },
+    "flag3": {
+     "type": "flag"
+    },
+    "flag4": {
+     "type": "flag"
+    },
+    "flag5": {
+     "type": "flag"
+    },
+    "flag6": {
+     "type": "flag"
+    },
+    "flag7": {
+     "type": "flag"
+    },
+    "flag8": {
+     "type": "flag"
+    },
+    "flag9": {
+     "type": "flag"
+    },
+    "variable": {
+     "type": "variable"
+    }
+   },
+   "file": "eventVariableClearFlags.js"
+  },
+  "EVENT_COMMENT": {
+   "conditional": false,
+   "fields": {
+    "text": {
+     "type": "textarea"
+    }
+   },
+   "file": "eventComment.js"
+  },
+  "EVENT_DATA_TABLE": {
+   "conditional": false,
+   "fields": {
+    "data": {
+     "type": "dataTable"
+    },
+    "indexVariable": {
+     "type": "variable"
+    }
+   },
+   "file": "eventDataTable.js"
+  },
+  "EVENT_DEC_VALUE": {
+   "conditional": false,
+   "fields": {
+    "variable": {
+     "type": "variable"
+    }
+   },
+   "file": "eventVariableDec.js"
+  },
+  "EVENT_DEFINE_LABEL": {
+   "conditional": false,
+   "fields": {
+    "label": {
+     "type": "text"
+    }
+   },
+   "file": "eventLabelDefine.js"
+  },
+  "EVENT_DIALOGUE_CLOSE_NONMODAL": {
+   "conditional": false,
+   "fields": {
+    "speed": {
+     "type": "overlaySpeed"
+    }
+   },
+   "file": "eventTextCloseNonModal.js"
+  },
+  "EVENT_ENGINE_FIELD_SET": {
+   "conditional": false,
+   "fields": {
+    "engineFieldKey": {
+     "type": "engineField"
+    },
+    "value": {
+     "conditions": [
+      {
+       "key": "engineFieldKey",
+       "set": true
+      }
+     ],
+     "type": "engineFieldValue"
+    }
+   },
+   "file": "eventEngineFieldSet.js"
+  },
+  "EVENT_ENGINE_FIELD_STORE": {
+   "conditional": false,
+   "fields": {
+    "engineFieldKey": {
+     "type": "engineField"
+    },
+    "value": {
+     "conditions": [
+      {
+       "key": "engineFieldKey",
+       "set": true
+      }
+     ],
+     "type": "variable"
+    }
+   },
+   "file": "eventEngineFieldStore.js"
+  },
+  "EVENT_FADE_IN": {
+   "conditional": false,
+   "fields": {
+    "speed": {
+     "type": "fadeSpeed"
+    }
+   },
+   "file": "eventFadeIn.js"
+  },
+  "EVENT_FADE_OUT": {
+   "conditional": false,
+   "fields": {
+    "speed": {
+     "type": "fadeSpeed"
+    }
+   },
+   "file": "eventFadeOut.js"
+  },
+  "EVENT_GBVM_SCRIPT": {
+   "conditional": false,
+   "fields": {
+    "references": {
+     "type": "references"
+    },
+    "script": {
+     "type": "code"
+    }
+   },
+   "file": "eventGBVMScript.js"
+  },
+  "EVENT_GOTO_LABEL": {
+   "conditional": false,
+   "fields": {
+    "label": {
+     "type": "text"
+    }
+   },
+   "file": "eventLabelGoto.js"
+  },
+  "EVENT_GROUP": {
+   "conditional": true,
+   "fields": {
+    "true": {
+     "type": "events"
+    }
+   },
+   "file": "eventGroup.js"
+  },
+  "EVENT_HIDE_SPRITES": {
+   "conditional": false,
+   "fields": {},
+   "file": "eventSpritesHide.js"
+  },
+  "EVENT_IDLE": {
+   "conditional": false,
+   "fields": {},
+   "file": "eventIdle.js"
+  },
+  "EVENT_IF": {
+   "conditional": true,
+   "fields": {
+    "__collapseElse": {
+     "conditions": [
+      {
+       "key": "__disableElse",
+       "ne": true
+      }
+     ],
+     "type": "collapsable"
+    },
+    "condition": {
+     "type": "value"
+    },
+    "false": {
+     "conditions": [
+      {
+       "key": "__collapseElse",
+       "ne": true
+      },
+      {
+       "key": "__disableElse",
+       "ne": true
+      }
+     ],
+     "type": "events"
+    },
+    "true": {
+     "type": "events"
+    }
+   },
+   "file": "eventIf.js"
+  },
+  "EVENT_IF_ACTOR_AT_POSITION": {
+   "conditional": true,
+   "fields": {
+    "__collapseElse": {
+     "conditions": [
+      {
+       "key": "__disableElse",
+       "ne": true
+      }
+     ],
+     "type": "collapsable"
+    },
+    "actorId": {
+     "type": "actor"
+    },
+    "false": {
+     "conditions": [
+      {
+       "key": "__collapseElse",
+       "ne": true
+      },
+      {
+       "key": "__disableElse",
+       "ne": true
+      }
+     ],
+     "type": "events"
+    },
+    "true": {
+     "type": "events"
+    },
+    "x": {
+     "type": "value"
+    },
+    "y": {
+     "type": "value"
+    }
+   },
+   "file": "eventIfActorAtPosition.js"
+  },
+  "EVENT_IF_ACTOR_DIRECTION": {
+   "conditional": true,
+   "fields": {
+    "__collapseElse": {
+     "conditions": [
+      {
+       "key": "__disableElse",
+       "ne": true
+      }
+     ],
+     "type": "collapsable"
+    },
+    "actorId": {
+     "type": "actor"
+    },
+    "direction": {
+     "type": "value"
+    },
+    "false": {
+     "conditions": [
+      {
+       "key": "__collapseElse",
+       "ne": true
+      },
+      {
+       "key": "__disableElse",
+       "ne": true
+      }
+     ],
+     "type": "events"
+    },
+    "true": {
+     "type": "events"
+    }
+   },
+   "file": "eventIfActorDirection.js"
+  },
+  "EVENT_IF_ACTOR_DISTANCE_FROM_ACTOR": {
+   "conditional": true,
+   "fields": {
+    "__collapseElse": {
+     "conditions": [
+      {
+       "key": "__disableElse",
+       "ne": true
+      }
+     ],
+     "type": "collapsable"
+    },
+    "actorId": {
+     "type": "actor"
+    },
+    "distance": {
+     "type": "value"
+    },
+    "false": {
+     "conditions": [
+      {
+       "key": "__collapseElse",
+       "ne": true
+      },
+      {
+       "key": "__disableElse",
+       "ne": true
+      }
+     ],
+     "type": "events"
+    },
+    "operator": {
+     "type": "operator"
+    },
+    "otherActorId": {
+     "type": "actor"
+    },
+    "true": {
+     "type": "events"
+    }
+   },
+   "file": "eventIfActorDistanceFromActor.js"
+  },
+  "EVENT_IF_ACTOR_RELATIVE_TO_ACTOR": {
+   "conditional": true,
+   "fields": {
+    "__collapseElse": {
+     "conditions": [
+      {
+       "key": "__disableElse",
+       "ne": true
+      }
+     ],
+     "type": "collapsable"
+    },
+    "actorId": {
+     "type": "actor"
+    },
+    "false": {
+     "conditions": [
+      {
+       "key": "__collapseElse",
+       "ne": true
+      },
+      {
+       "key": "__disableElse",
+       "ne": true
+      }
+     ],
+     "type": "events"
+    },
+    "operation": {
+     "type": "select"
+    },
+    "otherActorId": {
+     "type": "actor"
+    },
+    "true": {
+     "type": "events"
+    }
+   },
+   "file": "eventIfActorRelativeToActor.js"
+  },
+  "EVENT_IF_COLOR_SUPPORTED": {
+   "conditional": true,
+   "fields": {
+    "__collapseElse": {
+     "conditions": [
+      {
+       "key": "__disableElse",
+       "ne": true
+      }
+     ],
+     "type": "collapsable"
+    },
+    "false": {
+     "conditions": [
+      {
+       "key": "__collapseElse",
+       "ne": true
+      },
+      {
+       "key": "__disableElse",
+       "ne": true
+      }
+     ],
+     "type": "events"
+    },
+    "true": {
+     "type": "events"
+    }
+   },
+   "file": "eventIfColorSupported.js"
+  },
+  "EVENT_IF_CURRENT_SCENE_IS": {
+   "conditional": true,
+   "fields": {
+    "__collapseElse": {
+     "conditions": [
+      {
+       "key": "__disableElse",
+       "ne": true
+      }
+     ],
+     "type": "collapsable"
+    },
+    "false": {
+     "conditions": [
+      {
+       "key": "__collapseElse",
+       "ne": true
+      },
+      {
+       "key": "__disableElse",
+       "ne": true
+      }
+     ],
+     "type": "events"
+    },
+    "sceneId": {
+     "type": "scene"
+    },
+    "true": {
+     "type": "events"
+    }
+   },
+   "file": "eventIfCurrentSceneIs.js"
+  },
+  "EVENT_IF_DEVICE_GBA": {
+   "conditional": true,
+   "fields": {
+    "__collapseElse": {
+     "conditions": [
+      {
+       "key": "__disableElse",
+       "ne": true
+      }
+     ],
+     "type": "collapsable"
+    },
+    "false": {
+     "conditions": [
+      {
+       "key": "__collapseElse",
+       "ne": true
+      },
+      {
+       "key": "__disableElse",
+       "ne": true
+      }
+     ],
+     "type": "events"
+    },
+    "true": {
+     "type": "events"
+    }
+   },
+   "file": "eventIfDeviceGBA.js"
+  },
+  "EVENT_IF_DEVICE_SGB": {
+   "conditional": true,
+   "fields": {
+    "__collapseElse": {
+     "conditions": [
+      {
+       "key": "__disableElse",
+       "ne": true
+      }
+     ],
+     "type": "collapsable"
+    },
+    "false": {
+     "conditions": [
+      {
+       "key": "__collapseElse",
+       "ne": true
+      },
+      {
+       "key": "__disableElse",
+       "ne": true
+      }
+     ],
+     "type": "events"
+    },
+    "true": {
+     "type": "events"
+    }
+   },
+   "file": "eventIfDeviceSGB.js"
+  },
+  "EVENT_IF_EXPRESSION": {
+   "conditional": true,
+   "fields": {
+    "__collapseElse": {
+     "conditions": [
+      {
+       "key": "__disableElse",
+       "ne": true
+      }
+     ],
+     "type": "collapsable"
+    },
+    "expression": {
+     "type": "matharea"
+    },
+    "false": {
+     "conditions": [
+      {
+       "key": "__collapseElse",
+       "ne": true
+      },
+      {
+       "key": "__disableElse",
+       "ne": true
+      }
+     ],
+     "type": "events"
+    },
+    "true": {
+     "type": "events"
+    }
+   },
+   "file": "eventIfExpression.js"
+  },
+  "EVENT_IF_FALSE": {
+   "conditional": true,
+   "fields": {
+    "__collapseElse": {
+     "conditions": [
+      {
+       "key": "__disableElse",
+       "ne": true
+      }
+     ],
+     "type": "collapsable"
+    },
+    "false": {
+     "conditions": [
+      {
+       "key": "__collapseElse",
+       "ne": true
+      },
+      {
+       "key": "__disableElse",
+       "ne": true
+      }
+     ],
+     "type": "events"
+    },
+    "true": {
+     "type": "events"
+    },
+    "variable": {
+     "type": "variable"
+    }
+   },
+   "file": "eventIfVariableFalse.js"
+  },
+  "EVENT_IF_FLAGS_COMPARE": {
+   "conditional": true,
+   "fields": {
+    "__collapseElse": {
+     "conditions": [
+      {
+       "key": "__disableElse",
+       "ne": true
+      }
+     ],
+     "type": "collapsable"
+    },
+    "false": {
+     "conditions": [
+      {
+       "key": "__collapseElse",
+       "ne": true
+      },
+      {
+       "key": "__disableElse",
+       "ne": true
+      }
+     ],
+     "type": "events"
+    },
+    "flag": {
+     "type": "selectFlags"
+    },
+    "true": {
+     "type": "events"
+    },
+    "variable": {
+     "type": "variable"
+    }
+   },
+   "file": "eventIfVariableFlagsCompare.js"
+  },
+  "EVENT_IF_INPUT": {
+   "conditional": true,
+   "fields": {
+    "__collapseElse": {
+     "conditions": [
+      {
+       "key": "__disableElse",
+       "ne": true
+      }
+     ],
+     "type": "collapsable"
+    },
+    "false": {
+     "conditions": [
+      {
+       "key": "__collapseElse",
+       "ne": true
+      },
+      {
+       "key": "__disableElse",
+       "ne": true
+      }
+     ],
+     "type": "events"
+    },
+    "input": {
+     "type": "input"
+    },
+    "true": {
+     "type": "events"
+    }
+   },
+   "file": "eventIfInput.js"
+  },
+  "EVENT_IF_SAVED_DATA": {
+   "conditional": true,
+   "fields": {
+    "__collapseElse": {
+     "conditions": [
+      {
+       "key": "__disableElse",
+       "ne": true
+      }
+     ],
+     "type": "collapsable"
+    },
+    "false": {
+     "conditions": [
+      {
+       "key": "__collapseElse",
+       "ne": true
+      },
+      {
+       "key": "__disableElse",
+       "ne": true
+      }
+     ],
+     "type": "events"
+    },
+    "saveSlot": {
+     "type": "togglebuttons"
+    },
+    "true": {
+     "type": "events"
+    }
+   },
+   "file": "eventIfDataSaved.js"
+  },
+  "EVENT_IF_TRUE": {
+   "conditional": true,
+   "fields": {
+    "__collapseElse": {
+     "conditions": [
+      {
+       "key": "__disableElse",
+       "ne": true
+      }
+     ],
+     "type": "collapsable"
+    },
+    "false": {
+     "conditions": [
+      {
+       "key": "__collapseElse",
+       "ne": true
+      },
+      {
+       "key": "__disableElse",
+       "ne": true
+      }
+     ],
+     "type": "events"
+    },
+    "true": {
+     "type": "events"
+    },
+    "variable": {
+     "type": "variable"
+    }
+   },
+   "file": "eventIfVariableTrue.js"
+  },
+  "EVENT_IF_VALUE": {
+   "conditional": true,
+   "fields": {
+    "__collapseElse": {
+     "conditions": [
+      {
+       "key": "__disableElse",
+       "ne": true
+      }
+     ],
+     "type": "collapsable"
+    },
+    "comparator": {
+     "type": "number"
+    },
+    "false": {
+     "conditions": [
+      {
+       "key": "__collapseElse",
+       "ne": true
+      },
+      {
+       "key": "__disableElse",
+       "ne": true
+      }
+     ],
+     "type": "events"
+    },
+    "operator": {
+     "type": "operator"
+    },
+    "true": {
+     "type": "events"
+    },
+    "variable": {
+     "type": "variable"
+    }
+   },
+   "file": "eventIfVariableValue.js"
+  },
+  "EVENT_IF_VALUE_COMPARE": {
+   "conditional": true,
+   "fields": {
+    "__collapseElse": {
+     "conditions": [
+      {
+       "key": "__disableElse",
+       "ne": true
+      }
+     ],
+     "type": "collapsable"
+    },
+    "false": {
+     "conditions": [
+      {
+       "key": "__collapseElse",
+       "ne": true
+      },
+      {
+       "key": "__disableElse",
+       "ne": true
+      }
+     ],
+     "type": "events"
+    },
+    "operator": {
+     "type": "operator"
+    },
+    "true": {
+     "type": "events"
+    },
+    "vectorX": {
+     "type": "variable"
+    },
+    "vectorY": {
+     "type": "variable"
+    }
+   },
+   "file": "eventIfVariableCompare.js"
+  },
+  "EVENT_INC_VALUE": {
+   "conditional": false,
+   "fields": {
+    "variable": {
+     "type": "variable"
+    }
+   },
+   "file": "eventVariableInc.js"
+  },
+  "EVENT_LAUNCH_PROJECTILE": {
+   "conditional": false,
+   "fields": {
+    "__section": {
+     "type": "tabs"
+    },
+    "actorId": {
+     "conditions": [
+      {
+       "in": [
+        "source"
+       ],
+       "key": "__section"
+      }
+     ],
+     "type": "actor"
+    },
+    "angle": {
+     "conditions": [
+      {
+       "eq": "angle",
+       "key": "directionType"
+      }
+     ],
+     "type": "angle"
+    },
+    "angleVariable": {
+     "conditions": [
+      {
+       "eq": "anglevar",
+       "key": "directionType"
+      }
+     ],
+     "type": "variable"
+    },
+    "animSpeed": {
+     "type": "animSpeed"
+    },
+    "collisionGroup": {
+     "type": "collisionMask"
+    },
+    "collisionMask": {
+     "type": "collisionMask"
+    },
+    "destroyOnHit": {
+     "type": "checkbox"
+    },
+    "direction": {
+     "conditions": [
+      {
+       "eq": "direction",
+       "key": "directionType"
+      }
+     ],
+     "type": "direction"
+    },
+    "directionType": {
+     "type": "select"
+    },
+    "initialOffset": {
+     "type": "number"
+    },
+    "lifeTime": {
+     "type": "number"
+    },
+    "loopAnim": {
+     "type": "checkbox"
+    },
+    "otherActorId": {
+     "conditions": [
+      {
+       "eq": "actor",
+       "key": "directionType"
+      }
+     ],
+     "type": "actor"
+    },
+    "speed": {
+     "type": "moveSpeed"
+    },
+    "spriteSheetId": {
+     "type": "sprite"
+    },
+    "spriteStateId": {
+     "type": "animationstate"
+    },
+    "targetActorId": {
+     "conditions": [
+      {
+       "eq": "target",
+       "key": "directionType"
+      }
+     ],
+     "type": "actor"
+    },
+    "x": {
+     "type": "number"
+    },
+    "y": {
+     "type": "number"
+    }
+   },
+   "file": "eventLaunchProjectile.js"
+  },
+  "EVENT_LAUNCH_PROJECTILE_SLOT": {
+   "conditional": false,
+   "fields": {
+    "__section": {
+     "type": "tabs"
+    },
+    "actorId": {
+     "conditions": [
+      {
+       "in": [
+        "source",
+        null
+       ],
+       "key": "__section"
+      }
+     ],
+     "type": "actor"
+    },
+    "angle": {
+     "conditions": [
+      {
+       "eq": "angle",
+       "key": "directionType"
+      }
+     ],
+     "type": "angle"
+    },
+    "angleVariable": {
+     "conditions": [
+      {
+       "eq": "anglevar",
+       "key": "directionType"
+      }
+     ],
+     "type": "variable"
+    },
+    "direction": {
+     "conditions": [
+      {
+       "eq": "direction",
+       "key": "directionType"
+      }
+     ],
+     "type": "direction"
+    },
+    "directionType": {
+     "type": "select"
+    },
+    "otherActorId": {
+     "conditions": [
+      {
+       "eq": "actor",
+       "key": "directionType"
+      }
+     ],
+     "type": "actor"
+    },
+    "slot": {
+     "conditions": [
+      {
+       "in": [
+        "source",
+        null
+       ],
+       "key": "__section"
+      }
+     ],
+     "type": "togglebuttons"
+    },
+    "targetActorId": {
+     "conditions": [
+      {
+       "eq": "target",
+       "key": "directionType"
+      }
+     ],
+     "type": "actor"
+    },
+    "x": {
+     "type": "number"
+    },
+    "y": {
+     "type": "number"
+    }
+   },
+   "file": "eventLaunchProjectileSlot.js"
+  },
+  "EVENT_LINK_CLOSE": {
+   "conditional": false,
+   "fields": {},
+   "file": "eventLinkClose.js"
+  },
+  "EVENT_LINK_HOST": {
+   "conditional": false,
+   "fields": {},
+   "file": "eventLinkStart.js"
+  },
+  "EVENT_LINK_JOIN": {
+   "conditional": false,
+   "fields": {},
+   "file": "eventLinkJoin.js"
+  },
+  "EVENT_LINK_TRANSFER": {
+   "conditional": false,
+   "fields": {
+    "receiveVariable": {
+     "type": "variable"
+    },
+    "sendVariable": {
+     "type": "variable"
+    },
+    "size": {
+     "type": "number"
+    }
+   },
+   "file": "eventLinkTransfer.js"
+  },
+  "EVENT_LOAD_DATA": {
+   "conditional": false,
+   "fields": {
+    "saveSlot": {
+     "type": "togglebuttons"
+    }
+   },
+   "file": "eventDataLoad.js"
+  },
+  "EVENT_LOAD_PROJECTILE_SLOT": {
+   "conditional": false,
+   "fields": {
+    "__section": {
+     "type": "tabs"
+    },
+    "animSpeed": {
+     "type": "animSpeed"
+    },
+    "collisionGroup": {
+     "type": "collisionMask"
+    },
+    "collisionMask": {
+     "type": "collisionMask"
+    },
+    "destroyOnHit": {
+     "type": "checkbox"
+    },
+    "initialOffset": {
+     "type": "number"
+    },
+    "lifeTime": {
+     "type": "number"
+    },
+    "loopAnim": {
+     "type": "checkbox"
+    },
+    "slot": {
+     "conditions": [
+      {
+       "in": [
+        "projectile",
+        null
+       ],
+       "key": "__section"
+      }
+     ],
+     "type": "togglebuttons"
+    },
+    "speed": {
+     "type": "moveSpeed"
+    },
+    "spriteSheetId": {
+     "type": "sprite"
+    },
+    "spriteStateId": {
+     "type": "animationstate"
+    }
+   },
+   "file": "eventLoadProjectile.js"
+  },
+  "EVENT_LOOP": {
+   "conditional": true,
+   "fields": {
+    "true": {
+     "type": "events"
+    }
+   },
+   "file": "eventLoop.js"
+  },
+  "EVENT_LOOP_FOR": {
+   "conditional": true,
+   "fields": {
+    "comparison": {
+     "type": "operator"
+    },
+    "from": {
+     "type": "value"
+    },
+    "operation": {
+     "type": "mathOperator"
+    },
+    "to": {
+     "type": "value"
+    },
+    "true": {
+     "type": "events"
+    },
+    "value": {
+     "type": "value"
+    },
+    "variable": {
+     "type": "variable"
+    }
+   },
+   "file": "eventLoopFor.js"
+  },
+  "EVENT_LOOP_WHILE": {
+   "conditional": true,
+   "fields": {
+    "condition": {
+     "type": "value"
+    },
+    "true": {
+     "type": "events"
+    }
+   },
+   "file": "eventLoopWhile.js"
+  },
+  "EVENT_MENU": {
+   "conditional": false,
+   "fields": {
+    "cancelOnB": {
+     "type": "checkbox"
+    },
+    "cancelOnLastOption": {
+     "type": "checkbox"
+    },
+    "items": {
+     "type": "number"
+    },
+    "layout": {
+     "type": "select"
+    },
+    "option1": {
+     "conditions": [
+      {
+       "eq": 1,
+       "key": "items"
+      },
+      {
+       "eq": true,
+       "key": "cancelOnLastOption"
+      }
+     ],
+     "type": "textarea"
+    },
+    "option2": {
+     "conditions": [
+      {
+       "eq": 2,
+       "key": "items"
+      },
+      {
+       "eq": true,
+       "key": "cancelOnLastOption"
+      }
+     ],
+     "type": "textarea"
+    },
+    "option3": {
+     "conditions": [
+      {
+       "eq": 3,
+       "key": "items"
+      },
+      {
+       "eq": true,
+       "key": "cancelOnLastOption"
+      }
+     ],
+     "type": "textarea"
+    },
+    "option4": {
+     "conditions": [
+      {
+       "eq": 4,
+       "key": "items"
+      },
+      {
+       "eq": true,
+       "key": "cancelOnLastOption"
+      }
+     ],
+     "type": "textarea"
+    },
+    "option5": {
+     "conditions": [
+      {
+       "eq": 5,
+       "key": "items"
+      },
+      {
+       "eq": true,
+       "key": "cancelOnLastOption"
+      }
+     ],
+     "type": "textarea"
+    },
+    "option6": {
+     "conditions": [
+      {
+       "eq": 6,
+       "key": "items"
+      },
+      {
+       "eq": true,
+       "key": "cancelOnLastOption"
+      }
+     ],
+     "type": "textarea"
+    },
+    "option7": {
+     "conditions": [
+      {
+       "eq": 7,
+       "key": "items"
+      },
+      {
+       "eq": true,
+       "key": "cancelOnLastOption"
+      }
+     ],
+     "type": "textarea"
+    },
+    "option8": {
+     "conditions": [
+      {
+       "eq": 8,
+       "key": "items"
+      },
+      {
+       "eq": true,
+       "key": "cancelOnLastOption"
+      }
+     ],
+     "type": "textarea"
+    },
+    "variable": {
+     "type": "variable"
+    }
+   },
+   "file": "eventMenu.js"
+  },
+  "EVENT_MUSIC_PLAY": {
+   "conditional": false,
+   "fields": {
+    "musicId": {
+     "type": "music"
+    }
+   },
+   "file": "eventMusicPlay.js"
+  },
+  "EVENT_MUSIC_STOP": {
+   "conditional": false,
+   "fields": {},
+   "file": "eventMusicStop.js"
+  },
+  "EVENT_MUTE_CHANNEL": {
+   "conditional": false,
+   "fields": {
+    "channels": {
+     "type": "togglebuttons"
+    }
+   },
+   "file": "eventMuteChannel.js"
+  },
+  "EVENT_OVERLAY_HIDE": {
+   "conditional": false,
+   "fields": {},
+   "file": "eventOverlayHide.js"
+  },
+  "EVENT_OVERLAY_MOVE_TO": {
+   "conditional": false,
+   "fields": {
+    "speed": {
+     "type": "overlaySpeed"
+    },
+    "x": {
+     "type": "number"
+    },
+    "y": {
+     "type": "number"
+    }
+   },
+   "file": "eventOverlayMoveTo.js"
+  },
+  "EVENT_OVERLAY_SET_SCANLINE_CUTOFF": {
+   "conditional": false,
+   "fields": {
+    "y": {
+     "type": "value"
+    }
+   },
+   "file": "eventOverlaySetScanlineCutoff.js"
+  },
+  "EVENT_OVERLAY_SHOW": {
+   "conditional": false,
+   "fields": {
+    "color": {
+     "type": "overlayColor"
+    },
+    "x": {
+     "type": "number"
+    },
+    "y": {
+     "type": "number"
+    }
+   },
+   "file": "eventOverlayShow.js"
+  },
+  "EVENT_PALETTE_SET_BACKGROUND": {
+   "conditional": false,
+   "fields": {
+    "palette0": {
+     "type": "palette"
+    },
+    "palette1": {
+     "type": "palette"
+    },
+    "palette2": {
+     "type": "palette"
+    },
+    "palette3": {
+     "type": "palette"
+    },
+    "palette4": {
+     "type": "palette"
+    },
+    "palette5": {
+     "type": "palette"
+    },
+    "palette6": {
+     "type": "palette"
+    },
+    "palette7": {
+     "type": "palette"
+    }
+   },
+   "file": "eventPaletteSetBackground.js"
+  },
+  "EVENT_PALETTE_SET_EMOTE": {
+   "conditional": false,
+   "fields": {
+    "palette": {
+     "type": "palette"
+    }
+   },
+   "file": "eventPaletteSetEmote.js"
+  },
+  "EVENT_PALETTE_SET_SGB": {
+   "conditional": false,
+   "fields": {
+    "palette1": {
+     "type": "palette"
+    },
+    "palette2": {
+     "type": "palette"
+    },
+    "palette3": {
+     "type": "palette"
+    },
+    "palette4": {
+     "type": "palette"
+    }
+   },
+   "file": "eventPaletteSetSGB.js"
+  },
+  "EVENT_PALETTE_SET_SPRITE": {
+   "conditional": false,
+   "fields": {
+    "palette0": {
+     "type": "palette"
+    },
+    "palette1": {
+     "type": "palette"
+    },
+    "palette2": {
+     "type": "palette"
+    },
+    "palette3": {
+     "type": "palette"
+    },
+    "palette4": {
+     "type": "palette"
+    },
+    "palette5": {
+     "type": "palette"
+    },
+    "palette6": {
+     "type": "palette"
+    },
+    "palette7": {
+     "type": "palette"
+    }
+   },
+   "file": "eventPaletteSetSprite.js"
+  },
+  "EVENT_PALETTE_SET_UI": {
+   "conditional": false,
+   "fields": {
+    "palette": {
+     "type": "palette"
+    }
+   },
+   "file": "eventPaletteSetUI.js"
+  },
+  "EVENT_PEEK_DATA": {
+   "conditional": false,
+   "fields": {
+    "saveSlot": {
+     "type": "togglebuttons"
+    },
+    "variableDest": {
+     "type": "variable"
+    },
+    "variableSource": {
+     "type": "variable"
+    }
+   },
+   "file": "eventDataPeek.js"
+  },
+  "EVENT_PLATFORMER_STATE_SET": {
+   "conditional": false,
+   "fields": {
+    "state": {
+     "type": "select"
+    }
+   },
+   "file": "eventPlatformerStateSet.js"
+  },
+  "EVENT_PLAYER_BOUNCE": {
+   "conditional": false,
+   "fields": {
+    "height": {
+     "type": "select"
+    }
+   },
+   "file": "eventPlatformerBounce.js"
+  },
+  "EVENT_PLAYER_SET_SPRITE": {
+   "conditional": false,
+   "fields": {
+    "spriteSheetId": {
+     "type": "sprite"
+    }
+   },
+   "file": "eventPlayerSetSprite.js"
+  },
+  "EVENT_PRINT": {
+   "conditional": true,
+   "fields": {
+    "__collapseElse": {
+     "conditions": [
+      {
+       "key": "__disableElse",
+       "ne": true
+      }
+     ],
+     "type": "collapsable"
+    },
+    "__collapseSuccess": {
+     "type": "collapsable"
+    },
+    "false": {
+     "conditions": [
+      {
+       "key": "__collapseElse",
+       "ne": true
+      },
+      {
+       "key": "__disableElse",
+       "ne": true
+      }
+     ],
+     "type": "events"
+    },
+    "height": {
+     "type": "number"
+    },
+    "margin": {
+     "type": "number"
+    },
+    "source": {
+     "type": "select"
+    },
+    "true": {
+     "conditions": [
+      {
+       "key": "__collapseSuccess",
+       "ne": true
+      }
+     ],
+     "type": "events"
+    },
+    "y": {
+     "type": "number"
+    }
+   },
+   "file": "eventPrint.js"
+  },
+  "EVENT_RATE_LIMIT": {
+   "conditional": true,
+   "fields": {
+    "frames": {
+     "conditions": [
+      {
+       "eq": "frames",
+       "key": "units"
+      }
+     ],
+     "type": "constvalue"
+    },
+    "time": {
+     "conditions": [
+      {
+       "key": "units",
+       "ne": "frames"
+      }
+     ],
+     "type": "constvalue"
+    },
+    "true": {
+     "type": "events"
+    },
+    "variable": {
+     "type": "variable"
+    }
+   },
+   "file": "eventRateLimit.js"
+  },
+  "EVENT_REMOVE_ADVENTURE_CALLBACK_SCRIPT": {
+   "conditional": false,
+   "fields": {
+    "event": {
+     "type": "select"
+    }
+   },
+   "file": "eventAdventureCallbackScriptRemove.js"
+  },
+  "EVENT_REMOVE_INPUT_SCRIPT": {
+   "conditional": false,
+   "fields": {
+    "input": {
+     "type": "input"
+    }
+   },
+   "file": "eventInputScriptRemove.js"
+  },
+  "EVENT_REMOVE_PLATFORMER_CALLBACK_SCRIPT": {
+   "conditional": false,
+   "fields": {
+    "event": {
+     "type": "select"
+    }
+   },
+   "file": "eventPlatformerCallbackScriptRemove.js"
+  },
+  "EVENT_REPLACE_TILE_XY": {
+   "conditional": false,
+   "fields": {
+    "tileIndex": {
+     "type": "value"
+    },
+    "tilesetId": {
+     "type": "tileset"
+    },
+    "x": {
+     "type": "value"
+    },
+    "y": {
+     "type": "value"
+    }
+   },
+   "file": "eventReplaceTileXY.js"
+  },
+  "EVENT_REPLACE_TILE_XY_SEQUENCE": {
+   "conditional": false,
+   "fields": {
+    "frames": {
+     "type": "value"
+    },
+    "tileIndex": {
+     "type": "value"
+    },
+    "tilesetId": {
+     "type": "tileset"
+    },
+    "variable": {
+     "type": "variable"
+    },
+    "x": {
+     "type": "value"
+    },
+    "y": {
+     "type": "value"
+    }
+   },
+   "file": "eventReplaceTileXYSequence.js"
+  },
+  "EVENT_RESET_VARIABLES": {
+   "conditional": false,
+   "fields": {},
+   "file": "eventVariablesReset.js"
+  },
+  "EVENT_RNG_SEED": {
+   "conditional": false,
+   "fields": {},
+   "file": "eventSeedRng.js"
+  },
+  "EVENT_SAVE_DATA": {
+   "conditional": true,
+   "fields": {
+    "__scriptTabs": {
+     "type": "tabs"
+    },
+    "load": {
+     "conditions": [
+      {
+       "eq": "load",
+       "key": "__scriptTabs"
+      }
+     ],
+     "type": "events"
+    },
+    "saveSlot": {
+     "type": "togglebuttons"
+    },
+    "true": {
+     "conditions": [
+      {
+       "key": "__scriptTabs",
+       "ne": "load"
+      }
+     ],
+     "type": "events"
+    }
+   },
+   "file": "eventDataSave.js"
+  },
+  "EVENT_SCENE_POP_ALL_STATE": {
+   "conditional": false,
+   "fields": {
+    "fadeSpeed": {
+     "type": "fadeSpeed"
+    }
+   },
+   "file": "eventScenePopAllState.js"
+  },
+  "EVENT_SCENE_POP_STATE": {
+   "conditional": false,
+   "fields": {
+    "fadeSpeed": {
+     "type": "fadeSpeed"
+    }
+   },
+   "file": "eventScenePopState.js"
+  },
+  "EVENT_SCENE_PUSH_STATE": {
+   "conditional": false,
+   "fields": {},
+   "file": "eventScenePushState.js"
+  },
+  "EVENT_SCENE_RESET_STATE": {
+   "conditional": false,
+   "fields": {},
+   "file": "eventSceneResetState.js"
+  },
+  "EVENT_SCENE_UPDATE_PAUSE": {
+   "conditional": false,
+   "fields": {},
+   "file": "eventSceneUpdatePause.js"
+  },
+  "EVENT_SCENE_UPDATE_RESUME": {
+   "conditional": false,
+   "fields": {},
+   "file": "eventSceneUpdateResume.js"
+  },
+  "EVENT_SCRIPT_LOCK": {
+   "conditional": false,
+   "fields": {},
+   "file": "eventScriptLock.js"
+  },
+  "EVENT_SCRIPT_UNLOCK": {
+   "conditional": false,
+   "fields": {},
+   "file": "eventScriptUnlock.js"
+  },
+  "EVENT_SET_ADVENTURE_CALLBACK_SCRIPT": {
+   "conditional": true,
+   "fields": {
+    "__scriptTabs": {
+     "type": "tabs"
+    },
+    "event": {
+     "type": "select"
+    },
+    "script": {
+     "conditions": [
+      {
+       "in": [
+        null,
+        "scriptinput"
+       ],
+       "key": "__scriptTabs"
+      }
+     ],
+     "type": "events"
+    }
+   },
+   "file": "eventAdventureCallbackScriptSet.js"
+  },
+  "EVENT_SET_DIALOGUE_FRAME": {
+   "conditional": false,
+   "fields": {
+    "tilesetId": {
+     "type": "tileset"
+    }
+   },
+   "file": "eventSetDialogueFrame.js"
+  },
+  "EVENT_SET_FALSE": {
+   "conditional": false,
+   "fields": {
+    "variable": {
+     "type": "variable"
+    }
+   },
+   "file": "eventVariableSetToFalse.js"
+  },
+  "EVENT_SET_FLAGS": {
+   "conditional": false,
+   "fields": {
+    "flag1": {
+     "type": "flag"
+    },
+    "flag10": {
+     "type": "flag"
+    },
+    "flag11": {
+     "type": "flag"
+    },
+    "flag12": {
+     "type": "flag"
+    },
+    "flag13": {
+     "type": "flag"
+    },
+    "flag14": {
+     "type": "flag"
+    },
+    "flag15": {
+     "type": "flag"
+    },
+    "flag16": {
+     "type": "flag"
+    },
+    "flag2": {
+     "type": "flag"
+    },
+    "flag3": {
+     "type": "flag"
+    },
+    "flag4": {
+     "type": "flag"
+    },
+    "flag5": {
+     "type": "flag"
+    },
+    "flag6": {
+     "type": "flag"
+    },
+    "flag7": {
+     "type": "flag"
+    },
+    "flag8": {
+     "type": "flag"
+    },
+    "flag9": {
+     "type": "flag"
+    },
+    "variable": {
+     "type": "variable"
+    }
+   },
+   "file": "eventVariableSetFlags.js"
+  },
+  "EVENT_SET_FONT": {
+   "conditional": false,
+   "fields": {
+    "fontId": {
+     "type": "font"
+    }
+   },
+   "file": "eventSetFont.js"
+  },
+  "EVENT_SET_INPUT_SCRIPT": {
+   "conditional": true,
+   "fields": {
+    "__scriptTabs": {
+     "type": "tabs"
+    },
+    "input": {
+     "type": "input"
+    },
+    "override": {
+     "type": "checkbox"
+    },
+    "true": {
+     "conditions": [
+      {
+       "in": [
+        null,
+        "press"
+       ],
+       "key": "__scriptTabs"
+      }
+     ],
+     "type": "events"
+    }
+   },
+   "file": "eventInputScriptSet.js"
+  },
+  "EVENT_SET_MUSIC_ROUTINE": {
+   "conditional": true,
+   "fields": {
+    "__scriptTabs": {
+     "type": "tabs"
+    },
+    "routine": {
+     "type": "number"
+    },
+    "true": {
+     "conditions": [
+      {
+       "in": [
+        null,
+        "trigger"
+       ],
+       "key": "__scriptTabs"
+      }
+     ],
+     "type": "events"
+    }
+   },
+   "file": "eventMusicRoutine.js"
+  },
+  "EVENT_SET_PLATFORMER_CALLBACK_SCRIPT": {
+   "conditional": true,
+   "fields": {
+    "__scriptTabs": {
+     "type": "tabs"
+    },
+    "event": {
+     "type": "select"
+    },
+    "script": {
+     "conditions": [
+      {
+       "in": [
+        null,
+        "scriptinput"
+       ],
+       "key": "__scriptTabs"
+      }
+     ],
+     "type": "events"
+    }
+   },
+   "file": "eventPlatformerCallbackScriptSet.js"
+  },
+  "EVENT_SET_SGB_COLOR_AREA": {
+   "conditional": false,
+   "fields": {
+    "border": {
+     "type": "select"
+    },
+    "fill": {
+     "type": "select"
+    },
+    "height": {
+     "type": "number"
+    },
+    "outside": {
+     "type": "select"
+    },
+    "width": {
+     "type": "number"
+    },
+    "x": {
+     "type": "number"
+    },
+    "y": {
+     "type": "number"
+    }
+   },
+   "file": "eventSetColorAreaSGB.js"
+  },
+  "EVENT_SET_TIMER_SCRIPT": {
+   "conditional": true,
+   "fields": {
+    "__scriptTabs": {
+     "type": "tabs"
+    },
+    "duration": {
+     "conditions": [
+      {
+       "key": "units",
+       "ne": "frames"
+      }
+     ],
+     "type": "number"
+    },
+    "frames": {
+     "conditions": [
+      {
+       "eq": "frames",
+       "key": "units"
+      }
+     ],
+     "type": "number"
+    },
+    "script": {
+     "conditions": [
+      {
+       "in": [
+        null,
+        "end"
+       ],
+       "key": "__scriptTabs"
+      }
+     ],
+     "type": "events"
+    },
+    "timer": {
+     "type": "togglebuttons"
+    }
+   },
+   "file": "eventTimerScriptSet.js"
+  },
+  "EVENT_SET_TRUE": {
+   "conditional": false,
+   "fields": {
+    "variable": {
+     "type": "variable"
+    }
+   },
+   "file": "eventVariableSetToTrue.js"
+  },
+  "EVENT_SET_VALUE": {
+   "conditional": false,
+   "fields": {
+    "value": {
+     "type": "value"
+    },
+    "variable": {
+     "type": "variable"
+    }
+   },
+   "file": "eventVariableSetToValue.js"
+  },
+  "EVENT_SHOW_SPRITES": {
+   "conditional": false,
+   "fields": {},
+   "file": "eventSpritesShow.js"
+  },
+  "EVENT_SOUND_PLAY_EFFECT": {
+   "conditional": false,
+   "fields": {
+    "duration": {
+     "conditions": [
+      {
+       "in": [
+        "beep",
+        "crash",
+        "tone"
+       ],
+       "key": "type"
+      }
+     ],
+     "type": "number"
+    },
+    "effect": {
+     "conditions": [
+      {
+       "key": "type",
+       "soundType": "fxhammer"
+      }
+     ],
+     "type": "number"
+    },
+    "frequency": {
+     "conditions": [
+      {
+       "eq": "tone",
+       "key": "type"
+      }
+     ],
+     "type": "number"
+    },
+    "pitch": {
+     "conditions": [
+      {
+       "eq": "beep",
+       "key": "type"
+      }
+     ],
+     "type": "number"
+    },
+    "priority": {
+     "type": "priority"
+    },
+    "type": {
+     "type": "soundEffect"
+    },
+    "wait": {
+     "conditions": [
+      {
+       "in": [
+        "beep",
+        "crash",
+        "tone"
+       ],
+       "key": "type"
+      }
+     ],
+     "type": "checkbox"
+    }
+   },
+   "file": "eventSoundPlayEffect.js"
+  },
+  "EVENT_STOP": {
+   "conditional": false,
+   "fields": {},
+   "file": "eventScriptStop.js"
+  },
+  "EVENT_SWITCH": {
+   "conditional": true,
+   "fields": {
+    "__collapseCase0": {
+     "conditions": [
+      {
+       "gt": 0,
+       "key": "choices"
+      }
+     ],
+     "type": "collapsable"
+    },
+    "__collapseCase1": {
+     "conditions": [
+      {
+       "gt": 1,
+       "key": "choices"
+      }
+     ],
+     "type": "collapsable"
+    },
+    "__collapseCase10": {
+     "conditions": [
+      {
+       "gt": 10,
+       "key": "choices"
+      }
+     ],
+     "type": "collapsable"
+    },
+    "__collapseCase11": {
+     "conditions": [
+      {
+       "gt": 11,
+       "key": "choices"
+      }
+     ],
+     "type": "collapsable"
+    },
+    "__collapseCase12": {
+     "conditions": [
+      {
+       "gt": 12,
+       "key": "choices"
+      }
+     ],
+     "type": "collapsable"
+    },
+    "__collapseCase13": {
+     "conditions": [
+      {
+       "gt": 13,
+       "key": "choices"
+      }
+     ],
+     "type": "collapsable"
+    },
+    "__collapseCase14": {
+     "conditions": [
+      {
+       "gt": 14,
+       "key": "choices"
+      }
+     ],
+     "type": "collapsable"
+    },
+    "__collapseCase15": {
+     "conditions": [
+      {
+       "gt": 15,
+       "key": "choices"
+      }
+     ],
+     "type": "collapsable"
+    },
+    "__collapseCase2": {
+     "conditions": [
+      {
+       "gt": 2,
+       "key": "choices"
+      }
+     ],
+     "type": "collapsable"
+    },
+    "__collapseCase3": {
+     "conditions": [
+      {
+       "gt": 3,
+       "key": "choices"
+      }
+     ],
+     "type": "collapsable"
+    },
+    "__collapseCase4": {
+     "conditions": [
+      {
+       "gt": 4,
+       "key": "choices"
+      }
+     ],
+     "type": "collapsable"
+    },
+    "__collapseCase5": {
+     "conditions": [
+      {
+       "gt": 5,
+       "key": "choices"
+      }
+     ],
+     "type": "collapsable"
+    },
+    "__collapseCase6": {
+     "conditions": [
+      {
+       "gt": 6,
+       "key": "choices"
+      }
+     ],
+     "type": "collapsable"
+    },
+    "__collapseCase7": {
+     "conditions": [
+      {
+       "gt": 7,
+       "key": "choices"
+      }
+     ],
+     "type": "collapsable"
+    },
+    "__collapseCase8": {
+     "conditions": [
+      {
+       "gt": 8,
+       "key": "choices"
+      }
+     ],
+     "type": "collapsable"
+    },
+    "__collapseCase9": {
+     "conditions": [
+      {
+       "gt": 9,
+       "key": "choices"
+      }
+     ],
+     "type": "collapsable"
+    },
+    "__collapseElse": {
+     "conditions": [
+      {
+       "key": "__disableElse",
+       "ne": true
+      }
+     ],
+     "type": "collapsable"
+    },
+    "choices": {
+     "type": "number"
+    },
+    "false": {
+     "conditions": [
+      {
+       "key": "__collapseElse",
+       "ne": true
+      },
+      {
+       "key": "__disableElse",
+       "ne": true
+      }
+     ],
+     "type": "events"
+    },
+    "true0": {
+     "conditions": [
+      {
+       "key": "__collapseCase0",
+       "ne": true
+      },
+      {
+       "gt": 0,
+       "key": "choices"
+      }
+     ],
+     "type": "events"
+    },
+    "true1": {
+     "conditions": [
+      {
+       "key": "__collapseCase1",
+       "ne": true
+      },
+      {
+       "gt": 1,
+       "key": "choices"
+      }
+     ],
+     "type": "events"
+    },
+    "true10": {
+     "conditions": [
+      {
+       "key": "__collapseCase10",
+       "ne": true
+      },
+      {
+       "gt": 10,
+       "key": "choices"
+      }
+     ],
+     "type": "events"
+    },
+    "true11": {
+     "conditions": [
+      {
+       "key": "__collapseCase11",
+       "ne": true
+      },
+      {
+       "gt": 11,
+       "key": "choices"
+      }
+     ],
+     "type": "events"
+    },
+    "true12": {
+     "conditions": [
+      {
+       "key": "__collapseCase12",
+       "ne": true
+      },
+      {
+       "gt": 12,
+       "key": "choices"
+      }
+     ],
+     "type": "events"
+    },
+    "true13": {
+     "conditions": [
+      {
+       "key": "__collapseCase13",
+       "ne": true
+      },
+      {
+       "gt": 13,
+       "key": "choices"
+      }
+     ],
+     "type": "events"
+    },
+    "true14": {
+     "conditions": [
+      {
+       "key": "__collapseCase14",
+       "ne": true
+      },
+      {
+       "gt": 14,
+       "key": "choices"
+      }
+     ],
+     "type": "events"
+    },
+    "true15": {
+     "conditions": [
+      {
+       "key": "__collapseCase15",
+       "ne": true
+      },
+      {
+       "gt": 15,
+       "key": "choices"
+      }
+     ],
+     "type": "events"
+    },
+    "true2": {
+     "conditions": [
+      {
+       "key": "__collapseCase2",
+       "ne": true
+      },
+      {
+       "gt": 2,
+       "key": "choices"
+      }
+     ],
+     "type": "events"
+    },
+    "true3": {
+     "conditions": [
+      {
+       "key": "__collapseCase3",
+       "ne": true
+      },
+      {
+       "gt": 3,
+       "key": "choices"
+      }
+     ],
+     "type": "events"
+    },
+    "true4": {
+     "conditions": [
+      {
+       "key": "__collapseCase4",
+       "ne": true
+      },
+      {
+       "gt": 4,
+       "key": "choices"
+      }
+     ],
+     "type": "events"
+    },
+    "true5": {
+     "conditions": [
+      {
+       "key": "__collapseCase5",
+       "ne": true
+      },
+      {
+       "gt": 5,
+       "key": "choices"
+      }
+     ],
+     "type": "events"
+    },
+    "true6": {
+     "conditions": [
+      {
+       "key": "__collapseCase6",
+       "ne": true
+      },
+      {
+       "gt": 6,
+       "key": "choices"
+      }
+     ],
+     "type": "events"
+    },
+    "true7": {
+     "conditions": [
+      {
+       "key": "__collapseCase7",
+       "ne": true
+      },
+      {
+       "gt": 7,
+       "key": "choices"
+      }
+     ],
+     "type": "events"
+    },
+    "true8": {
+     "conditions": [
+      {
+       "key": "__collapseCase8",
+       "ne": true
+      },
+      {
+       "gt": 8,
+       "key": "choices"
+      }
+     ],
+     "type": "events"
+    },
+    "true9": {
+     "conditions": [
+      {
+       "key": "__collapseCase9",
+       "ne": true
+      },
+      {
+       "gt": 9,
+       "key": "choices"
+      }
+     ],
+     "type": "events"
+    },
+    "variable": {
+     "type": "variable"
+    }
+   },
+   "file": "eventSwitch.js"
+  },
+  "EVENT_SWITCH_SCENE": {
+   "conditional": false,
+   "fields": {
+    "direction": {
+     "type": "direction"
+    },
+    "fadeSpeed": {
+     "type": "fadeSpeed"
+    },
+    "sceneId": {
+     "type": "scene"
+    },
+    "x": {
+     "type": "value"
+    },
+    "y": {
+     "type": "value"
+    }
+   },
+   "file": "eventSceneSwitch.js"
+  },
+  "EVENT_TEXT": {
+   "conditional": false,
+   "fields": {
+    "__section": {
+     "type": "tabs"
+    },
+    "avatarId": {
+     "conditions": [
+      {
+       "in": [
+        "text",
+        null
+       ],
+       "key": "__section"
+      }
+     ],
+     "type": "avatar"
+    },
+    "clearPrevious": {
+     "conditions": [
+      {
+       "in": [
+        "layout"
+       ],
+       "key": "__section"
+      }
+     ],
+     "type": "checkbox"
+    },
+    "closeButton": {
+     "conditions": [
+      {
+       "in": [
+        "behavior"
+       ],
+       "key": "__section"
+      },
+      {
+       "in": [
+        "key",
+        null
+       ],
+       "key": "closeWhen"
+      }
+     ],
+     "type": "togglebuttons"
+    },
+    "closeDelayFrames": {
+     "conditions": [
+      {
+       "in": [
+        "behavior"
+       ],
+       "key": "__section"
+      },
+      {
+       "eq": "frames",
+       "key": "closeDelayUnits"
+      },
+      {
+       "in": [
+        "text"
+       ],
+       "key": "closeWhen"
+      }
+     ],
+     "type": "number"
+    },
+    "closeDelayTime": {
+     "conditions": [
+      {
+       "in": [
+        "behavior"
+       ],
+       "key": "__section"
+      },
+      {
+       "key": "closeDelayUnits",
+       "ne": "frames"
+      },
+      {
+       "in": [
+        "text"
+       ],
+       "key": "closeWhen"
+      }
+     ],
+     "type": "number"
+    },
+    "closeWhen": {
+     "conditions": [
+      {
+       "in": [
+        "behavior"
+       ],
+       "key": "__section"
+      }
+     ],
+     "type": "select"
+    },
+    "maxHeight": {
+     "type": "number"
+    },
+    "minHeight": {
+     "type": "number"
+    },
+    "position": {
+     "conditions": [
+      {
+       "in": [
+        "layout"
+       ],
+       "key": "__section"
+      },
+      {
+       "parallaxEnabled": false
+      }
+     ],
+     "type": "select"
+    },
+    "showFrame": {
+     "conditions": [
+      {
+       "in": [
+        "layout"
+       ],
+       "key": "__section"
+      },
+      {
+       "in": [
+        true,
+        null
+       ],
+       "key": "clearPrevious"
+      }
+     ],
+     "type": "checkbox"
+    },
+    "speedIn": {
+     "conditions": [
+      {
+       "in": [
+        "behavior"
+       ],
+       "key": "__section"
+      }
+     ],
+     "type": "overlaySpeed"
+    },
+    "speedOut": {
+     "conditions": [
+      {
+       "in": [
+        "behavior"
+       ],
+       "key": "__section"
+      }
+     ],
+     "type": "overlaySpeed"
+    },
+    "text": {
+     "conditions": [
+      {
+       "in": [
+        "text",
+        null
+       ],
+       "key": "__section"
+      }
+     ],
+     "type": "textarea"
+    },
+    "textHeight": {
+     "type": "number"
+    },
+    "textX": {
+     "type": "number"
+    },
+    "textY": {
+     "type": "number"
+    }
+   },
+   "file": "eventTextDialogue.js"
+  },
+  "EVENT_TEXT_DRAW": {
+   "conditional": false,
+   "fields": {
+    "location": {
+     "type": "select"
+    },
+    "text": {
+     "type": "textarea"
+    },
+    "x": {
+     "type": "number"
+    },
+    "y": {
+     "type": "number"
+    }
+   },
+   "file": "eventTextDraw.js"
+  },
+  "EVENT_TEXT_SET_ANIMATION_SPEED": {
+   "conditional": false,
+   "fields": {
+    "allowFastForward": {
+     "type": "checkbox"
+    },
+    "speed": {
+     "type": "cameraSpeed"
+    },
+    "speedIn": {
+     "type": "overlaySpeed"
+    },
+    "speedOut": {
+     "type": "overlaySpeed"
+    }
+   },
+   "file": "eventTextSetAnimationSpeed.js"
+  },
+  "EVENT_TEXT_SET_SOUND_EFFECT": {
+   "conditional": false,
+   "fields": {
+    "duration": {
+     "conditions": [
+      {
+       "in": [
+        "beep",
+        "crash",
+        "tone"
+       ],
+       "key": "type"
+      }
+     ],
+     "type": "number"
+    },
+    "effect": {
+     "conditions": [
+      {
+       "key": "type",
+       "soundType": "fxhammer"
+      }
+     ],
+     "type": "number"
+    },
+    "frequency": {
+     "conditions": [
+      {
+       "eq": "tone",
+       "key": "type"
+      }
+     ],
+     "type": "number"
+    },
+    "pitch": {
+     "conditions": [
+      {
+       "eq": "beep",
+       "key": "type"
+      }
+     ],
+     "type": "number"
+    },
+    "type": {
+     "type": "soundEffect"
+    }
+   },
+   "file": "eventTextSetSound.js"
+  },
+  "EVENT_THREAD_START": {
+   "conditional": true,
+   "fields": {
+    "__scriptTabs": {
+     "type": "tabs"
+    },
+    "true": {
+     "type": "events"
+    },
+    "variable": {
+     "type": "variable"
+    }
+   },
+   "file": "eventThreadStart.js"
+  },
+  "EVENT_THREAD_STOP": {
+   "conditional": false,
+   "fields": {
+    "variable": {
+     "type": "variable"
+    }
+   },
+   "file": "eventThreadStop.js"
+  },
+  "EVENT_TIMER_DISABLE": {
+   "conditional": false,
+   "fields": {
+    "timer": {
+     "type": "togglebuttons"
+    }
+   },
+   "file": "eventTimerDisable.js"
+  },
+  "EVENT_TIMER_RESTART": {
+   "conditional": false,
+   "fields": {
+    "timer": {
+     "type": "togglebuttons"
+    }
+   },
+   "file": "eventTimerRestart.js"
+  },
+  "EVENT_VARIABLE_MATH": {
+   "conditional": false,
+   "fields": {
+    "clamp": {
+     "conditions": [
+      {
+       "in": [
+        "add",
+        "sub",
+        "mul"
+       ],
+       "key": "operation"
+      }
+     ],
+     "type": "checkbox"
+    },
+    "maxValue": {
+     "conditions": [
+      {
+       "eq": "rnd",
+       "key": "other"
+      }
+     ],
+     "type": "number"
+    },
+    "minValue": {
+     "conditions": [
+      {
+       "eq": "rnd",
+       "key": "other"
+      }
+     ],
+     "type": "number"
+    },
+    "operation": {
+     "type": "select"
+    },
+    "other": {
+     "type": "select"
+    },
+    "value": {
+     "conditions": [
+      {
+       "eq": "val",
+       "key": "other"
+      }
+     ],
+     "type": "number"
+    },
+    "vectorX": {
+     "type": "variable"
+    },
+    "vectorY": {
+     "conditions": [
+      {
+       "eq": "var",
+       "key": "other"
+      }
+     ],
+     "type": "variable"
+    }
+   },
+   "file": "eventVariableMath.js"
+  },
+  "EVENT_VARIABLE_MATH_EVALUATE": {
+   "conditional": false,
+   "fields": {
+    "expression": {
+     "type": "matharea"
+    },
+    "variable": {
+     "type": "variable"
+    }
+   },
+   "file": "eventVariableMathEvaluate.js"
+  },
+  "EVENT_WAIT": {
+   "conditional": false,
+   "fields": {
+    "frames": {
+     "conditions": [
+      {
+       "eq": "frames",
+       "key": "units"
+      }
+     ],
+     "type": "value"
+    },
+    "time": {
+     "conditions": [
+      {
+       "key": "units",
+       "ne": "frames"
+      }
+     ],
+     "type": "value"
+    }
+   },
+   "file": "eventWait.js"
+  },
+  "EVENT_WEAPON_ATTACK": {
+   "conditional": false,
+   "fields": {
+    "actorId": {
+     "type": "actor"
+    },
+    "collisionGroup": {
+     "type": "collisionMask"
+    },
+    "collisionMask": {
+     "type": "collisionMask"
+    },
+    "offset": {
+     "type": "number"
+    },
+    "spriteSheetId": {
+     "type": "sprite"
+    }
+   },
+   "file": "eventWeaponAttack.js"
+  }
+ },
+ "reference": "GB Studio 4.3.2 release (tag v4.3.2, gbvm bd6f41c; ../_reference/gb-studio-4.3.2)",
+ "rule": "handlerCommon.ts buildFieldsLookup",
+ "source": {
+  "path": "src/lib/events/*.js",
+  "sha256": "387ea7d718aa4b467fb63dd0ef87f63bfa3c521fcce7571b520667de3b4b9bbd"
+ }
+}

@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ngpcraft-v3"
+version = "0.1.0"
+description = "NgpCraft V3: explicit dependency planning and minimal C export"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+
+[project.scripts]
+ngpcraft = "ngpcraft.__main__:main"
+
+[tool.setuptools.packages.find]
+include = ["ngpcraft*"]
+
+[tool.setuptools.package-data]
+ngpcraft = ["runtime/*.c", "runtime/*.json", "runtime/*.lcf", "runtime/*.txt", "gbstudio_model.json", "defaults/assets/ui/*.png", "parity/*.json", "GBSTUDIO_UGE_LICENSE.txt", "GBVM_LICENSE.txt", "SOUND_CREATOR_LICENSE.txt", "MUSIC_NOTICE.txt"]

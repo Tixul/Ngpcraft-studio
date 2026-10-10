@@ -8,12 +8,15 @@ import {
   shell,
 } from "electron";
 import {
+  APP_REPO_NAME,
+  APP_REPO_OWNER,
   assetsRoot,
   EMULATOR_MUTED_SETTING_KEY,
   LOCALE_SETTING_KEY,
   THEME_SETTING_KEY,
 } from "consts";
 import l10n from "shared/lib/lang/l10n";
+import { openNgpcGaps } from "lib/ngpcraft/gapsHelp";
 import { ThemeManager } from "lib/themes/themeManager";
 import { L10nManager } from "lib/lang/l10nManager";
 import { MenuListenerFn, MenuListenerKey } from "shared/lib/menu/types";
@@ -275,39 +278,14 @@ const buildMenu = async ({
                 notifyListeners("build", "rom");
               },
             },
-            {
-              label: l10n("MENU_EXPORT_WEB"),
-              accelerator: "CommandOrControl+Shift+N",
-              click() {
-                notifyListeners("build", "web");
-              },
-            },
-            {
-              label: l10n("MENU_EXPORT_POCKET"),
-              accelerator: "CommandOrControl+Shift+M",
-              click() {
-                notifyListeners("build", "pocket");
-              },
-            },
+            // NgpCraft: web and Analogue Pocket exports removed (ROM .ngc only).
           ],
         },
         { type: "separator" },
         {
           label: l10n("MENU_ADVANCED"),
           submenu: [
-            {
-              label: l10n("MENU_EJECT_ENGINE"),
-              click() {
-                notifyListeners("ejectEngine");
-              },
-            },
-            {
-              label: l10n("MENU_EJECT_WEB_TEMPLATE"),
-              click() {
-                notifyListeners("ejectWebTemplate");
-              },
-            },
-            { type: "separator" },
+            // NgpCraft: the engine is generated per game, nothing to eject.
             {
               label: l10n("MENU_EJECT_PROJECT_BUILD"),
               click() {
@@ -669,9 +647,18 @@ const buildMenu = async ({
           },
         },
         {
+          // NgpCraft: where the NGPC build differs from GB Studio.
+          label: l10n("MENU_NGPC_GAPS"),
+          click() {
+            openNgpcGaps();
+          },
+        },
+        {
           label: l10n("MENU_LEARN_MORE"),
           click() {
-            shell.openExternal("https://www.gbstudio.dev");
+            shell.openExternal(
+              `https://github.com/${APP_REPO_OWNER}/${APP_REPO_NAME}`,
+            );
           },
         },
       ],
@@ -710,12 +697,6 @@ const buildMenu = async ({
           label: l10n("MENU_ABOUT"),
           click() {
             openAbout();
-          },
-        },
-        {
-          label: l10n("MENU_CHECK_FOR_UPDATES"),
-          click: () => {
-            notifyListeners("checkUpdates");
           },
         },
         { type: "separator" },
@@ -785,12 +766,6 @@ const buildMenu = async ({
           label: l10n("MENU_ABOUT"),
           click() {
             openAbout();
-          },
-        },
-        {
-          label: l10n("MENU_CHECK_FOR_UPDATES"),
-          click: () => {
-            notifyListeners("checkUpdates");
           },
         },
       );

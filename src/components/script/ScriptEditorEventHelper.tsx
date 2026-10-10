@@ -1,4 +1,5 @@
 import React, { FC, useCallback } from "react";
+import { SCREEN_HEIGHT } from "consts";
 import { useAppSelector } from "store/hooks";
 import { ScriptEventNormalized } from "shared/lib/entities/entitiesTypes";
 import { RelativePortal } from "ui/layout/RelativePortal";
@@ -154,7 +155,7 @@ export const ScriptEditorEventHelper: FC<ScriptEditorEventHelperProps> = ({
             textY={location === "overlay" ? y : 0}
             showFrame={false}
             minHeight={location === "overlay" ? 4 : 0}
-            maxHeight={18}
+            maxHeight={SCREEN_HEIGHT}
             scale={1.5}
           />
         </PreviewWrapper>

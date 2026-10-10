@@ -1,5 +1,6 @@
 import { DMG_PALETTE } from "consts";
-import { hex2GBCrgb } from "shared/lib/helpers/color";
+// NgpCraft: NGPC colours (4 bits per channel, no GBC colour correction).
+import { hex2NgpcRgb } from "shared/lib/ngpcraft/color";
 import { autoPalette, autoPaletteUsingTiles } from "shared/lib/tiles/autoColor";
 import { pixelDataToIndexedImage } from "shared/lib/tiles/indexedImage";
 import { tileDataIndexFn } from "shared/lib/tiles/tileData";
@@ -30,7 +31,7 @@ workerCtx.onmessage = async (evt) => {
   const previewAsMono = evt.data.previewAsMono;
   const monoBGP = evt.data.monoBGP ?? [0, 1, 2, 3];
   const uiPalette = evt.data.uiPalette;
-  const colorCorrectionFn = hex2GBCrgb(evt.data.colorCorrection);
+  const colorCorrectionFn = hex2NgpcRgb;
 
   let canvas: OffscreenCanvas;
   let ctx: OffscreenCanvasRenderingContext2D;

@@ -1,0 +1,35 @@
+# NgpCraft Studio: copy of NgpCraft_web_emulator (bridge + build), owned by the
+# fork. Output goes to the Play window files, appData/wasm/ngpcraft-web.
+cmake_minimum_required(VERSION 3.16)
+project(ngpcraft_web LANGUAGES CXX)
+if(NOT EMSCRIPTEN)
+  message(FATAL_ERROR "Configure with emcmake cmake")
+endif()
+set(CMAKE_CXX_STANDARD 17)
+set(NGPCRAFT_DESKTOP "" CACHE PATH "Path to the current Ngpcraft_emulator desktop repository")
+if(NOT EXISTS "${NGPCRAFT_DESKTOP}/cpp/include/ngpc_core.h")
+  message(FATAL_ERROR "Set -DNGPCRAFT_DESKTOP=/path/to/Ngpcraft_emulator")
+endif()
+set(CORE "${NGPCRAFT_DESKTOP}/cpp")
+set(INPUT "${NGPCRAFT_DESKTOP}/hle_bios/bios_hle.bin")
+set(OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/bios_hle_data.hpp")
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${INPUT}")
+file(READ "${INPUT}" BIOS_HEX HEX)
+string(LENGTH "${BIOS_HEX}" BIOS_LENGTH)
+if(NOT BIOS_LENGTH EQUAL 131072)
+  message(FATAL_ERROR "HLE BIOS must be exactly 64 KiB")
+endif()
+string(REGEX REPLACE "([0-9a-fA-F][0-9a-fA-F])" "0x\\1," BIOS_BYTES "${BIOS_HEX}")
+file(WRITE "${OUTPUT}" "#pragma once\ninline constexpr unsigned char bios_hle[] = {${BIOS_BYTES}};\n")
+add_executable(ngpcraft bridge.cpp)
+foreach(unit core memory execute mem_family reg_family z80 apu render)
+  target_sources(ngpcraft PRIVATE "${CORE}/src/${unit}.cpp")
+endforeach()
+target_include_directories(ngpcraft PRIVATE "${CMAKE_CURRENT_BINARY_DIR}" "${CORE}/include" "${CORE}/src")
+target_compile_options(ngpcraft PRIVATE -Oz -flto)
+target_link_options(ngpcraft PRIVATE -Oz -flto --no-entry
+  "-sMODULARIZE=1" "-sEXPORT_ES6=1" "-sEXPORT_NAME=createNgpCraft"
+  "-sENVIRONMENT=web,node" "-sALLOW_MEMORY_GROWTH=1" "-sINITIAL_MEMORY=33554432"
+  "-sFILESYSTEM=0" "-sEXPORTED_RUNTIME_METHODS=HEAPU8,HEAP16"
+  "-sEXPORTED_FUNCTIONS=_malloc,_free,_web_load,_web_run,_web_video,_web_audio,_web_audio_frames,_web_save,_web_save_size,_web_save_restore,_web_reset,_web_close,_web_read_mem,_web_write_mem,_web_set_breakpoints,_web_cpu_reg")
+set_target_properties(ngpcraft PROPERTIES SUFFIX ".mjs" RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../appData/wasm/ngpcraft-web")

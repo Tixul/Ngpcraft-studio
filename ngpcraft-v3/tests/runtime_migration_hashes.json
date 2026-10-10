@@ -1,0 +1,62 @@
+{
+  "empty.json:module": {
+    "src/game.h": "4dbd73c60b94a2becd1a16f7da0a063f66b568c42e05b99d8ebaa50f5c6ead5c",
+    "src/game.c": "040728dc85b1c208cd7319b018102e8e89009f002da2effcc38cc574c8fad8ef"
+  },
+  "empty.json:rom": {
+    "src/game.h": "4dbd73c60b94a2becd1a16f7da0a063f66b568c42e05b99d8ebaa50f5c6ead5c",
+    "src/game.c": "040728dc85b1c208cd7319b018102e8e89009f002da2effcc38cc574c8fad8ef",
+    "src/startup.c": "34b0831bfa8f0bac5110a86e82b2026785475bf59c006ff25b965e6c654b1b44",
+    "ngpc.lcf": "976426e7951fa5b7694d8095c7c85c03ffd9a6b7acc6786e645591745dc5df3a",
+    "NOTICE.txt": "64f6e06193eab6a47a542067439c85e110cf02619f59fe9b53ba7e01b4fa03fe",
+    "src/cart.c": "def4a31c492126ccbd3be86d7f15a3257e54c1354d70cc9bf09657159a1a7053"
+  },
+  "minimal.json:module": {
+    "src/game.h": "4dbd73c60b94a2becd1a16f7da0a063f66b568c42e05b99d8ebaa50f5c6ead5c",
+    "src/game.c": "b9ef9d57465e53b66686c9bc7ae11b8c539fc731579659a6b6ec0a2bd3773361",
+    "src/hardware.h": "03f8cfecb05cd25b588f928ffe27cffef2eee7b0d35dafec1a659f5bab533bc0",
+    "src/hardware.c": "e8c6a63e9074722193faf280afcf577ab597bd84a18ae5e6054c9378a7e79dfa"
+  },
+  "minimal.json:rom": {
+    "src/game.h": "4dbd73c60b94a2becd1a16f7da0a063f66b568c42e05b99d8ebaa50f5c6ead5c",
+    "src/game.c": "b9ef9d57465e53b66686c9bc7ae11b8c539fc731579659a6b6ec0a2bd3773361",
+    "src/hardware.h": "03f8cfecb05cd25b588f928ffe27cffef2eee7b0d35dafec1a659f5bab533bc0",
+    "src/hardware.c": "e8c6a63e9074722193faf280afcf577ab597bd84a18ae5e6054c9378a7e79dfa",
+    "src/startup.c": "34b0831bfa8f0bac5110a86e82b2026785475bf59c006ff25b965e6c654b1b44",
+    "ngpc.lcf": "976426e7951fa5b7694d8095c7c85c03ffd9a6b7acc6786e645591745dc5df3a",
+    "NOTICE.txt": "64f6e06193eab6a47a542067439c85e110cf02619f59fe9b53ba7e01b4fa03fe",
+    "src/cart.c": "def4a31c492126ccbd3be86d7f15a3257e54c1354d70cc9bf09657159a1a7053"
+  },
+  "rom_colors.json:module": {
+    "src/game.h": "4dbd73c60b94a2becd1a16f7da0a063f66b568c42e05b99d8ebaa50f5c6ead5c",
+    "src/game.c": "cf0cd0eb94a66ca9592501f9f81453a0582ea2133f8cafc602f3f9f908389264",
+    "src/hardware.h": "03f8cfecb05cd25b588f928ffe27cffef2eee7b0d35dafec1a659f5bab533bc0",
+    "src/hardware.c": "e8c6a63e9074722193faf280afcf577ab597bd84a18ae5e6054c9378a7e79dfa"
+  },
+  "rom_colors.json:rom": {
+    "src/game.h": "4dbd73c60b94a2becd1a16f7da0a063f66b568c42e05b99d8ebaa50f5c6ead5c",
+    "src/game.c": "cf0cd0eb94a66ca9592501f9f81453a0582ea2133f8cafc602f3f9f908389264",
+    "src/hardware.h": "03f8cfecb05cd25b588f928ffe27cffef2eee7b0d35dafec1a659f5bab533bc0",
+    "src/hardware.c": "e8c6a63e9074722193faf280afcf577ab597bd84a18ae5e6054c9378a7e79dfa",
+    "src/startup.c": "34b0831bfa8f0bac5110a86e82b2026785475bf59c006ff25b965e6c654b1b44",
+    "ngpc.lcf": "976426e7951fa5b7694d8095c7c85c03ffd9a6b7acc6786e645591745dc5df3a",
+    "NOTICE.txt": "64f6e06193eab6a47a542067439c85e110cf02619f59fe9b53ba7e01b4fa03fe",
+    "src/cart.c": "def4a31c492126ccbd3be86d7f15a3257e54c1354d70cc9bf09657159a1a7053"
+  },
+  "two_scenes.json:module": {
+    "src/game.h": "4dbd73c60b94a2becd1a16f7da0a063f66b568c42e05b99d8ebaa50f5c6ead5c",
+    "src/game.c": "f370756cf364996160cc787cb5baa486d81e26935d58e25b3de137a3657eca08",
+    "src/hardware.h": "03f8cfecb05cd25b588f928ffe27cffef2eee7b0d35dafec1a659f5bab533bc0",
+    "src/hardware.c": "e8c6a63e9074722193faf280afcf577ab597bd84a18ae5e6054c9378a7e79dfa"
+  },
+  "two_scenes.json:rom": {
+    "src/game.h": "4dbd73c60b94a2becd1a16f7da0a063f66b568c42e05b99d8ebaa50f5c6ead5c",
+    "src/game.c": "f370756cf364996160cc787cb5baa486d81e26935d58e25b3de137a3657eca08",
+    "src/hardware.h": "03f8cfecb05cd25b588f928ffe27cffef2eee7b0d35dafec1a659f5bab533bc0",
+    "src/hardware.c": "e8c6a63e9074722193faf280afcf577ab597bd84a18ae5e6054c9378a7e79dfa",
+    "src/startup.c": "34b0831bfa8f0bac5110a86e82b2026785475bf59c006ff25b965e6c654b1b44",
+    "ngpc.lcf": "976426e7951fa5b7694d8095c7c85c03ffd9a6b7acc6786e645591745dc5df3a",
+    "NOTICE.txt": "64f6e06193eab6a47a542067439c85e110cf02619f59fe9b53ba7e01b4fa03fe",
+    "src/cart.c": "def4a31c492126ccbd3be86d7f15a3257e54c1354d70cc9bf09657159a1a7053"
+  }
+}

@@ -1,0 +1,37 @@
+{
+ "format": "ngpcraft-translated-plugin/1",
+ "id": "actors_pass_through",
+ "name": "Actors Pass Through Actors",
+ "upstream": {
+  "repository": "https://gbstudiolab.neocities.org/",
+  "commit": "3.0 (2024-06-19, for 4.1.2)",
+  "path": "Actors Pass Through Actors (4.1.2)",
+  "license": "none stated (attribution appreciated)",
+  "copyright": "Shin",
+  "engine_of_origin": "GB Studio 4.1.2 (engine 4.2.0-e1)"
+ },
+ "engine_files": {
+  "engine/engine.json": "a502fbd5c6ae313c1a4dd4b61f6c2de5aa501f607bdf209b793ddc053e132366",
+  "engine/src/core/vm_actor.c": "4e6981190b3e7e31767b38cbce21a804585702b750a1f165b72730e07ecbd09f"
+ },
+ "fields": [
+  {
+   "key": "actors_pass",
+   "cType": "UBYTE",
+   "type": "select",
+   "defaultValue": 0
+  }
+ ],
+ "script_variables": [],
+ "requires": [
+  {
+   "field": "actors_pass",
+   "value": 0,
+   "reason": "actors passing through actors (actors_pass non-zero) is not translated yet: only actors_pass = 0, where the plugin changes nothing, is delivered"
+  }
+ ],
+ "replaces": {},
+ "natives": [],
+ "refused_natives": [],
+ "change": "vm_actor.c 4.1.2 vm_actor_move_to: `&& !actors_pass` after actor_overlapping_bb (2 places); nothing else differs from the 4.1.2 original"
+}

@@ -12,7 +12,7 @@ import { RelativePortal } from "ui/layout/RelativePortal";
 import { BackgroundSelect } from "./BackgroundSelect";
 import { assetURLStyleProp } from "shared/lib/helpers/assets";
 import { useAppDispatch, useAppSelector } from "store/hooks";
-import { MAX_BACKGROUND_TILES, MAX_BACKGROUND_TILES_CGB } from "consts";
+import { NGPC_CHARACTER_TILES } from "shared/lib/helpers/sprites";
 import { monoOverrideForFilename } from "shared/lib/assets/backgrounds";
 import { FlexGrow } from "ui/spacing/Spacing";
 import { ColorModeSetting } from "shared/lib/resources/types";
@@ -186,7 +186,6 @@ export const BackgroundSelectButton: FC<BackgroundSelectProps> = ({
   const numPalettes = useAppSelector(
     (state) => state.assets.backgrounds[value || ""]?.autoPalettes?.length || 0,
   );
-  const isCGBOnly = colorMode === "color";
   const isColor = colorMode !== "mono";
 
   const dispatch = useAppDispatch();
@@ -324,11 +323,8 @@ export const BackgroundSelectButton: FC<BackgroundSelectProps> = ({
                 {background?.width}x{background?.height}
               </SpriteInfoRow>
               <SpriteInfoRow
-                $error={
-                  (numTiles > MAX_BACKGROUND_TILES_CGB ||
-                    (!isCGBOnly && numTiles > MAX_BACKGROUND_TILES)) &&
-                  !is360
-                }
+                // NgpCraft: 512 tiles on NGPC, shared with the sprites.
+                $error={numTiles > NGPC_CHARACTER_TILES && !is360}
               >
                 <SpriteInfoField>{l10n("FIELD_TILES")}:</SpriteInfoField>
                 {numTiles}

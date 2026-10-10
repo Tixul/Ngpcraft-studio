@@ -3,11 +3,11 @@
   "id": "f8b1c7ad-7bb2-44b2-8189-175ae8698f11",
   "name": "logo",
   "symbol": "bg_logo",
-  "tileColors": "",
+  "tileColors": "0017c+",
   "filename": "logo.png",
   "width": 20,
-  "height": 18,
+  "height": 19,
   "imageWidth": 160,
-  "imageHeight": 144,
+  "imageHeight": 152,
   "autoColor": false
 }

@@ -96,14 +96,15 @@ const makeStore = (initialState: RootState): TestStore => {
 };
 
 test("Should resync slider and hex state when palette color changes without palette id changing", async () => {
-  const store = makeStore(makeState("080808"));
+  // NgpCraft: NGPC channels are 4 bits (0-15); 111111 is channel value 1.
+  const store = makeStore(makeState("111111"));
 
   render(<CustomPalettePicker paletteId="palette1" />, store, {});
 
   const colorHexInput = document.getElementById("colorHex") as HTMLInputElement;
   const colorRInput = document.getElementById("colorR") as HTMLInputElement;
 
-  await waitFor(() => expect(colorHexInput.value).toBe("#080808"));
+  await waitFor(() => expect(colorHexInput.value).toBe("#111111"));
   expect(colorRInput.value).toBe("1");
 
   act(() => {
@@ -111,7 +112,7 @@ test("Should resync slider and hex state when palette color changes without pale
   });
 
   await waitFor(() => expect(colorHexInput.value).toBe("#ffffff"));
-  expect(colorRInput.value).toBe("31");
+  expect(colorRInput.value).toBe("15");
 });
 
 test("Should keep local saturation value after updating selected color through the store", async () => {

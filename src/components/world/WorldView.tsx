@@ -14,6 +14,7 @@ import {
   TOOL_COLORS,
   TOOL_COLLISIONS,
   TOOL_ERASER,
+  SCREEN_HEIGHT,
   TILE_SIZE,
   TOOL_SELECT,
   TOOL_SCENE,
@@ -69,7 +70,7 @@ const NewSceneCursor = styled.div`
   cursor: pointer;
   background-color: rgba(3, 54, 99, 0.5);
   width: 160px;
-  height: 144px;
+  height: ${SCREEN_HEIGHT * 8}px;
   border-radius: 4px;
   z-index: 2000;
 `;

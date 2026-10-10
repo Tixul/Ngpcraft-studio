@@ -48,6 +48,9 @@ import {
   TILE_COLOR_PALETTE,
   MIN_WORLD_ENTITY_X,
   MIN_WORLD_ENTITY_Y,
+  GB_SCREEN_HEIGHT,
+  SCREEN_HEIGHT,
+  SCREEN_WIDTH,
 } from "consts";
 import {
   paintMagic,
@@ -56,8 +59,12 @@ import {
   floodFill,
 } from "shared/lib/helpers/paint";
 
-const MIN_SCENE_WIDTH = 20;
-const MIN_SCENE_HEIGHT = 18;
+const MIN_SCENE_WIDTH = SCREEN_WIDTH;
+// NgpCraft: an empty scene fills the 152 px screen. With a background, the
+// GB Studio minimum (18 rows) applies, so a 144 px background never gets a
+// row without image; the V3 adds black bands and warns.
+const MIN_SCENE_HEIGHT = SCREEN_HEIGHT;
+const MIN_SCENE_HEIGHT_WITH_BACKGROUND = GB_SCREEN_HEIGHT;
 
 const addScene: CaseReducer<
   EntitiesState,
@@ -79,7 +86,9 @@ const addScene: CaseReducer<
     backgroundId,
     tilesetId: "",
     width: Math.max(MIN_SCENE_WIDTH, background?.width || 0),
-    height: Math.max(MIN_SCENE_HEIGHT, background?.height || 0),
+    height: background
+      ? Math.max(MIN_SCENE_HEIGHT_WITH_BACKGROUND, background.height)
+      : MIN_SCENE_HEIGHT,
     type: "TOPDOWN",
     colorModeOverride: "none",
     paletteIds: [],

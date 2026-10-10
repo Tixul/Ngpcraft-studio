@@ -18,14 +18,14 @@ import editorActions from "store/features/editor/editorActions";
 import { useRestoreScroll } from "ui/hooks/use-restore-scroll";
 import { useSaveScroll } from "ui/hooks/use-save-scroll";
 import { SettingsSectionColor } from "components/settings/section/SettingsSectionColor";
-import { SettingsSectionWeb } from "components/settings/section/SettingsSectionWeb";
 import { SettingsSectionBuild } from "components/settings/section/SettingsSectionBuild";
-import { SettingsSectionSGB } from "components/settings/section/SettingsSectionSGB";
-import { SettingsSectionCart } from "components/settings/section/SettingsSectionCart";
-import { SettingsSectionControls } from "components/settings/section/SettingsSectionControls";
 import { SettingsSectionUI } from "components/settings/section/SettingsSectionUI";
 import { SettingsSectionSprites } from "components/settings/section/SettingsSectionSprites";
+import { SettingsSectionNgpc } from "components/settings/section/SettingsSectionNgpc";
 
+// NgpCraft: Super Game Boy, cartridge (MBC), web export and keyboard controls
+// (keys of GB Studio's web player) sections are hidden.
+// Their values stay in the project file untouched; the NGPC build ignores them.
 const SettingsPage = () => {
   const dispatch = useAppDispatch();
   const [searchTerm, setSearchTerm] = useState<string>("");
@@ -85,11 +85,11 @@ const SettingsPage = () => {
                 onChange={onSearch}
               />
             </SettingsSearchWrapper>
+            <SettingsMenuItem onClick={onMenuItem("settingsNgpc")}>
+              {l10n("SETTINGS_NGPC")}
+            </SettingsMenuItem>
             <SettingsMenuItem onClick={onMenuItem("settingsColor")}>
               {l10n("SETTINGS_COLOR")}
-            </SettingsMenuItem>
-            <SettingsMenuItem onClick={onMenuItem("settingsSuper")}>
-              {l10n("SETTINGS_SGB")}
             </SettingsMenuItem>
             <SettingsMenuItem onClick={onMenuItem("settingsSceneTypes")}>
               {l10n("FIELD_SCENE_TYPES")}
@@ -109,32 +109,20 @@ const SettingsPage = () => {
             <SettingsMenuItem onClick={onMenuItem("settingsUI")}>
               {l10n("MENU_UI_ELEMENTS")}
             </SettingsMenuItem>
-            <SettingsMenuItem onClick={onMenuItem("settingsControls")}>
-              {l10n("SETTINGS_CONTROLS")}
-            </SettingsMenuItem>
-            <SettingsMenuItem onClick={onMenuItem("settingsCartType")}>
-              {l10n("SETTINGS_CART_TYPE")}
-            </SettingsMenuItem>
             <SettingsMenuItem onClick={onMenuItem("settingsBuild")}>
               {l10n("SETTINGS_BUILD")}
-            </SettingsMenuItem>
-            <SettingsMenuItem onClick={onMenuItem("settingsWeb")}>
-              {l10n("SETTINGS_WEB_EXPORT")}
             </SettingsMenuItem>
           </SearchableCard>
         </SettingsMenuColumn>
       )}
       <SettingsContentColumn ref={scrollRef}>
+        <SettingsSectionNgpc searchTerm={searchTerm} />
         <SettingsSectionColor searchTerm={searchTerm} />
-        <SettingsSectionSGB searchTerm={searchTerm} />
         <SettingsSectionSceneTypes searchTerm={searchTerm} />
         <SettingsSectionEngineFields searchTerm={searchTerm} />
         <SettingsSectionSprites searchTerm={searchTerm} />
         <SettingsSectionUI searchTerm={searchTerm} />
-        <SettingsSectionControls searchTerm={searchTerm} />
-        <SettingsSectionCart searchTerm={searchTerm} />
         <SettingsSectionBuild searchTerm={searchTerm} />
-        <SettingsSectionWeb searchTerm={searchTerm} />
       </SettingsContentColumn>
     </SettingsPageWrapper>
   );

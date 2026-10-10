@@ -8,8 +8,8 @@ import type {
 import {
   LYC_SYNC_VALUE,
   SCENE_MAX_SIZE_PX,
-  SCREEN_HEIGHT_PX,
-  SCREEN_WIDTH_PX,
+  GB_SCREEN_HEIGHT_PX as SCREEN_HEIGHT_PX,
+  GB_SCREEN_WIDTH_PX as SCREEN_WIDTH_PX,
 } from "consts";
 import {
   isPropertyField,

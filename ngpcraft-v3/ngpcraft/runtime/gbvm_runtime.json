@@ -1,0 +1,622 @@
+{
+ "reference": "GB Studio 4.3.2 release (tag v4.3.2, gbvm bd6f41c; ../_reference/gb-studio-4.3.2)",
+ "gbvm_commit": "bd6f41cc5e05cbe6601dcc7f8e2db89bed527fe3",
+ "sources": {
+  "vm_c": {
+   "path": "appData/engine/gbvm/src/core/vm.c",
+   "sha256": "7dc77593c03a2354bbfa72a87bdf539c47c62a97a63e744fff58360f8666197c"
+  },
+  "vm_h": {
+   "path": "appData/engine/gbvm/include/vm.h",
+   "sha256": "735d2c3ae88ebcf2b4f5cac48f727cc1b2ed5d2db67b1054a6e9050fbeccb607"
+  },
+  "vm_gameboy_c": {
+   "path": "appData/engine/gbvm/src/core/vm_gameboy.c",
+   "sha256": "a4f89644092f814ac6392331770a7f79713654188b4d21c7e8be076ff3b8ba91"
+  },
+  "vm_gameboy_h": {
+   "path": "appData/engine/gbvm/include/vm_gameboy.h",
+   "sha256": "21fe15df80977d25123c364b47f90a3ffcfcbbc79ffeccaf90ca02e940b1eb1c"
+  },
+  "fade_c": {
+   "path": "appData/engine/gbvm/src/core/fade_manager.c",
+   "sha256": "d903936499d72f2cb986963975a992871d96774fb1d2b793b229a69c1a35df21"
+  },
+  "fade_h": {
+   "path": "appData/engine/gbvm/include/fade_manager.h",
+   "sha256": "47b0aadeb5f0c5a49f8c5c7c6f64b67e0567943a64f3e39a595acea1e9ad41fa"
+  },
+  "events_c": {
+   "path": "appData/engine/gbvm/src/core/events.c",
+   "sha256": "d662bccdeed771838ae7c10a52219e8e7c3a0d57bdcf1624dae94dc341055907"
+  },
+  "events_h": {
+   "path": "appData/engine/gbvm/include/events.h",
+   "sha256": "e927c0c6d120fe3d10d2edcf87533895c81f277e491ba828b0903e88d889aee6"
+  },
+  "ui_c": {
+   "path": "appData/engine/gbvm/src/core/ui.c",
+   "sha256": "2bdb8547aaea5c43b48d90c84a0a06c62a84cdfcd77f58780aa4245c255b9c55"
+  },
+  "vm_ui_c": {
+   "path": "appData/engine/gbvm/src/core/vm_ui.c",
+   "sha256": "435963c667f68afea93c83f1fa39321b2778cad8dd453a98b56c63cca169fdbb"
+  },
+  "vm_camera_c": {
+   "path": "appData/engine/gbvm/src/core/vm_camera.c",
+   "sha256": "da0da43c1207fbb95b6ab4b8daff6f68f028d0dc9884392dd3ee0b4dee8759f0"
+  },
+  "vm_camera_h": {
+   "path": "appData/engine/gbvm/include/vm_camera.h",
+   "sha256": "b4b473ab82fcaa54490d0513f89d95b6cd3fea8d7219fa69fd1c27c6c228a422"
+  },
+  "license": {
+   "path": "appData/engine/gbvm/LICENSE",
+   "sha256": "86299a4390a678ce8dd073c24f9e820834601b5ec696b85334fcdd468401f5b1"
+  }
+ },
+ "license": "MIT License\n\nCopyright (c) 2020 Toxa\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE.\n",
+ "context": "typedef struct SCRIPT_CTX {\n    const UBYTE * PC;\n    UBYTE bank;\n    \n    struct SCRIPT_CTX * next;\n    \n    void * update_fn;\n    UBYTE update_fn_bank;\n    \n    UWORD * stack_ptr;\n    UWORD * base_addr;\n    \n    UBYTE ID;\n    UWORD * hthread;\n    UBYTE terminated;\n    \n    UBYTE waitable;\n    UBYTE lock_count;\n    UBYTE flags;\n} SCRIPT_CTX;",
+ "fade_direction": "typedef enum { FADE_IN, FADE_OUT } FADE_DIRECTION;",
+ "script_event": "typedef struct script_event_t {\n    UWORD handle;\n    UBYTE script_bank;\n    void * script_addr;\n} script_event_t;",
+ "timer_time": "typedef struct timer_time_t {\n    UBYTE value, remains;\n} timer_time_t;\n#define MAX_CONCURRENT_TIMERS 4",
+ "defines": {
+  "VM_MAX_CONTEXTS": 16,
+  "VM_CONTEXT_STACK_SIZE": 64,
+  "VM_HEAP_SIZE": 768,
+  "INSTRUCTIONS_PER_QUANT": 16,
+  "SCRIPT_TERMINATED": 32768,
+  "INSTRUCTION_SIZE": 1,
+  "RUNNER_DONE": 0,
+  "RUNNER_IDLE": 1,
+  "RUNNER_BUSY": 2,
+  "RUNNER_EXCEPTION": 3,
+  "EXCEPTION_CODE_NONE": 0
+ },
+ "c_defines": {
+  "CAMERA_SHAKE_X": "1",
+  "CAMERA_SHAKE_Y": "2",
+  "VM_OP_STOP": "0",
+  "VM_OP_EQ": "1",
+  "VM_OP_LT": "2",
+  "VM_OP_LE": "3",
+  "VM_OP_GT": "4",
+  "VM_OP_GE": "5",
+  "VM_OP_NE": "6",
+  "VM_OP_AND": "7",
+  "VM_OP_OR": "8",
+  "VM_OP_NOT": "9",
+  "VM_OP_ADD": "10",
+  "VM_OP_SUB": "11",
+  "VM_OP_MUL": "12",
+  "VM_OP_DIV": "13",
+  "VM_OP_MOD": "14",
+  "VM_OP_B_AND": "15",
+  "VM_OP_B_OR": "16",
+  "VM_OP_B_XOR": "17",
+  "VM_OP_SHL": "18",
+  "VM_OP_SHR": "19",
+  "VM_OP_MIN": "20",
+  "VM_OP_MAX": "21",
+  "VM_OP_ATAN2": "22",
+  "VM_OP_ABS": "23",
+  "VM_OP_B_NOT": "24",
+  "VM_OP_NEG": "25",
+  "VM_OP_ISQRT": "26",
+  "VM_OP_RND": "27",
+  "VM_OP_INT8": "-1",
+  "VM_OP_INT16": "-2",
+  "VM_OP_REF": "-3",
+  "VM_OP_REF_IND": "-4",
+  "VM_OP_REF_SET": "-5",
+  "VM_OP_REF_SET_IND": "-6",
+  "VM_OP_REF_MEM": "-7",
+  "VM_OP_REF_MEM_SET": "-8",
+  "VM_OP_REF_MEM_IND": "-9",
+  "VM_OP_MEM_I8": "'i'",
+  "VM_OP_MEM_U8": "'u'",
+  "VM_OP_MEM_I16": "'I'",
+  "FADE_MODE_MODAL": "0x01",
+  "FADE_DIR_IN": "0x02",
+  "FADED_OUT_FRAME": "5",
+  "FADED_IN_FRAME": "0"
+ },
+ "functions": {
+  "vm_camera_move_to": "static void vm_camera_move_to(SCRIPT_CTX * THIS, INT16 idx, UBYTE speed, UBYTE after_lock_camera) {\n\n    \n    camera_position_t * params;\n    UBYTE x_dest;\n    THIS->waitable = 1;\n\n    params = VM_REF_TO_PTR(idx);\n\n    \n    camera_settings &= ~(CAMERA_LOCK_FLAG);\n\n    \n    if ((camera_x == params->X) && (camera_y == params->Y)) {\n        camera_settings = after_lock_camera;\n        camera_clamp_x = camera_x;\n        camera_clamp_y = camera_y;\n        return;\n    }\n\n    \n    x_dest = FALSE;\n    if (camera_x > params->X) {\n        \n        camera_x -= speed;\n        if (camera_x <= params->X) {\n            camera_x = params->X;\n            x_dest = TRUE;\n        }\n    } else if (camera_x < params->X) {\n        \n        camera_x += speed;\n        if (camera_x >= params->X) {\n            camera_x = params->X;\n            x_dest = TRUE;\n        }\n    }\n\n    if (camera_y > params->Y) {\n        \n        camera_y -= speed;\n        if (camera_y <= params->Y) {\n            camera_y = params->Y;\n            if (x_dest) {\n                return;\n            }\n        }\n    } else if (camera_y < params->Y) {\n        \n        camera_y += speed;\n        if (camera_y >= params->Y) {\n            camera_y = params->Y;\n            if (x_dest) {\n                return;\n            }\n        }\n    }\n\n    THIS->PC -= 5u;\n    return;\n}\n",
+  "vm_camera_set_pos": "static void vm_camera_set_pos(SCRIPT_CTX * THIS, INT16 idx) {\n    camera_position_t * params = VM_REF_TO_PTR(idx);\n    camera_x = params->X;\n    camera_y = params->Y;\n    camera_clamp_x = camera_x;\n    camera_clamp_y = camera_y;\n\n    \n    camera_settings &= ~(CAMERA_LOCK_FLAG);\n\n    scroll_update();\n    return;\n}\n",
+  "script_detach_hthread": "static UBYTE script_detach_hthread(UBYTE ID) {\n    static SCRIPT_CTX * ctx;\n    ctx = first_ctx;\n    while (ctx) {\n        if (ctx->ID == ID) {\n            ctx->hthread = 0;\n            return TRUE;\n        } else ctx = ctx->next;\n    }\n    return FALSE;\n}\n",
+  "camera_shake_frames": "static UBYTE camera_shake_frames(void * THIS, UBYTE start, UWORD * stack_frame) {\n    if (start) *((SCRIPT_CTX *)THIS)->stack_ptr = sys_time;\n    if (((UWORD)((UWORD)sys_time - *((SCRIPT_CTX *)THIS)->stack_ptr)) < stack_frame[0]) {\n        if (stack_frame[1] & CAMERA_SHAKE_X) {\n            scroll_offset_x = (ngc_rand() % (stack_frame[2] << 1)) - stack_frame[2];\n        }\n        if (stack_frame[1] & CAMERA_SHAKE_Y) {\n            scroll_offset_y = (ngc_rand() % (stack_frame[2] << 1)) - stack_frame[2];\n        }\n        ((SCRIPT_CTX *)THIS)->waitable = TRUE;\n        return FALSE;\n    }\n    scroll_offset_x = scroll_offset_y = 0;\n    return TRUE;\n}\n",
+  "wait_frames": "static UBYTE wait_frames(void * THIS, UBYTE start, UWORD * stack_frame) {\n    \n    if (start) *((SCRIPT_CTX *)THIS)->stack_ptr = stack_frame[0] + 1; \n    \n    return ((--*((SCRIPT_CTX *)THIS)->stack_ptr) != 0) ? ((SCRIPT_CTX *)THIS)->waitable = TRUE, (UBYTE)FALSE : (UBYTE)TRUE;\n}\n",
+  "vm_invoke": "static void vm_invoke(SCRIPT_CTX * THIS, UBYTE bank, UBYTE * fn, UBYTE nparams, INT16 idx) {\n    UBYTE start;\n    UWORD * stack_frame = (idx < 0) ? THIS->stack_ptr + idx : script_memory + idx;\n    \n    start = ((THIS->update_fn != fn) || (THIS->update_fn_bank != bank)) ? THIS->update_fn = fn, THIS->update_fn_bank = bank, (UBYTE)TRUE : (UBYTE)FALSE;\n    \n    if (FAR_CALL_EX(fn, bank, SCRIPT_UPDATE_FN, THIS, start, stack_frame)) {\n        if (nparams) THIS->stack_ptr -= nparams;\n        THIS->update_fn = 0, THIS->update_fn_bank = 0;\n        return;\n    }\n    \n    THIS->PC -= 7u;\n}\n",
+  "vm_reserve": "static void vm_reserve(SCRIPT_CTX * THIS, INT8 ofs) {\n    THIS->stack_ptr += ofs;\n}\n",
+  "vm_set": "static void vm_set(SCRIPT_CTX * THIS, INT16 idxA, INT16 idxB) {\n    INT16 * A, * B;\n    if (idxA < 0) A = THIS->stack_ptr + idxA; else A = script_memory + idxA;\n    if (idxB < 0) B = THIS->stack_ptr + idxB; else B = script_memory + idxB;\n    *A = *B;\n}\n",
+  "vm_get_tlocal": "static void vm_get_tlocal(SCRIPT_CTX * THIS, INT16 idxA, INT16 idxB) {\n    INT16 * A, * B;\n    if (idxA < 0) A = THIS->stack_ptr + idxA; else A = script_memory + idxA;\n    if (idxB < 0) B = THIS->stack_ptr + idxB; else B = THIS->base_addr + idxB;\n    *A = *B;\n}\n",
+  "vm_set_const": "static void vm_set_const(SCRIPT_CTX * THIS, INT16 idx, UWORD value) {\n    UWORD * A;\n    if (idx < 0) A = THIS->stack_ptr + idx; else A = script_memory + idx;\n    *A = value;\n}\n",
+  "vm_memset": "static void vm_memset(SCRIPT_CTX * THIS, INT16 idx, INT16 value, INT16 count) {\n    INT16 i;\n    INT16 *v = ((idx < 0) ? (INT16 *)THIS->stack_ptr + idx : (INT16 *)script_memory + idx);\n    for (i = 0; i != count; i++) *v++ = value;\n }\n",
+  "vm_idle": "static void vm_idle(SCRIPT_CTX * THIS) {\n    THIS->waitable = TRUE;\n}\n",
+  "vm_jump": "static void vm_jump(SCRIPT_CTX * THIS, UBYTE * pc) {\n    THIS->PC = pc;\n}\n",
+  "vm_if_const": "static void vm_if_const(SCRIPT_CTX * THIS, UBYTE condition, INT16 idxA, INT16 B, UBYTE * pc, UBYTE n) {\n    INT16 A;\n    UBYTE res;\n    if (idxA < 0) A = *(THIS->stack_ptr + idxA); else A = script_memory[idxA];\n    res = FALSE;\n    switch (condition) {\n        case VM_OP_EQ: res = (A == B); break;\n        case VM_OP_LT: res = (A <  B); break;\n        case VM_OP_LE: res = (A <= B); break;\n        case VM_OP_GT: res = (A >  B); break;\n        case VM_OP_GE: res = (A >= B); break;\n        case VM_OP_NE: res = (A != B); break;\n    }\n    if (res) THIS->PC = pc;\n    if (n) THIS->stack_ptr -= n;\n}\n",
+  "vm_if": "static void vm_if(SCRIPT_CTX * THIS, UBYTE condition, INT16 idxA, INT16 idxB, UBYTE * pc, UBYTE n) {\n    INT16 A, B;\n    UBYTE res;\n    if (idxA < 0) A = *(THIS->stack_ptr + idxA); else A = script_memory[idxA];\n    if (idxB < 0) B = *(THIS->stack_ptr + idxB); else B = script_memory[idxB];\n    res = FALSE;\n    switch (condition) {\n        case VM_OP_EQ: res = (A == B); break;\n        case VM_OP_LT: res = (A <  B); break;\n        case VM_OP_LE: res = (A <= B); break;\n        case VM_OP_GT: res = (A >  B); break;\n        case VM_OP_GE: res = (A >= B); break;\n        case VM_OP_NE: res = (A != B); break;\n    }\n    if (res) THIS->PC = pc;\n    if (n) THIS->stack_ptr -= n;\n}\n",
+  "vm_switch": "static void vm_switch(SCRIPT_CTX * THIS, INT16 idx, UBYTE size, UBYTE n) {\n    INT16 value;\n    const UBYTE * table;\n\n    if (idx < 0) value = *(THIS->stack_ptr + idx); else value = *(script_memory + idx);\n    if (n) THIS->stack_ptr -= n;        \n\n    SWITCH_ROM(THIS->bank);             \n\n    table = THIS->PC;\n    while (size) {\n        if (value == NGC_LE16(table)) {\n            THIS->PC = ngc_banks[THIS->bank] + (UWORD)NGC_LE16(table + 2);   \n            return;\n        } else table += 4;\n        size--;\n    }\n\n    THIS->PC = table;          \n}\n",
+  "vm_rand": "static void vm_rand(SCRIPT_CTX * THIS, INT16 idx, UWORD min, UWORD limit) {\n    UWORD * A;\n    if (idx < 0) A = THIS->stack_ptr + idx; else A = script_memory + idx;\n    *A = (ngc_randw() % limit) + min;\n}\n",
+  "vm_init_rng": "static void vm_init_rng(SCRIPT_CTX * THIS, INT16 idx) {\n    UWORD * A;\n    if (idx < 0) A = THIS->stack_ptr + idx; else A = script_memory + idx;\n    ngc_initrand(*A);\n}\n",
+  "vm_rate_limit_const": "static void vm_rate_limit_const(SCRIPT_CTX * THIS, UWORD n_frames, INT16 idxA, UBYTE * pc) {\n    UWORD *A;\n    if (idxA < 0) A = THIS->stack_ptr + idxA; else A = script_memory + idxA;\n    if ((UWORD)(ngc_sys_time - *A) >= 0x8000u) {\n        THIS->PC = pc;\n    } else {\n        *A = ngc_sys_time + n_frames;\n    }\n}\n",
+  "vm_lock": "static void vm_lock(SCRIPT_CTX * THIS) {\n    THIS->lock_count++;\n    vm_lock_state++;\n}\n",
+  "vm_unlock": "static void vm_unlock(SCRIPT_CTX * THIS) {\n    if (THIS->lock_count == 0) return;\n    THIS->lock_count--;\n    vm_lock_state--;\n}\n",
+  "vm_pop": "static UWORD vm_pop(SCRIPT_CTX * THIS, UBYTE n) {\n    if (n) THIS->stack_ptr -= n;\n    return *(THIS->stack_ptr);\n}\n",
+  "vm_rpn": [
+   {
+    "text": "static void vm_rpn(SCRIPT_CTX * THIS) {\n\n    INT16 * A, * B, * ARGS;\n    INT16 idx;\n    const UBYTE * pc;\n    UWORD * sp;\n\n    SWITCH_ROM(THIS->bank);             \n\n    pc = THIS->PC;\n    sp = THIS->stack_ptr;\n    ARGS = sp;\n    while (TRUE) {\n        INT8 op;\n        op = *(pc++);\n        if (op < 0) {\n            switch (op) {\n                \n"
+   },
+   {
+    "case": "VM_OP_REF_MEM_IND",
+    "text": "                case VM_OP_REF_MEM_IND:\n                    op = *(pc++);\n                    idx = NGC_LE16(pc);\n                    idx = *((idx < 0) ? ARGS + idx : (INT16 *)script_memory + idx);\n                    switch ((UINT8)op) {\n                        case VM_OP_MEM_I8  : *(sp) = *((INT8 *)(ngc_banks[THIS->bank] + (UWORD)idx));  break;\n                        case VM_OP_MEM_U8  : *(sp) = *((UINT8 *)(ngc_banks[THIS->bank] + (UWORD)idx)); break;\n                        case VM_OP_MEM_I16 : *(sp) = NGC_LE16(ngc_banks[THIS->bank] + (UWORD)idx); break;\n                    }\n                    pc += 2;\n                    break;\n                \n"
+   },
+   {
+    "case": "VM_OP_REF_MEM_SET",
+    "text": "                case VM_OP_REF_MEM_SET:\n                    op = *(pc++);\n                    switch ((UINT8)op) {\n                        case VM_OP_MEM_I8  : *((INT8 *)ngc_memory(NGC_LE16(pc)))  = *(--(sp)); break;\n                        case VM_OP_MEM_U8  : *((UINT8 *)ngc_memory(NGC_LE16(pc))) = *(--(sp)); break;\n                        case VM_OP_MEM_I16 : *((INT16 *)ngc_memory(NGC_LE16(pc))) = *(--(sp)); break;\n                    }\n                    pc += 2;\n                    continue;\n                \n"
+   },
+   {
+    "case": "VM_OP_REF_MEM",
+    "text": "                case VM_OP_REF_MEM:\n                    op = *(pc++);\n                    switch ((UINT8)op) {\n                        case VM_OP_MEM_I8  : *(sp) = *((INT8 *)ngc_memory(NGC_LE16(pc)));  break;\n                        case VM_OP_MEM_U8  : *(sp) = *((UINT8 *)ngc_memory(NGC_LE16(pc))); break;\n                        case VM_OP_MEM_I16 : *(sp) = *((INT16 *)ngc_memory(NGC_LE16(pc))); break;\n                    }\n                    pc += 2;\n                    break;\n                \n"
+   },
+   {
+    "case": "VM_OP_REF_SET_IND",
+    "text": "                case VM_OP_REF_SET_IND:\n                    idx = NGC_LE16(pc);\n                    idx = *((idx < 0) ? ARGS + idx : (INT16 *)script_memory + idx);\n                    *((idx < 0) ? ARGS + idx : (INT16 *)script_memory + idx) = *(--(sp));\n                    pc += 2;\n                    continue;\n                \n"
+   },
+   {
+    "case": "VM_OP_REF_SET",
+    "text": "                case VM_OP_REF_SET:\n                    idx = NGC_LE16(pc);\n                    *((idx < 0) ? ARGS + idx : (INT16 *)script_memory + idx) = *(--(sp));\n                    pc += 2;\n                    continue;\n                \n"
+   },
+   {
+    "case": "VM_OP_REF_IND",
+    "text": "                case VM_OP_REF_IND:\n                    idx = NGC_LE16(pc);\n                    idx = *((idx < 0) ? ARGS + idx : (INT16 *)script_memory + idx);\n                    *(sp) = *((idx < 0) ? ARGS + idx : (INT16 *)script_memory + idx);\n                    pc += 2;\n                    break;\n                \n"
+   },
+   {
+    "case": "VM_OP_REF",
+    "text": "                case VM_OP_REF:\n                    idx = NGC_LE16(pc);\n                    *(sp) = *((idx < 0) ? ARGS + idx : (INT16 *)script_memory + idx);\n                    pc += 2;\n                    break;\n                \n"
+   },
+   {
+    "case": "VM_OP_INT16",
+    "text": "                case VM_OP_INT16:\n                    *(sp) = (UWORD)NGC_LE16(pc);\n                    pc += 2;\n                    break;\n                \n"
+   },
+   {
+    "case": "VM_OP_INT8",
+    "text": "                case VM_OP_INT8:\n                    op = *(pc++);\n                    *(sp) = op;\n                    break;\n"
+   },
+   {
+    "text": "                default:\n                    { THIS->PC = pc; THIS->stack_ptr = sp; return; }\n            }\n            sp++;\n        } else {\n            A = sp - 2; B = A + 1;\n            switch ((UINT8)op) {\n                \n"
+   },
+   {
+    "case": "VM_OP_EQ",
+    "text": "                case VM_OP_EQ    : *A = (*A == *B); break;\n"
+   },
+   {
+    "case": "VM_OP_LT",
+    "text": "                case VM_OP_LT    : *A = (*A <  *B); break;\n"
+   },
+   {
+    "case": "VM_OP_LE",
+    "text": "                case VM_OP_LE    : *A = (*A <= *B); break;\n"
+   },
+   {
+    "case": "VM_OP_GT",
+    "text": "                case VM_OP_GT    : *A = (*A >  *B); break;\n"
+   },
+   {
+    "case": "VM_OP_GE",
+    "text": "                case VM_OP_GE    : *A = (*A >= *B); break;\n"
+   },
+   {
+    "case": "VM_OP_NE",
+    "text": "                case VM_OP_NE    : *A = (*A != *B); break;\n"
+   },
+   {
+    "case": "VM_OP_AND",
+    "text": "                case VM_OP_AND   : *A = ((*A != 0) && (*B != 0)); break;\n"
+   },
+   {
+    "case": "VM_OP_OR",
+    "text": "                case VM_OP_OR    : *A = ((*A != 0) || (*B != 0)); break;\n"
+   },
+   {
+    "case": "VM_OP_NOT",
+    "text": "                case VM_OP_NOT   : *B = !(*B); continue;\n                \n"
+   },
+   {
+    "case": "VM_OP_ADD",
+    "text": "                case VM_OP_ADD   : *A = *A + *B; break;\n"
+   },
+   {
+    "case": "VM_OP_SUB",
+    "text": "                case VM_OP_SUB   : *A = *A - *B; break;\n"
+   },
+   {
+    "case": "VM_OP_MUL",
+    "text": "                case VM_OP_MUL   : *A = *A * *B; break;\n"
+   },
+   {
+    "case": "VM_OP_DIV",
+    "text": "                case VM_OP_DIV   : *A = *A / *B; break;\n"
+   },
+   {
+    "case": "VM_OP_MOD",
+    "text": "                case VM_OP_MOD   : *A = *A % *B; break;\n                \n"
+   },
+   {
+    "case": "VM_OP_B_AND",
+    "text": "                case VM_OP_B_AND : *A = *A & *B; break;\n"
+   },
+   {
+    "case": "VM_OP_B_OR",
+    "text": "                case VM_OP_B_OR  : *A = *A | *B; break;\n"
+   },
+   {
+    "case": "VM_OP_B_XOR",
+    "text": "                case VM_OP_B_XOR : *A = *A ^ *B; break;\n"
+   },
+   {
+    "case": "VM_OP_SHL",
+    "text": "                case VM_OP_SHL   : *A = *(UWORD *)A << (*B & 0x0f); break;\n"
+   },
+   {
+    "case": "VM_OP_SHR",
+    "text": "                case VM_OP_SHR   : *A = *(UWORD *)A >> (*B & 0x0f); break;\n                \n"
+   },
+   {
+    "case": "VM_OP_MIN",
+    "text": "                case VM_OP_MIN   : *A = (*A < *B) ? *A : *B; break;\n"
+   },
+   {
+    "case": "VM_OP_MAX",
+    "text": "                case VM_OP_MAX   : *A = (*A > *B) ? *A : *B; break;\n"
+   },
+   {
+    "case": "VM_OP_ATAN2",
+    "text": "                case VM_OP_ATAN2 : *A = atan2((WORD)*A, (WORD)*B); break;\n                \n"
+   },
+   {
+    "case": "VM_OP_ABS",
+    "text": "                case VM_OP_ABS   : *B = abs(*B); continue;\n"
+   },
+   {
+    "case": "VM_OP_B_NOT",
+    "text": "                case VM_OP_B_NOT : *B = ~(*B);   continue;\n"
+   },
+   {
+    "case": "VM_OP_NEG",
+    "text": "                case VM_OP_NEG   : *B = -(*B);   continue;\n"
+   },
+   {
+    "case": "VM_OP_ISQRT",
+    "text": "                case VM_OP_ISQRT : *B = isqrt((UWORD)*B); continue;\n"
+   },
+   {
+    "case": "VM_OP_RND",
+    "text": "                case VM_OP_RND   : *B = ngc_randw() % (UWORD)*B; continue;\n                \n"
+   },
+   {
+    "text": "                default:\n                    { THIS->PC = pc; THIS->stack_ptr = sp; return; }\n            }\n            sp--;\n        }\n    }\n}\n"
+   }
+  ],
+  "vm_fade": "static void vm_fade(SCRIPT_CTX * THIS, UBYTE mode) {\n    THIS;\n    if (mode & FADE_DIR_IN) {\n        if (mode & FADE_MODE_MODAL) fade_in_modal(); else fade_in();\n    } else {\n        if (mode & FADE_MODE_MODAL) fade_out_modal(); else fade_out();\n    }\n}\n",
+  "fade_init": "static void fade_init(void) {\n    fade_frames_per_step = fade_speeds[2];\n    fade_timer = FADED_OUT_FRAME;\n    fade_running = FALSE;\n    ApplyPaletteChangeColor(fade_timer);\n}\n",
+  "fade_in": "static void fade_in(void) {\n    if (fade_timer == FADED_IN_FRAME) {\n        ApplyPaletteChangeColor(FADED_IN_FRAME);\n        return;\n    }\n    fade_frame = 0;\n    fade_direction = FADE_IN;\n    fade_running = TRUE;\n    fade_timer = FADED_OUT_FRAME;\n    ApplyPaletteChangeColor(FADED_OUT_FRAME);\n}\n",
+  "fade_out": "static void fade_out(void) {\n    if (fade_timer == FADED_OUT_FRAME) {\n        ApplyPaletteChangeColor(FADED_OUT_FRAME);\n        return;\n    }\n    fade_frame = 0;\n    fade_direction = FADE_OUT;\n    fade_running = TRUE;\n    fade_timer = FADED_IN_FRAME;\n        ApplyPaletteChangeColor(fade_timer);\n}\n",
+  "fade_update": "static void fade_update(void) {\n    if (fade_running) {\n        if ((fade_frame++ & fade_frames_per_step) == 0) {\n            if (fade_direction == FADE_IN) {\n                if (fade_timer > FADED_IN_FRAME) fade_timer--;\n                if (fade_timer == FADED_IN_FRAME) fade_running = FALSE;\n            } else {\n                if (fade_timer < FADED_OUT_FRAME) fade_timer++;\n                if (fade_timer == FADED_OUT_FRAME) fade_running = FALSE;\n            }\n            ApplyPaletteChangeColor(fade_timer);\n        }\n    }\n}\n",
+  "fade_in_modal": "static void fade_in_modal(void) {\n    fade_in();\n    while (fade_isfading()) {\n        wait_vbl_done();\n        fade_update();\n    }\n}\n",
+  "fade_out_modal": "static void fade_out_modal(void) {\n    fade_out();\n    while (fade_isfading()) {\n        wait_vbl_done();\n        fade_update();\n    }\n}\n",
+  "vm_raise": "static void vm_raise(SCRIPT_CTX * THIS, UBYTE code, UBYTE size) {\n    vm_exception_code = code;\n    vm_exception_params_length = size;\n    vm_exception_params_bank = THIS->bank;\n    vm_exception_params_offset = THIS->PC;\n    THIS->PC += size;\n}\n",
+  "vm_call_far": "static void vm_call_far(SCRIPT_CTX * THIS, UBYTE bank, UBYTE * pc) {\n    *(THIS->stack_ptr++) = (UWORD)(THIS->PC - ngc_banks[THIS->bank]);\n    *(THIS->stack_ptr++) = THIS->bank;\n    THIS->PC = pc;\n    THIS->bank = bank;\n}\n",
+  "vm_ret_far": "static void vm_ret_far(SCRIPT_CTX * THIS, UBYTE n) {\n    THIS->stack_ptr--;\n    THIS->bank = (UBYTE)(*(THIS->stack_ptr));\n    THIS->stack_ptr--;\n    THIS->PC = ngc_banks[THIS->bank] + *(THIS->stack_ptr);\n    if (n) THIS->stack_ptr -= n;\n}\n",
+  "vm_push": "static void vm_push(SCRIPT_CTX * THIS, UWORD value) {\n    *(THIS->stack_ptr++) = value;\n}\n",
+  "vm_push_value_ind": "static void vm_push_value_ind(SCRIPT_CTX * THIS, INT16 idx) {\n    idx = *((idx < 0) ? (THIS->stack_ptr + idx) : (script_memory + idx));\n    *(THIS->stack_ptr) = *((idx < 0) ? (THIS->stack_ptr + idx) : (script_memory + idx));\n    THIS->stack_ptr++;\n}\n",
+  "vm_set_indirect": "static void vm_set_indirect(SCRIPT_CTX * THIS, INT16 idxA, INT16 idxB) {\n    INT16 * A, * B;\n    \n    if (idxA < 0) A = THIS->stack_ptr + idxA; else A = script_memory + idxA;\n    if (*A < 0) A = THIS->stack_ptr + *A; else A = script_memory + *A;\n    \n    if (idxB < 0) B = THIS->stack_ptr + idxB; else B = script_memory + idxB;\n    \n    *A = *B;\n}\n",
+  "vm_get_indirect": "static void vm_get_indirect(SCRIPT_CTX * THIS, INT16 idxA, INT16 idxB) {\n    INT16 * A, * B;\n    \n    if (idxA < 0) A = THIS->stack_ptr + idxA; else A = script_memory + idxA;\n    \n    if (idxB < 0) B = THIS->stack_ptr + idxB; else B = script_memory + idxB;\n    if (*B < 0) B = THIS->stack_ptr + *B; else B = script_memory + *B;\n    \n    *A = *B;\n}\n",
+  "vm_push_value": "static void vm_push_value(SCRIPT_CTX * THIS, INT16 idx) {\n    *(THIS->stack_ptr) = *((idx < 0) ? (THIS->stack_ptr + idx) : (script_memory + idx));\n    THIS->stack_ptr++;\n}\n",
+  "vm_push_reference": "static void vm_push_reference(SCRIPT_CTX * THIS, INT16 idx) {\n    *(THIS->stack_ptr) = ((idx < 0) ? ((UWORD)(THIS->stack_ptr - script_memory) + idx) : idx);\n    THIS->stack_ptr++;\n}\n",
+  "vm_beginthread": "static void vm_beginthread(SCRIPT_CTX * THIS, UBYTE bank, UBYTE * pc, INT16 idx, UBYTE nargs) {\n    UWORD * A;\n    SCRIPT_CTX * ctx;\n    UBYTE i;\n    INT16 v;\n    if (idx < 0) A = THIS->stack_ptr + idx; else A = script_memory + idx;\n    ctx = script_execute(bank, pc, A, 0);\n    \n    if (!(nargs)) return;\n    if (ctx) {\n        for (i = nargs; i != 0; i--) {\n            v = NGC_LE16(THIS->PC);\n            v = (v < 0) ? *(THIS->stack_ptr + v) : *(script_memory + v);\n            *(ctx->stack_ptr++) = (UWORD)v;\n            THIS->PC += 2;\n        }\n    }\n}\n",
+  "vm_terminate": "static void vm_terminate(SCRIPT_CTX * THIS, INT16 idx) {\n    UWORD * A;\n    if (idx < 0) A = THIS->stack_ptr + idx; else A = script_memory + idx;\n    script_terminate((UBYTE)(*A));\n}\n",
+  "vm_loop": "static void vm_loop(SCRIPT_CTX * THIS, INT16 idx, UINT8 * pc, UBYTE n) {\n    UWORD * counter;\n    if (idx < 0) counter = THIS->stack_ptr + idx; else counter = script_memory + idx;\n    if (*counter) {\n        THIS->PC = pc, (*counter)--;\n    } else {\n        if (n) THIS->stack_ptr -= n;\n    }\n}\n",
+  "vm_poll_loaded": "static void vm_poll_loaded(SCRIPT_CTX * THIS, INT16 idx) {\n    UWORD * A;\n    if (idx < 0) A = THIS->stack_ptr + idx; else A = script_memory + idx;\n    *A = vm_loaded_state;\n    vm_loaded_state = FALSE;\n}\n",
+  "script_terminate": "static UBYTE script_terminate(UBYTE ID) {\n    static SCRIPT_CTX * ctx;\n    ctx = first_ctx;\n    while (ctx) {\n        if (ctx->ID == ID) {\n            if (ctx->hthread) {\n                *(ctx->hthread) |= SCRIPT_TERMINATED;\n                ctx->hthread = 0;\n            }\n            return ctx->terminated = TRUE;\n        } else ctx = ctx->next;\n    }\n    return FALSE;\n}\n",
+  "script_runner_init": "static void script_runner_init(UBYTE reset) {\n    UWORD * base_addr;\n    SCRIPT_CTX * nxt;\n    SCRIPT_CTX * tmp;\n    UBYTE i;\n    if (reset) {\n        ngc_clear((UBYTE *)script_memory, sizeof(script_memory));\n        ngc_clear((UBYTE *)CTXS, sizeof(CTXS));\n    }\n    base_addr = &script_memory[VM_HEAP_SIZE];\n    free_ctxs = CTXS, first_ctx = 0;\n    nxt = 0;\n    tmp = CTXS + (VM_MAX_CONTEXTS - 1);\n    for (i = VM_MAX_CONTEXTS; i != 0; i--) {\n        tmp->next = nxt;\n        tmp->base_addr = base_addr;\n        tmp->ID = i;\n        base_addr += VM_CONTEXT_STACK_SIZE;\n        nxt = tmp--;\n    }\n    vm_lock_state = 0;\n    vm_loaded_state = FALSE;\n    \n    old_executing_ctx = 0, executing_ctx = first_ctx;\n}\n",
+  "script_execute": "static SCRIPT_CTX * script_execute(UBYTE bank, UBYTE * pc, UWORD * handle, UBYTE nargs) {\n    SCRIPT_CTX * tmp;\n    if (free_ctxs == NULL) return NULL;\n#ifdef SAFE_SCRIPT_EXECUTE\n    if (pc == NULL) return NULL;\n#endif\n\n    tmp = free_ctxs;\n    \n    free_ctxs = free_ctxs->next;\n    \n    tmp->PC = pc, tmp->bank = bank, tmp->stack_ptr = tmp->base_addr;\n    \n    tmp->hthread = handle;\n    if (handle) *handle = tmp->ID;\n    \n    tmp->terminated = FALSE;\n    \n    tmp->lock_count = 0;\n    \n    tmp->flags = 0;\n    \n    tmp->update_fn = 0; tmp->update_fn_bank = 0;\n    \n    tmp->next = NULL;\n    if (first_ctx) {\n         SCRIPT_CTX * idx = first_ctx;\n         while (idx->next) idx = idx->next;\n         idx->next = tmp;\n    } else first_ctx = tmp;\n    \n    (void)nargs;\n    \n    return tmp;\n}\n",
+  "script_runner_update": "UBYTE script_runner_update(void) {\n    UBYTE waitable;\n    UBYTE counter;\n    FASTUBYTE _save;\n    SCRIPT_CTX * ctx;\n    SCRIPT_CTX * old;\n\n    _save = CURRENT_BANK;\n\n    \n    ctx = executing_ctx;\n    old = old_executing_ctx;\n    if (!vm_lock_state) old = 0, ctx = first_ctx;\n\n    waitable = TRUE;\n    counter = INSTRUCTIONS_PER_QUANT;\n    while (ctx) {\n        vm_exception_code = EXCEPTION_CODE_NONE;\n        ctx->waitable = FALSE;\n        if ((ctx->terminated != FALSE) || (!VM_STEP(ctx))) {\n            \n            vm_lock_state -= ctx->lock_count;\n            \n            if (ctx->hthread) *(ctx->hthread) |= SCRIPT_TERMINATED;\n            \n            if (old) old->next = ctx->next;\n            if (first_ctx == ctx) first_ctx = ctx->next;\n            \n            ctx->next = free_ctxs, free_ctxs = ctx;\n            \n            if (old) ctx = old->next; else ctx = first_ctx;\n        } else {\n            \n            if (vm_exception_code) {\n                old_executing_ctx = old, executing_ctx = ctx;\n                SWITCH_ROM(_save);\n                return RUNNER_EXCEPTION;\n            }\n            \n            if (!(ctx->waitable) && (counter--)) continue;\n            \n            if (vm_lock_state) break;\n            \n            waitable &= ctx->waitable;\n            old = ctx, ctx = ctx->next;\n            counter = INSTRUCTIONS_PER_QUANT;\n        }\n    }\n    old_executing_ctx = old, executing_ctx = ctx;\n    SWITCH_ROM(_save);\n\n    \n    if (first_ctx == 0) return RUNNER_DONE;\n    \n    if (waitable) return RUNNER_IDLE; else return RUNNER_BUSY;\n}\n",
+  "vm_context_prepare": "static void vm_context_prepare(SCRIPT_CTX * THIS, UBYTE slot, UBYTE bank, UBYTE * pc) {\n    script_event_t * event = &input_events[(slot - 1) & 7];\n    (void)THIS;\n    event->script_bank = bank;\n    event->script_addr = pc;\n}\n",
+  "vm_input_attach": "static void vm_input_attach(SCRIPT_CTX * THIS, UBYTE mask, UBYTE slot) {\n    UBYTE * current_slot = input_slots;\n    UBYTE tmp;\n    (void)THIS;\n    for (tmp = mask; (tmp); tmp = tmp >> 1, current_slot++) {\n        if (tmp & 1) *current_slot = slot;\n    }\n}\n",
+  "vm_input_detach": "static void vm_input_detach(SCRIPT_CTX * THIS, UBYTE mask) {\n    UBYTE * current_slot = input_slots;\n    UBYTE tmp;\n    (void)THIS;\n    for (tmp = mask; (tmp); tmp = tmp >> 1, current_slot++) {\n        if (tmp & 1) *current_slot = 0;\n    }\n}\n",
+  "vm_input_wait": "static void vm_input_wait(SCRIPT_CTX * THIS, UBYTE mask) {\n    if ((ngc_joy != ngc_last_joy) && (ngc_joy & mask)) return;\n    THIS->waitable = 1;\n    THIS->PC -= INSTRUCTION_SIZE + sizeof(mask);\n}\n",
+  "vm_timer_prepare": "static void vm_timer_prepare(SCRIPT_CTX * THIS, UBYTE timer, UBYTE bank, UBYTE * pc) {\n    script_event_t * event = &timer_events[(timer - 1) & 3];\n    (void)THIS;\n    event->script_bank = bank;\n    event->script_addr = pc;\n}\n",
+  "vm_timer_set": "static void vm_timer_set(SCRIPT_CTX * THIS, UBYTE timer, UBYTE value) {\n    timer_time_t * timer_value = &timer_values[(timer - 1) & 3];\n    (void)THIS;\n    timer_value->value = value;\n    timer_value->remains = value;\n}\n",
+  "vm_timer_stop": "static void vm_timer_stop(SCRIPT_CTX * THIS, UBYTE timer) {\n    timer_time_t * timer_value = &timer_values[(timer - 1) & 3];\n    (void)THIS;\n    timer_value->value = 0;\n}\n",
+  "vm_timer_reset": "static void vm_timer_reset(SCRIPT_CTX * THIS, UBYTE timer) {\n    timer_time_t * timer_value = &timer_values[(timer - 1) & 3];\n    (void)THIS;\n    timer_value->remains = timer_value->value;\n}\n",
+  "timers_init": "static void timers_init(UBYTE preserve) {\n    UBYTE i;\n    if (preserve) {\n        for (i = 0; i != MAX_CONCURRENT_TIMERS; i++)\n            timer_events[i].handle = 0;\n    } else {\n        ngc_clear((UBYTE *)timer_values, sizeof(timer_values));\n        ngc_clear((UBYTE *)timer_events, sizeof(timer_events));\n    }\n}\n",
+  "timers_update": "void timers_update(void) {\n    timer_time_t * ctimer = timer_values;\n    UBYTE i;\n    script_event_t * event;\n    for (i = 0; i != MAX_CONCURRENT_TIMERS; i++) {\n        if (ctimer->value) {\n            if (--ctimer->remains == 0) {\n                ctimer->remains = ctimer->value;\n                event = &timer_events[i];\n                if (!event->script_addr) continue;\n                if ((event->handle == 0) || ((event->handle & SCRIPT_TERMINATED) != 0)) {\n                    script_execute(event->script_bank, event->script_addr, &event->handle, 0);\n                }\n            }\n\n        }\n        ctimer++;\n    }\n}\n",
+  "events_init": "static void events_init(UBYTE preserve) {\n    UBYTE i;\n    if (preserve) {\n        for (i = 0; i < 8; i++)\n            input_events[i].handle = 0;\n    } else {\n        ngc_clear((UBYTE *)input_slots, sizeof(input_slots));\n        ngc_clear((UBYTE *)input_events, sizeof(input_events));\n    }\n}\n",
+  "events_update": "void events_update(void) {\n    UBYTE * slot_ptr = input_slots;\n    UBYTE tmp, key;\n    script_event_t * event;\n    SCRIPT_CTX * ctx;\n    for (tmp = ngc_joy, key = 1; (tmp); tmp = tmp >> 1, key = key << 1, slot_ptr++) {\n        if (tmp & 1) {\n            if (*slot_ptr == 0) continue;\n            event = &input_events[(*slot_ptr & 0x0f) - 1u];\n            if (!event->script_addr) continue;\n            if (*slot_ptr & 0x80) { ngc_joy ^= key; ngc_joy_pressed &= (UBYTE)~key; }     \n            if (ngc_last_joy & key) continue;\n            if ((event->handle == 0) || ((event->handle & SCRIPT_TERMINATED) != 0))\n                { ctx = script_execute(event->script_bank, event->script_addr, &event->handle, 0);\n                  if (ctx) *(ctx->stack_ptr++) = (UWORD)key; }\n        }\n    }\n    ngc_recent_joy = ngc_recent_joy & ngc_joy;\n}\n",
+  "ui_init": "static void ui_init(void) {\n    vwf_direction               = UI_PRINT_LEFTTORIGHT;\n    vwf_current_font_idx        = 0;\n    vwf_current_font_bank       = 0;\n    ngc_ui_font_load(0u);\n\n    text_options                = TEXT_OPT_DEFAULT;\n    text_in_speed               = 0;\n    text_out_speed              = 0;\n    text_ff_joypad              = TRUE;\n    text_bkg_fill               = TEXT_BKG_FILL_W;\n\n    ui_text_ptr                 = 0;\n\n    vwf_current_offset          = 0;\n\n    ui_current_tile             = TEXT_BUFFER_START;\n    ui_current_tile_bank        = 0;\n    ui_prev_tile                = TEXT_BUFFER_START;\n    ui_prev_tile_bank           = 0;\n\n    ui_set_pos(0, MENU_CLOSED_Y);\n\n    win_speed                   = 1;\n    text_drawn                  = TRUE;\n    text_draw_speed             = 1;\n    current_text_speed          = 0;\n\n    ui_dest_ptr = ui_dest_base  = (text_render_base_addr = GetWinAddr()) + 32 + 1;\n\n    text_scroll_addr            = GetWinAddr();\n    text_scroll_width           = 20;\n    text_scroll_height          = 8;\n    text_scroll_fill            = ui_white_tile;\n\n    text_sound_bank             = SFX_STOP_BANK;\n\n    ui_load_tiles();\n\n    overlay_priority            = S_PRIORITY;\n    text_palette                = UI_DEFAULT_PALETTE;\n}\n",
+  "ui_print_reset": "static void ui_print_reset(void) {\n    ngc_ui_flush();\n    if (vwf_current_offset) ui_next_tile();\n    vwf_current_offset = 0;\n    ngc_ui_fill(vwf_tile_data, text_bkg_fill, sizeof(vwf_tile_data));\n}\n",
+  "ui_set_start_tile": "static void ui_set_start_tile(UBYTE start_tile, UBYTE start_tile_bank) {\n    ngc_ui_flush();\n    ui_prev_tile = ui_current_tile = start_tile;\n    ui_prev_tile_bank = ui_current_tile_bank = start_tile_bank;\n    vwf_current_offset = 0;\n    ngc_ui_fill(vwf_tile_data, text_bkg_fill, sizeof(vwf_tile_data));\n}\n",
+  "ui_draw_frame": "static void ui_draw_frame(UBYTE x, UBYTE y, UBYTE width, UBYTE height) {\n    volatile UWORD * base_addr;\n    UBYTE i;\n    if (height == 0) return;\n    base_addr = GetWinAddr() + (y << 5) + x;\n    {\n        UBYTE attr = overlay_priority | (text_palette & 0x07u);\n        ui_draw_frame_row_cgb(base_addr, ui_frame_tl_tiles, width, attr);\n        if (--height == 0) return;\n        if (height > 1)\n            for (i = height - 1; i != 0; i--) {\n                base_addr += 32;\n                ui_draw_frame_row_cgb(base_addr, ui_frame_l_tiles, width, attr);\n            }\n        base_addr += 32;\n        ui_draw_frame_row_cgb(base_addr, ui_frame_bl_tiles, width, attr);\n        return;\n    }\n}\n",
+  "ui_draw_text_buffer_char": "static UBYTE ui_draw_text_buffer_char(void) {\n    static UBYTE current_font_idx, current_text_bkg_fill, current_vwf_direction, current_text_ff_joypad, current_text_draw_speed;\n\n    if (ui_text_ptr == 0) {\n        \n        current_text_speed = ui_time_masks[text_draw_speed];\n        \n        current_font_idx        = vwf_current_font_idx;\n        current_text_bkg_fill   = text_bkg_fill;\n        current_vwf_direction   = vwf_direction;\n        current_text_ff_joypad  = text_ff_joypad;\n        current_text_draw_speed = text_draw_speed;\n        \n        \n        ui_text_ptr = ui_text_data;\n        \n        if ((text_options & TEXT_OPT_PRESERVE_POS) == 0) {\n            ui_dest_base = text_render_base_addr + 32 + 1;                  \n            if (vwf_direction == UI_PRINT_RIGHTTOLEFT) ui_dest_base += 17;  \n            \n            ui_dest_ptr = ui_dest_base;\n            \n            ui_print_reset();\n        }\n    }\n\n    \n    while (TRUE) {\n        switch (*ui_text_ptr) {\n            case 0x00: {\n                ui_text_ptr = 0;\n                text_drawn = TRUE;\n                if (vwf_current_font_idx != current_font_idx) {\n                    ngc_ui_font_load(vwf_current_font_idx);\n                }\n                text_bkg_fill = current_text_bkg_fill;\n                vwf_direction = current_vwf_direction;\n                text_ff_joypad = current_text_ff_joypad;\n                text_draw_speed = current_text_draw_speed;\n                return FALSE;\n            }\n            case 0x01:\n                \n                text_draw_speed = (*(++ui_text_ptr) - 1u) & 0x07u;\n                current_text_speed = ui_time_masks[text_draw_speed];\n                break;\n            case 0x02: {\n                \n                UBYTE old_flags;\n                current_font_idx = *(++ui_text_ptr) - 1u;\n                old_flags = vwf_current_font_desc.attr;\n                ngc_ui_font_load(current_font_idx);\n                if ((vwf_current_offset) && ((old_flags & FONT_VWF) != 0) && ((vwf_current_font_desc.attr & FONT_VWF) == 0)) {\n                    ui_dest_ptr++;\n                }\n                break;\n            }\n            case 0x03:\n                \n                {\n                    INT16 gx, gy;\n                    gx = (INT16)*++ui_text_ptr - 1;\n                    gy = (INT16)*++ui_text_ptr - 1;\n                    ui_dest_ptr = ui_dest_base = text_render_base_addr + (INT16)(gx + gy * 32);\n                }\n                if (vwf_current_offset) ui_print_reset();\n                break;\n            case 0x04: {\n                \n                BYTE dx, dy;\n                dx = (BYTE)(*++ui_text_ptr);\n                if (dx > 0) dx--;\n                dy = (BYTE)(*++ui_text_ptr);\n                if (dy > 0) dy--;\n                ui_dest_base = ui_dest_ptr += (INT16)(dx + dy * 32);\n                if (vwf_current_offset) ui_print_reset();\n                break;\n            }\n            case 0x06:\n                \n                if (text_ff) {\n                    text_ff = FALSE;\n                    INPUT_RESET;\n                }\n                text_ff_joypad = FALSE;\n                \n                ui_text_ptr++;\n                \n                if (text_draw_speed) {\n                    \n                    if (INPUT_PRESSED(*ui_text_ptr)) {\n                        \n                        text_ff_joypad = current_text_ff_joypad;\n                        INPUT_RESET;\n                    } else {\n                        \n                        ui_text_ptr--;\n                        current_text_speed = 0;\n                        return FALSE;\n                    }\n                }\n                current_text_speed = ui_time_masks[text_draw_speed];\n                break;\n            case 0x07:\n                \n                text_bkg_fill = (*++ui_text_ptr & 1u) ? TEXT_BKG_FILL_W : TEXT_BKG_FILL_B;\n                break;\n            case 0x08:\n                \n                vwf_direction = (*++ui_text_ptr & 1u) ? UI_PRINT_LEFTTORIGHT : UI_PRINT_RIGHTTOLEFT;\n                break;\n            case 0x09:\n                break;\n            case '\\n':  \n                \n                ui_dest_ptr = ui_dest_base += 32u;\n                if (vwf_current_offset) ui_print_reset();\n                break;\n            case 0x0b:\n                text_palette = (((*++ui_text_ptr) - 1u) & 0x07u);\n                break;\n            case '\\r':  \n                \n                if ((UWORD)(ui_dest_ptr - NGC_WIN_MAP + 32) > (UWORD)((((UWORD)(text_scroll_addr - NGC_WIN_MAP) + ((UWORD)text_scroll_height << 5)) & 0xFFE0u) - 1u)) {\n                    scroll_rect(text_scroll_addr, text_scroll_width, text_scroll_height, text_scroll_fill);\n                    ui_dest_ptr = ui_dest_base;\n                } else {\n                    ui_dest_ptr = ui_dest_base += 32u;\n                }\n                if (vwf_current_offset) ui_print_reset();\n                break;\n            case 0x05:\n                \n                ui_text_ptr++;\n                \n            default:\n                if (ui_print_render(*ui_text_ptr)) {\n                    ui_set_tile(ui_dest_ptr, ui_prev_tile, ui_prev_tile_bank);\n                    if (vwf_direction == UI_PRINT_LEFTTORIGHT)  ui_dest_ptr++; else ui_dest_ptr--;\n                }\n                if (vwf_current_offset) ui_set_tile(ui_dest_ptr, ui_current_tile, ui_current_tile_bank);\n                ui_text_ptr++;\n                return TRUE;\n        }\n        ui_text_ptr++;\n    }\n}\n",
+  "ui_update": "static void ui_update(void) {\n    UBYTE flag = FALSE;\n\n    \n    if (win_pos_y != win_dest_pos_y) {\n        if ((game_time & ui_time_masks[win_speed]) == 0) {\n            UBYTE interval = (win_speed == 0) ? 2u : 1u;\n            \n            if (win_pos_y < win_dest_pos_y) win_pos_y += interval; else win_pos_y -= interval;\n        }\n        flag = TRUE;\n    }\n    if (win_pos_x != win_dest_pos_x) {\n        if ((game_time & ui_time_masks[win_speed]) == 0) {\n            UBYTE interval = (win_speed == 0) ? 2u : 1u;\n            \n            if (win_pos_x < win_dest_pos_x) win_pos_x += interval; else win_pos_x -= interval;\n        }\n        flag = TRUE;\n    }\n\n    \n    if (flag) return;\n    \n    if (text_drawn) return;\n    \n    if ((text_ff_joypad) && (INPUT_A_OR_B_PRESSED)) {\n        text_ff = TRUE;\n    } else {\n        if (game_time & current_text_speed) return;\n    }\n    \n    do {\n        flag = ui_draw_text_buffer_char();\n    } while (((text_ff) || (text_draw_speed == 0)) && (!text_drawn));\n    \n    (void)flag;\n}\n",
+  "ui_run_modal": "static void ui_run_modal(UBYTE wait_flags) {\n    UBYTE fail;\n    ngc_input_update();\n    do {\n        fail = FALSE;\n\n        if (wait_flags & UI_WAIT_WINDOW)\n            if ((win_pos_x != win_dest_pos_x) || (win_pos_y != win_dest_pos_y)) fail = TRUE;\n        if (wait_flags & UI_WAIT_TEXT)\n            if (!text_drawn) fail = TRUE;\n        if (wait_flags & UI_WAIT_BTN_A)\n            if (!INPUT_A_PRESSED) fail = TRUE;\n        if (wait_flags & UI_WAIT_BTN_B)\n            if (!INPUT_B_PRESSED) fail = TRUE;\n        if (wait_flags & UI_WAIT_BTN_ANY)\n            if (!INPUT_ANY_PRESSED) fail = TRUE;\n\n        if (!fail) return;\n\n        ui_update();\n#if NGC_TICK_FRAMES == 2\n        game_time++;\n        ui_update();\n        game_time--;\n#endif\n        ngc_ui_flush();\n        ngc_ui_modal_logic();\n\n        game_time += NGC_TICK_FRAMES;\n        ngc_vm_frame_end();\n        ngc_ui_modal_commit();\n        ngc_input_update();\n    } while (fail);\n}\n",
+  "load_text": "static const unsigned char * load_text(const unsigned char * s, INT16 * args) {\n    unsigned char * d = ui_text_data;\n    while (*s) {\n        if (*s == '%') {\n            switch (*++s) {\n                \n                case 'D':\n                    d += itoa_format(*args, d, *++s - '0');\n                    break;\n                \n                case 'd':\n                    d += itoa_format(*args, d, 0);\n                    break;\n                \n                case 'c':\n                    *d++ = (unsigned char)(*args);\n                    break;\n                \n                case 't':\n                    *d++ = 0x01u;\n                    *d++ = (unsigned char)(*args) + 0x02u;\n                    break;\n                \n                case 'f':\n                    *d++ = 0x02u;\n                    *d++ = (unsigned char)(*args) + 0x01u;\n                    break;\n                \n                case '%':\n                    s++;\n                default:\n                    s--;\n                    *d++ = *s++;\n                    continue;\n            }\n        } else {\n            *d++ = *s++;\n            continue;\n        }\n        s++; args--;\n    }\n    *d = 0;\n    return s + 1;\n}\n",
+  "vm_load_text": "static void vm_load_text(SCRIPT_CTX * THIS, UBYTE nargs) {\n    const UBYTE * sargs;\n    INT16 * dargs;\n    SWITCH_ROM(THIS->bank);\n    sargs = THIS->PC;\n    dargs = (INT16 *)(ui_text_data + (sizeof(ui_text_data) - sizeof(INT16)));\n    while (nargs--) {\n        *dargs-- = *((INT16 *)VM_REF_TO_PTR(NGC_LE16(sargs)));\n        sargs += 2;\n    }\n    THIS->PC = load_text((const unsigned char *)sargs, (INT16 *)(ui_text_data + (sizeof(ui_text_data) - sizeof(INT16))));\n}\n",
+  "vm_display_text": "static void vm_display_text(SCRIPT_CTX * THIS, UBYTE options, UBYTE start_tile) {\n    THIS;\n\n    INPUT_RESET;\n    text_options = options;\n    text_drawn = text_ff = FALSE;\n\n        {\n            if (start_tile >= (UBYTE)((0x100 - TEXT_BUFFER_START) + (0x100 - TEXT_BUFFER_START_BANK1))) {\n                return;\n            } else if (start_tile >= (UBYTE)(0x100 - TEXT_BUFFER_START)) {\n                ui_set_start_tile(TEXT_BUFFER_START_BANK1 + (start_tile - (UBYTE)(0x100 - TEXT_BUFFER_START)), 1);\n            } else {\n                ui_set_start_tile(TEXT_BUFFER_START + start_tile, 0);\n            }\n        }\n\n}\n",
+  "vm_switch_text_layer": "static void vm_switch_text_layer(SCRIPT_CTX * THIS, UBYTE target) {\n    THIS;\n    if (target) text_render_base_addr = GetWinAddr(); else text_render_base_addr = GetBkgAddr();\n}\n",
+  "vm_overlay_wait": "static void vm_overlay_wait(SCRIPT_CTX * THIS, UBYTE is_modal, UBYTE wait_flags) {\n    UBYTE fail;\n    if (is_modal) {\n        ui_run_modal(wait_flags);\n        return;\n    }\n\n    fail = 0;\n    if (wait_flags & UI_WAIT_WINDOW)\n        if ((win_pos_x != win_dest_pos_x) || (win_pos_y != win_dest_pos_y)) fail = 1;\n    if (wait_flags & UI_WAIT_TEXT)\n        if (!text_drawn) fail = 1;\n    if (wait_flags & UI_WAIT_BTN_A)\n        if (!INPUT_A_PRESSED) fail = 1;\n    if (wait_flags & UI_WAIT_BTN_B)\n        if (!INPUT_B_PRESSED) fail = 1;\n    if (wait_flags & UI_WAIT_BTN_ANY)\n        if (!INPUT_ANY_PRESSED) fail = 1;\n\n    if (fail) {\n        THIS->waitable = 1;\n        THIS->PC -= INSTRUCTION_SIZE + sizeof(is_modal) + sizeof(wait_flags);\n    }\n}\n",
+  "vm_overlay_move_to": "static void vm_overlay_move_to(SCRIPT_CTX * THIS, UBYTE pos_x, UBYTE pos_y, BYTE speed) {\n    THIS;\n    if (speed == UI_IN_SPEED) {\n        speed = text_in_speed;\n    } else if (speed == UI_OUT_SPEED) {\n        speed = text_out_speed;\n    }\n    ui_move_to(pos_x << 3, pos_y << 3, speed);\n}\n",
+  "vm_overlay_set_scroll": "static void vm_overlay_set_scroll(SCRIPT_CTX * THIS, UBYTE x, UBYTE y, UBYTE w, UBYTE h, UBYTE color) {\n    THIS;\n    text_scroll_addr = GetWinAddr() + (y << 5) + x;\n    text_scroll_width = w; text_scroll_height = h;\n    text_scroll_fill = (color) ? ui_white_tile : ui_black_tile;\n}\n",
+  "vm_overlay_clear": "static void vm_overlay_clear(SCRIPT_CTX * THIS, UBYTE x, UBYTE y, UBYTE w, UBYTE h, UBYTE color, UBYTE options) {\n    THIS;\n    text_bkg_fill = (color) ? TEXT_BKG_FILL_W : TEXT_BKG_FILL_B;\n    if (options & UI_DRAW_FRAME) {\n        ui_draw_frame(x, y, w, h);\n        if (options & UI_AUTOSCROLL) vm_overlay_set_scroll(THIS, x + 1, y + 1, w - 2, h - 2, color);\n    } else {\n        fill_win_rect(x, y, w, h, ((color) ? ui_white_tile : ui_black_tile));\n        if (options & UI_AUTOSCROLL) vm_overlay_set_scroll(THIS, x, y, w, h, color);\n    }\n}\n",
+  "ui_run_menu": "static UBYTE ui_run_menu(menu_item_t * start_item, UBYTE bank, UBYTE options, UBYTE count, UBYTE start_index) {\n    menu_item_t current_menu_item;\n    UBYTE current_index = ((options & MENU_SET_START) ? start_index : 1u), next_index = 0u;\n    \n    (void)bank;\n    ngc_menu_item_load(&current_menu_item, start_item, (UBYTE)(current_index - 1u));\n\n    \n    set_win_tile_xy(current_menu_item.X, current_menu_item.Y, ui_cursor_tile);\n\n    \n    while (TRUE) {\n        ngc_input_update();\n        ui_update();\n#if NGC_TICK_FRAMES == 2\n        game_time++;\n        ui_update();\n        game_time--;\n#endif\n        ngc_ui_flush();\n        ngc_ui_modal_logic();\n\n        game_time += NGC_TICK_FRAMES;\n        ngc_vm_frame_end();\n        ngc_ui_modal_commit();\n\n        if (INPUT_UP_PRESSED) {\n            next_index = current_menu_item.iU;\n        } else if (INPUT_DOWN_PRESSED) {\n            next_index = current_menu_item.iD;\n        } else if (INPUT_LEFT_PRESSED) {\n            next_index = current_menu_item.iL;\n        } else if (INPUT_RIGHT_PRESSED) {\n            next_index = current_menu_item.iR;\n        } else if (INPUT_A_PRESSED) {\n            return ((current_index == count) && (options & MENU_CANCEL_LAST)) ? 0u : current_index;\n        } else if ((INPUT_B_PRESSED) && (options & MENU_CANCEL_B))  {\n            return 0u;\n        } else {\n            continue;\n        }\n\n        if (!next_index) continue;\n\n        \n        current_index = next_index;\n        \n        set_win_tile_xy(current_menu_item.X, current_menu_item.Y, ui_bg_tile);\n        \n        ngc_menu_item_load(&current_menu_item, start_item, (UBYTE)(current_index - 1u));\n        \n        set_win_tile_xy(current_menu_item.X, current_menu_item.Y, ui_cursor_tile);\n        \n        next_index = 0;\n    };\n}\n",
+  "vm_choice": "static void vm_choice(SCRIPT_CTX * THIS, INT16 idx, UBYTE options, UBYTE count) {\n    INT16 * v = VM_REF_TO_PTR(idx);\n    *v = (count) ? ui_run_menu((menu_item_t *)(THIS->PC), THIS->bank, options, count, MAX(1, MIN(count, *v))) : 0;\n    THIS->PC += NGC_MENU_ITEM_BYTES * count;\n}\n",
+  "vm_overlay_show": "static void vm_overlay_show(SCRIPT_CTX * THIS, UBYTE pos_x, UBYTE pos_y, UBYTE color, UBYTE options) {\n    THIS;\n    if ((pos_x < 20u) && (pos_y < 18u)) vm_overlay_clear(THIS, 0, 0, 20u - pos_x, 18u - pos_y, color, options);\n    ui_set_pos(pos_x << 3, pos_y << 3);\n}\n",
+  "vm_overlay_setpos": "static void vm_overlay_setpos(SCRIPT_CTX * THIS, UBYTE pos_x, UBYTE pos_y) {\n    THIS;\n    ui_set_pos(pos_x << 3, pos_y << 3);\n}\n",
+  "vm_set_font": "static void vm_set_font(SCRIPT_CTX * THIS, UBYTE font_index) {\n    (void)THIS;\n    vwf_current_font_idx = font_index;\n    ngc_ui_font_load(font_index);\n}\n"
+ },
+ "adaptations": {
+  "vm_camera_move_to": [
+   "C89: declarations before statements (cc900 refuses late declarations)",
+   "C89: declarations before statements (cc900 refuses late declarations)",
+   "C89: declarations before statements (cc900 refuses late declarations)",
+   "encoded VM_CAMERA_MOVE_TO length: opcode + signed word + two bytes; explicit on all hosts"
+  ],
+  "vm_camera_set_pos": [],
+  "script_detach_hthread": [],
+  "camera_shake_frames": [
+   "GBDK 4.3.0 rand / randw / initrand (libc/asm/sm83/rand.s, one 16-bit seed): independent C in emit.py, seed = 17*seed + 0x5c93; rand returns the new high byte, randw (OLDCALL, DE) the new low byte above the new high byte",
+   "explicit 16-bit VBlank elapsed time, including wrap, also on the host C oracle"
+  ],
+  "wait_frames": [],
+  "vm_invoke": [
+   "C89: declarations before statements (cc900 refuses late declarations)",
+   "C89: declarations before statements (cc900 refuses late declarations)",
+   "rewind by the encoded instruction length (1+2+1+2+1 bytes, vm.i VM_INVOKE); on TLCS-900 sizeof(fn) is a 4-byte pointer while the bytecode holds 2"
+  ],
+  "vm_reserve": [],
+  "vm_set": [],
+  "vm_get_tlocal": [],
+  "vm_set_const": [],
+  "vm_memset": [
+   "C89: declarations before statements (cc900 refuses late declarations)",
+   "vm.h reference resolution explicit: independent of actor/UI support, signed word pointers"
+  ],
+  "vm_idle": [],
+  "vm_jump": [],
+  "vm_if_const": [
+   "C89: declarations before statements (cc900 refuses late declarations)",
+   "C89: declarations before statements (cc900 refuses late declarations)"
+  ],
+  "vm_if": [
+   "C89: declarations before statements (cc900 refuses late declarations)",
+   "C89: declarations before statements (cc900 refuses late declarations)"
+  ],
+  "vm_switch": [
+   "the two dummy words belong to the Game Boy banked-call ABI",
+   "see above",
+   "read the little-endian .dw operand byte by byte (no unaligned word access assumed)",
+   "read the little-endian .dw operand byte by byte (no unaligned word access assumed)",
+   "read the little-endian .dw operand byte by byte (no unaligned word access assumed); the case label is an offset in the script's bank (assembler.py), as VM_JUMP's",
+   "one case = two .dw words (value, label): the original steps one word in the test and one here",
+   "read the little-endian .dw operand byte by byte (no unaligned word access assumed)"
+  ],
+  "vm_rand": [
+   "UINT16 is UWORD (GBDK types.h); one type name in the export",
+   "GBDK 4.3.0 rand / randw / initrand (libc/asm/sm83/rand.s, one 16-bit seed): independent C in emit.py, seed = 17*seed + 0x5c93; rand returns the new high byte, randw (OLDCALL, DE) the new low byte above the new high byte"
+  ],
+  "vm_init_rng": [
+   "UINT16 is UWORD (GBDK types.h); one type name in the export",
+   "GBDK 4.3.0 rand / randw / initrand (libc/asm/sm83/rand.s, one 16-bit seed): independent C in emit.py, seed = 17*seed + 0x5c93; rand returns the new high byte, randw (OLDCALL, DE) the new low byte above the new high byte"
+  ],
+  "vm_rate_limit_const": [
+   "UINT16 is UWORD (GBDK types.h); one type name in the export",
+   "GBDK sys_time, the 16-bit VBlank clock, is startup.c's ngc_sys_time (runtime unit vblank_clock)"
+  ],
+  "vm_lock": [],
+  "vm_unlock": [],
+  "vm_pop": [],
+  "vm_rpn": [
+   "C89 conditional references: both branches are signed-word pointers, as ARGS; preserves the corresponding signed/unsigned word alias and the index",
+   "VM_OP_REF_MEM_IND reads the 16-bit address held by a variable; GB Studio emits it only for Variable Data Table, whose rows follow the script in its bank: the address is an offset in the executing script's bank (assembler.py local labels), little-endian as sdasgb's .dw",
+   "VM_OP_REF_MEM_IND reads the 16-bit address held by a variable; GB Studio emits it only for Variable Data Table, whose rows follow the script in its bank: the address is an offset in the executing script's bank (assembler.py local labels), little-endian as sdasgb's .dw",
+   "VM_OP_REF_MEM_IND reads the 16-bit address held by a variable; GB Studio emits it only for Variable Data Table, whose rows follow the script in its bank: the address is an offset in the executing script's bank (assembler.py local labels), little-endian as sdasgb's .dw",
+   "GBDK 4.3.0 rand / randw / initrand (libc/asm/sm83/rand.s, one 16-bit seed): independent C in emit.py, seed = 17*seed + 0x5c93; rand returns the new high byte, randw (OLDCALL, DE) the new low byte above the new high byte",
+   "the two dummy words belong to the Game Boy banked-call ABI",
+   "see above",
+   "read the little-endian .dw operand byte by byte (no unaligned word access assumed)",
+   "read the little-endian .dw operand byte by byte (no unaligned word access assumed)",
+   "TLCS-900: pointers are 4 bytes and the bytecode holds a 2-byte operand; a memory operand is an index in the NGPC engine memory table (assembler.ENGINE_MEMORY)",
+   "TLCS-900: pointers are 4 bytes and the bytecode holds a 2-byte operand; a memory operand is an index in the NGPC engine memory table (assembler.ENGINE_MEMORY)",
+   "TLCS-900: pointers are 4 bytes and the bytecode holds a 2-byte operand; a memory operand is an index in the NGPC engine memory table (assembler.ENGINE_MEMORY)",
+   "no bool type in C89",
+   "no bool type in C89",
+   "no stdint.h with cc900",
+   "PC and stack pointer kept in locals during the expression and written back at its exits (cc900 reloads them through THIS at every access); same memory reads and writes, same final state (docs/M2_PERF_PISTES.md)"
+  ],
+  "vm_fade": [],
+  "fade_init": [
+   "colour console: the CGB palette branch is kept, the dead DMG call removed; ApplyPaletteChangeColor is the NGPC palette writer (emit.py)"
+  ],
+  "fade_in": [
+   "colour console: the CGB palette branch is kept, the dead DMG call removed; ApplyPaletteChangeColor is the NGPC palette writer (emit.py)"
+  ],
+  "fade_out": [
+   "colour console: the CGB palette branch is kept, the dead DMG call removed; ApplyPaletteChangeColor is the NGPC palette writer (emit.py)"
+  ],
+  "fade_update": [
+   "colour console: the CGB palette branch is kept, the dead DMG call removed; ApplyPaletteChangeColor is the NGPC palette writer (emit.py)"
+  ],
+  "fade_in_modal": [],
+  "fade_out_modal": [],
+  "vm_raise": [],
+  "vm_call_far": [
+   "TLCS-900: a script pointer is 4 bytes and the VM stack holds words: the return address is kept as the offset in its bank (assembler.py: a script address is an offset in its bank array), as on the Game Boy where a 16-bit address is the place in the bank"
+  ],
+  "vm_ret_far": [
+   "TLCS-900: a script pointer is 4 bytes and the VM stack holds words: the return address is kept as the offset in its bank (assembler.py: a script address is an offset in its bank array), as on the Game Boy where a 16-bit address is the place in the bank"
+  ],
+  "vm_push": [],
+  "vm_push_value_ind": [],
+  "vm_set_indirect": [],
+  "vm_get_indirect": [],
+  "vm_push_value": [],
+  "vm_push_reference": [
+   "TLCS-900: pointers are 4 bytes: the word index of the stack slot is a pointer difference in words, not the difference of 16-bit truncated addresses shifted right"
+  ],
+  "vm_beginthread": [
+   "the two dummy words belong to the Game Boy banked-call ABI",
+   "see above",
+   "C89: declarations before statements (cc900 refuses late declarations)",
+   "C89: declarations before statements (cc900 refuses late declarations)",
+   "no ROM banks on the NGPC: the bytecode is always mapped",
+   "C89: declarations before statements (cc900 refuses late declarations)",
+   "read the little-endian .dw operand byte by byte (no unaligned word access assumed); the inner INT16 A shadowed the handle pointer A (C89: one declaration, renamed v)"
+  ],
+  "vm_terminate": [],
+  "vm_loop": [],
+  "vm_poll_loaded": [],
+  "script_terminate": [],
+  "script_runner_init": [
+   "C89: declarations before statements (cc900 refuses late declarations)",
+   "no libc memset with cc900",
+   "no libc memset with cc900",
+   "C89: declarations before statements (cc900 refuses late declarations)",
+   "C89: declarations before statements (cc900 refuses late declarations)",
+   "C89: declarations before statements (cc900 refuses late declarations)",
+   "C89: declarations before statements (cc900 refuses late declarations)"
+  ],
+  "script_execute": [
+   "no stdarg in cc900: script_execute takes nargs = 0; specialized callers push known thread-local arguments explicitly",
+   "C89: declarations before statements (cc900 refuses late declarations)",
+   "C89: declarations before statements (cc900 refuses late declarations)",
+   "NGPC native functions use bank 0: clearing only the bank no longer invalidates a pending VM_INVOKE when a terminated context is reused; clear the pointer as well",
+   "thread-local arguments pushed from varargs removed (see nargs above)"
+  ],
+  "script_runner_update": [
+   "executing_ctx / old_executing_ctx kept in locals and written back at both exits (cc900 reloads globals at every access); handlers only change globals that stay global (docs/M2_PERF_PISTES.md)"
+  ],
+  "vm_context_prepare": [
+   "C89: declarations before statements (cc900 refuses late declarations)"
+  ],
+  "vm_input_attach": [
+   "C89: declarations before statements (cc900 refuses late declarations)"
+  ],
+  "vm_input_detach": [
+   "C89: declarations before statements (cc900 refuses late declarations)"
+  ],
+  "vm_input_wait": [
+   "NGPC input of the scene engine (scene_input.c): input_update is ngc_input_update, joy / last_joy / joy_pressed are ngc_joy / ngc_last_joy / ngc_joy_pressed (emit_ui INPUT macros)"
+  ],
+  "vm_timer_prepare": [
+   "C89: declarations before statements (cc900 refuses late declarations)"
+  ],
+  "vm_timer_set": [
+   "C89: declarations before statements (cc900 refuses late declarations)"
+  ],
+  "vm_timer_stop": [
+   "C89: declarations before statements (cc900 refuses late declarations)"
+  ],
+  "vm_timer_reset": [
+   "C89: declarations before statements (cc900 refuses late declarations)"
+  ],
+  "timers_init": [
+   "C89: declarations before statements (cc900 refuses late declarations)",
+   "C89: declarations before statements (cc900 refuses late declarations)",
+   "no libc memset with cc900",
+   "no libc memset with cc900"
+  ],
+  "timers_update": [
+   "C89: declarations before statements (cc900 refuses late declarations)",
+   "C89: declarations before statements (cc900 refuses late declarations)",
+   "no stdarg in cc900: script_execute takes nargs = 0 and no argument (as GBVM passes 0, 0)"
+  ],
+  "events_init": [
+   "C89: declarations before statements (cc900 refuses late declarations)",
+   "C89: declarations before statements (cc900 refuses late declarations)",
+   "no libc memset with cc900",
+   "no libc memset with cc900"
+  ],
+  "events_update": [
+   "C89: declarations before statements (cc900 refuses late declarations)",
+   "C89: declarations before statements (cc900 refuses late declarations)",
+   "NGPC input state of the scene engine (scene_input.c): joy, last_joy, recent_joy are ngc_joy, ngc_last_joy, ngc_recent_joy, refreshed by ngc_input_update once per game tick as input_update. GBVM computes 'pressed' on use (input.h INPUT_PRESSED: joy & ~last_joy), so clearing an overridden button in joy also un-presses it; the scene engine keeps ngc_joy_pressed computed by ngc_input_update, hence cleared here too (measured: without it, A held with an overriding input script still triggered the topdown interaction)",
+   "see above",
+   "see above",
+   "no stdarg in cc900 (script_execute nargs = 0): the one thread-local argument, the button, is pushed as vm.c's varargs block does"
+  ],
+  "ui_init": [
+   "fonts are ROM tables of the export (no banks on the NGPC): ngc_ui_font_load copies the font descriptor as MemcpyBanked did",
+   "colour console: the CGB branch is kept (a GB Studio colour project runs it: 116 text tiles over two VRAM banks, palettes per map cell), the DMG code removed"
+  ],
+  "ui_print_reset": [
+   "tile rows are copied once per tile (emit_ui.py ngc_ui_flush): copy them before the tile changes",
+   "no libc memset with cc900"
+  ],
+  "ui_set_start_tile": [
+   "tile rows are copied once per tile (emit_ui.py ngc_ui_flush): copy them before the tile changes",
+   "no libc memset with cc900"
+  ],
+  "ui_draw_frame": [
+   "C89: declarations before statements (cc900 refuses late declarations); K2GE scroll map: one 16-bit cell per tile (tile number and palette), so the map pointers are word pointers into SCR1 (0x9000) instead of byte pointers into the Game Boy window map",
+   "C89: declarations before statements (cc900 refuses late declarations)",
+   "colour console: the CGB branch is kept (a GB Studio colour project runs it: 116 text tiles over two VRAM banks, palettes per map cell), the DMG code removed",
+   "colour console: the CGB branch is kept (a GB Studio colour project runs it: 116 text tiles over two VRAM banks, palettes per map cell), the DMG code removed"
+  ],
+  "ui_draw_text_buffer_char": [
+   "fonts are ROM tables of the export (no banks on the NGPC): ngc_ui_font_load copies the font descriptor as MemcpyBanked did",
+   "C89: declarations before statements (cc900 refuses late declarations); fonts are ROM tables of the export (no banks on the NGPC): ngc_ui_font_load copies the font descriptor as MemcpyBanked did",
+   "two `*++ui_text_ptr` in one expression are unsequenced in C: read x then y explicitly (the order of the \\003 code, the order SDCC evaluates); the Game Boy's 16-bit pointer arithmetic wraps, so the offset is a signed 16-bit value on the 32-bit TLCS-900 pointer",
+   "C89: declarations before statements (cc900 refuses late declarations); `dx + dy * 32u` is unsigned: on the Game Boy's 16-bit pointers it wraps to a step back, on the 32-bit TLCS-900 pointer it would jump forward: a signed 16-bit offset",
+   "K2GE scroll map: one 16-bit cell per tile (tile number and palette), so the map pointers are word pointers into SCR1 (0x9000) instead of byte pointers into the Game Boy window map; the Game Boy compares map addresses (window map 0x9C00 is 32-aligned, so `& 0xFFE0` is the start of a map row): the same test on cell indexes from the window map",
+   "a K2GE map cell holds the tile and its palette together: one scroll_rect moves both (the CGB scrolls the attribute bank in a second pass)"
+  ],
+  "ui_update": [
+   "text sound effect not delivered (EVENT_TEXT_SET_SOUND_EFFECT): text_sound_bank stays SFX_STOP_BANK, so this call never ran"
+  ],
+  "ui_run_modal": [
+   "NGPC input of the scene engine (scene_input.c): input_update is ngc_input_update, joy / last_joy / joy_pressed are ngc_joy / ngc_last_joy / ngc_joy_pressed (emit_ui INPUT macros)",
+   "ngc_ui_flush: the rows ui_update drew reach tile RAM in the same frame, as ui.c's per-character writes did (emit_ui.py); at 30 per second (NGC_TICK_FRAMES 2) a modal tick is two pictures: ui_update for each, game_time + 2, ngc_vm_frame_end keeps the fixed cadence (wait_vbl_done at 60); the scene engine's frame (game.c): ngc_ui_modal_logic is camera_update, scroll and activation, actors_update and actors_render into the shadow OAM, projectiles rendered but not updated (ngc_actors_update_modal when the export has projectiles); the shadow OAM, scroll and streaming reach the K2GE in the vertical blank (ngc_ui_modal_commit), as at the start of every tick; NGPC input of the scene engine (scene_input.c): input_update is ngc_input_update, joy / last_joy / joy_pressed are ngc_joy / ngc_last_joy / ngc_joy_pressed (emit_ui INPUT macros)"
+  ],
+  "load_text": [
+   "the exporter adds `static` to every vendored function"
+  ],
+  "vm_load_text": [
+   "the two dummy words belong to the Game Boy banked-call ABI",
+   "see above",
+   "C89: declarations before statements (cc900 refuses late declarations); the .dw operands are read byte by byte (below)",
+   "read the little-endian .dw operand byte by byte (no unaligned word access assumed)"
+  ],
+  "vm_display_text": [
+   "colour console: the CGB branch is kept (a GB Studio colour project runs it: 116 text tiles over two VRAM banks, palettes per map cell), the DMG code removed",
+   "colour console: the CGB branch is kept (a GB Studio colour project runs it: 116 text tiles over two VRAM banks, palettes per map cell), the DMG code removed"
+  ],
+  "vm_switch_text_layer": [],
+  "vm_overlay_wait": [
+   "C89: declarations before statements (cc900 refuses late declarations)",
+   "C89: declarations before statements (cc900 refuses late declarations)"
+  ],
+  "vm_overlay_move_to": [],
+  "vm_overlay_set_scroll": [],
+  "vm_overlay_clear": [
+   "a K2GE map cell holds the tile and its palette together: fill_win_rect writes both"
+  ],
+  "ui_run_menu": [
+   "the .MENUITEM operands are 6 bytes of bytecode (vm.i), read byte by byte (ngc_menu_item_load): no assumption on the C layout of menu_item_t on the TLCS-900 or on the alignment of the bytecode; no ROM banks on the NGPC",
+   "the .MENUITEM operands are 6 bytes of bytecode (vm.i), read byte by byte (ngc_menu_item_load): no assumption on the C layout of menu_item_t on the TLCS-900 or on the alignment of the bytecode; no ROM banks on the NGPC",
+   "a K2GE map cell holds the tile and its palette together: set_win_tile_xy writes both",
+   "a K2GE map cell holds the tile and its palette together: set_win_tile_xy writes both",
+   "the scene engine's modal frame, as in ui_run_modal (see there); NGPC input of the scene engine (scene_input.c): input_update is ngc_input_update, joy / last_joy / joy_pressed are ngc_joy / ngc_last_joy / ngc_joy_pressed (emit_ui INPUT macros)"
+  ],
+  "vm_choice": [
+   "the .MENUITEM operands are 6 bytes of bytecode (vm.i), read byte by byte (ngc_menu_item_load): no assumption on the C layout of menu_item_t on the TLCS-900 or on the alignment of the bytecode; no ROM banks on the NGPC"
+  ],
+  "vm_overlay_show": [],
+  "vm_overlay_setpos": [],
+  "vm_set_font": [
+   "unused parameter, C89 statement form",
+   "fonts are ROM tables of the export (no banks on the NGPC): ngc_ui_font_load copies the font descriptor as MemcpyBanked did"
+  ]
+ }
+}

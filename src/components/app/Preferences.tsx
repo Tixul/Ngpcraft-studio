@@ -18,6 +18,7 @@ import styled from "styled-components";
 import { TrackerKeysPreview } from "components/music/tracker/keyboard/TrackerKeysPreview";
 import { RelativePortal } from "ui/layout/RelativePortal";
 import { MenuOverlay } from "ui/menu/Menu";
+import { NgpcToolsPreferences } from "components/ngpcraft/NgpcToolsPreferences";
 
 interface Options {
   value: number;
@@ -148,6 +149,8 @@ const Preferences = () => {
       <GlobalStyle />
 
       <PreferencesWrapper>
+        <NgpcToolsPreferences />
+        <FixedSpacer height={10} />
         <FormRow>
           <TextField
             name="path"

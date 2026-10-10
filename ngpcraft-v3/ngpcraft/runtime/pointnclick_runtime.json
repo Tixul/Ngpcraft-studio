@@ -1,0 +1,149 @@
+{
+ "source": "appData/engine/gbvm/src/states/pointnclick.c",
+ "reference": "GB Studio 4.3.2 release (tag v4.3.2, gbvm bd6f41c; ../_reference/gb-studio-4.3.2)",
+ "gbvm_commit": "bd6f41cc5e05cbe6601dcc7f8e2db89bed527fe3",
+ "source_sha256": "e11cbc940de4badd56f4ef5ae9bda701b1432c14198c98b8b8361b5af5a6ec26",
+ "license": "MIT License\n\nCopyright (c) 2020 Toxa\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE.\n",
+ "engine_json": "appData/engine/engine.json",
+ "fields": [],
+ "consts": {},
+ "public_variables": [
+  "last_hit_trigger"
+ ],
+ "c89_hoisting": [
+  {
+   "function": "pointnclick_init",
+   "hoisted": []
+  },
+  {
+   "function": "pointnclick_update",
+   "hoisted": [
+    "angle",
+    "hit_trigger",
+    "is_hover_actor",
+    "is_hover_trigger"
+   ]
+  }
+ ],
+ "adaptations": [
+  {
+   "old": "upoint_translate_angle(&(PLAYER.pos), angle, PLAYER.move_speed);",
+   "new": "NGC_TRANSLATE_ANGLE(0u, angle, act_speed[0]);",
+   "count": 1,
+   "reason": "sincos.h upoint_translate_angle on the actor arrays (scene_genres.py NGC_TRANSLATE_ANGLE): same sine table and arithmetic, products widened explicitly to 16-bit signed"
+  },
+  {
+   "old": "hit_trigger = trigger_at_intersection(&PLAYER.bounds, &PLAYER.pos);",
+   "new": "hit_trigger = NGC_TRIGGER_AT_PLAYER();",
+   "count": 1,
+   "reason": "scene engine hook (scene_genres.py): defined by the exporter from what the scene uses (triggers, collision scripts, interaction scripts) (trigger.h intersection, no activation)"
+  },
+  {
+   "old": "&& (triggers[hit_trigger].script.bank);",
+   "new": "&& NGC_TRIGGER_HAS_SCRIPT(hit_trigger);",
+   "count": 1,
+   "reason": "scene engine hook (scene_genres.py): defined by the exporter from what the scene uses (triggers, collision scripts, interaction scripts)"
+  },
+  {
+   "old": "trigger_interact(hit_trigger);",
+   "new": "NGC_TRIGGER_INTERACT(hit_trigger);",
+   "count": 1,
+   "reason": "scene engine hook (scene_genres.py): defined by the exporter from what the scene uses (triggers, collision scripts, interaction scripts) (trigger.c trigger_interact: enter script, argument 1)"
+  },
+  {
+   "old": "hit_actor = actor_overlapping_player();",
+   "new": "hit_actor = player_overlap();",
+   "count": 1,
+   "reason": "scene engine port of GBVM actor_overlapping_player (scene_collisions.py player_overlap)"
+  },
+  {
+   "old": "is_hover_actor = hit_actor && hit_actor->script.bank;",
+   "new": "is_hover_actor = (hit_actor != 255u) && NGC_ACTOR_HAS_SCRIPT(hit_actor);",
+   "count": 1,
+   "reason": "scene engine hook (scene_genres.py): defined by the exporter from what the scene uses (triggers, collision scripts, interaction scripts); scene engine actors are indexes in the actor arrays, not actor_t pointers: 255 is GBVM's NULL (no actor)"
+  },
+  {
+   "old": "script_execute(hit_actor->script.bank, hit_actor->script.ptr, 0, 1, 0);",
+   "new": "NGC_ACTOR_INTERACT(hit_actor);",
+   "count": 1,
+   "reason": "scene engine hook (scene_genres.py): defined by the exporter from what the scene uses (triggers, collision scripts, interaction scripts)"
+  },
+  {
+   "old": "    actor_t *hit_actor;",
+   "new": "    unsigned char hit_actor;",
+   "count": 1,
+   "reason": "scene engine actors are indexes in the actor arrays, not actor_t pointers: 255 is GBVM's NULL (no actor)"
+  },
+  {
+   "old": "UBYTE last_hit_trigger = MAX_TRIGGERS;",
+   "new": "UBYTE last_hit_trigger;",
+   "count": 1,
+   "reason": "no initialized RAM on the NGPC; pointnclick.c never reads it (kept for the variable list)"
+  },
+  {
+   "old": "void pointnclick_init(void)",
+   "new": "static void pointnclick_init(void)",
+   "count": 1,
+   "reason": "file-local function: entered through ngc_<state>_init/update (scene_genres.py); static keeps the public symbols those of the scene engine"
+  },
+  {
+   "old": "void pointnclick_update(void)",
+   "new": "static void pointnclick_update(void)",
+   "count": 1,
+   "reason": "file-local function: entered through ngc_<state>_init/update (scene_genres.py); static keeps the public symbols those of the scene engine"
+  },
+  {
+   "old": "PLAYER.pos.x",
+   "new": "act_x[0]",
+   "count": 4,
+   "reason": "scene engine actor arrays (scene_actors.c): actor 0 is the player, act_bounds holds left, right, top, bottom"
+  },
+  {
+   "old": "PLAYER.pos.y",
+   "new": "act_y[0]",
+   "count": 4,
+   "reason": "scene engine actor arrays (scene_actors.c): actor 0 is the player, act_bounds holds left, right, top, bottom"
+  },
+  {
+   "old": "PLAYER.bounds.left",
+   "new": "act_bounds[0]",
+   "count": 2,
+   "reason": "scene engine actor arrays (scene_actors.c): actor 0 is the player, act_bounds holds left, right, top, bottom"
+  },
+  {
+   "old": "PLAYER.bounds.right",
+   "new": "act_bounds[1]",
+   "count": 2,
+   "reason": "scene engine actor arrays (scene_actors.c): actor 0 is the player, act_bounds holds left, right, top, bottom"
+  },
+  {
+   "old": "PLAYER.bounds.top",
+   "new": "act_bounds[2]",
+   "count": 2,
+   "reason": "scene engine actor arrays (scene_actors.c): actor 0 is the player, act_bounds holds left, right, top, bottom"
+  },
+  {
+   "old": "PLAYER.bounds.bottom",
+   "new": "act_bounds[3]",
+   "count": 2,
+   "reason": "scene engine actor arrays (scene_actors.c): actor 0 is the player, act_bounds holds left, right, top, bottom"
+  },
+  {
+   "old": "PLAYER.dir",
+   "new": "act_dir[0]",
+   "count": 1,
+   "reason": "scene engine actor arrays (scene_actors.c): actor 0 is the player, act_bounds holds left, right, top, bottom"
+  },
+  {
+   "old": "&PLAYER",
+   "new": "0u",
+   "count": 3,
+   "reason": "scene engine actor arrays (scene_actors.c): actor 0 is the player, act_bounds holds left, right, top, bottom"
+  }
+ ],
+ "unadapted": [],
+ "file_variables": [
+  "last_hit_trigger"
+ ],
+ "code": "\n\n\n#ifndef POINT_N_CLICK_CAMERA_DEADZONE\n#define POINT_N_CLICK_CAMERA_DEADZONE 24\n#endif\n\nUBYTE last_hit_trigger;\n\nstatic void pointnclick_init(void) {\n    camera_offset_x = 0;\n    camera_offset_y = 0;\n    camera_deadzone_x = POINT_N_CLICK_CAMERA_DEADZONE;\n    camera_deadzone_y = POINT_N_CLICK_CAMERA_DEADZONE;\n    act_dir[0] = DIR_RIGHT;\n    actor_set_anim(0u, ANIM_CURSOR);\n}\n\nstatic void pointnclick_update(void) {\n    UBYTE angle;\n    UBYTE hit_trigger;\n    UBYTE is_hover_trigger;\n    UBYTE is_hover_actor;\n    unsigned char hit_actor;\n\n    player_moving = FALSE;\n\n    // Handle input\n    if (INPUT_LEFT) {\n        player_moving = TRUE;\n        if (INPUT_UP) {\n            angle = ANGLE_315DEG;\n        } else if (INPUT_DOWN) {\n            angle = ANGLE_225DEG;\n        } else {\n            angle = ANGLE_270DEG;\n        }\n    } else if (INPUT_RIGHT) {\n        player_moving = TRUE;\n        if (INPUT_UP) {\n            angle = ANGLE_45DEG;\n        } else if (INPUT_DOWN) {\n            angle = ANGLE_135DEG;\n        } else {\n            angle = ANGLE_90DEG;\n        }\n    } else if (INPUT_UP) {\n        player_moving = TRUE;\n        angle = ANGLE_0DEG;\n    } else if (INPUT_DOWN) {\n        player_moving = TRUE;\n        angle = ANGLE_180DEG;\n    } else {\n        angle = ANGLE_0DEG;\n    }\n\n    // Move cursor\n    if (player_moving) {\n        NGC_TRANSLATE_ANGLE(0u, angle, act_speed[0]);\n        // Clamp X\n        if (act_x[0] + act_bounds[0] > image_width_subpx) {\n            act_x[0] = -act_bounds[0];\n        } else if (act_x[0] + act_bounds[1] > image_width_subpx) {\n            act_x[0] = image_width_subpx - EXCLUSIVE_OFFSET(act_bounds[1]);\n        }\n        // Clamp Y\n        if (act_y[0] + act_bounds[2] > image_height_subpx) {\n            act_y[0] = -act_bounds[2];\n        } else if (act_y[0] + act_bounds[3] > image_height_subpx) {\n            act_y[0] = image_height_subpx - EXCLUSIVE_OFFSET(act_bounds[3]);\n        }\n    }\n\n    // Check for trigger collisions\n    hit_trigger = NGC_TRIGGER_AT_PLAYER();\n\n    // Check for actor collisions\n    hit_actor = player_overlap();\n\n    is_hover_trigger = (hit_trigger != NO_TRIGGER_COLLISON)\n        && NGC_TRIGGER_HAS_SCRIPT(hit_trigger);\n\n    is_hover_actor = (hit_actor != 255u) && NGC_ACTOR_HAS_SCRIPT(hit_actor);\n\n    // Set cursor animation\n    if (is_hover_trigger || is_hover_actor) {\n        actor_set_anim(0u, ANIM_CURSOR_HOVER);\n    } else {\n        actor_set_anim(0u, ANIM_CURSOR);\n    }\n\n    if (INPUT_A_PRESSED) {\n        player_moving = FALSE;\n        if (is_hover_actor) {\n            // Run actor script\n            NGC_ACTOR_INTERACT(hit_actor);\n        }\n        else if (is_hover_trigger) {\n            // Run trigger script\n            NGC_TRIGGER_INTERACT(hit_trigger);\n        }\n    }\n}\n"
+}

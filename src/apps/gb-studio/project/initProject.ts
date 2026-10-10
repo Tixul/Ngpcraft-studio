@@ -22,6 +22,7 @@ import { isZoomSection } from "store/features/editor/editorHelpers";
 import trackerActions from "store/features/tracker/trackerActions";
 import { ConsoleLink } from "store/features/console/consoleState";
 import { actions as webTemplatesActions } from "store/features/webTemplates/webTemplatesState";
+import { setSceneBudgets } from "store/features/ngpcraft/ngpcraftState";
 
 const urlParams = new URLSearchParams(window.location.search);
 const projectPath = urlParams.get("path");
@@ -467,6 +468,10 @@ API.events.debugger.data.subscribe((_, packet) => {
       break;
     }
   }
+});
+
+API.events.ngpcraft.sceneBudgets.subscribe((_, budgets) => {
+  store.dispatch(setSceneBudgets(budgets));
 });
 
 API.events.debugger.symbols.subscribe(

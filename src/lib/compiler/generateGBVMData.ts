@@ -1,6 +1,9 @@
 /* eslint-disable camelcase */
 import flatten from "lodash/flatten";
-import { SCREEN_HEIGHT, SCREEN_WIDTH } from "consts";
+import {
+  GB_SCREEN_HEIGHT as SCREEN_HEIGHT,
+  GB_SCREEN_WIDTH as SCREEN_WIDTH,
+} from "consts";
 import { CompiledFontData } from "lib/fonts/fontData";
 import {
   decHex32Val,

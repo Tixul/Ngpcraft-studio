@@ -8,7 +8,7 @@
   "x": 338,
   "y": 521,
   "width": 80,
-  "height": 18,
+  "height": 19,
   "backgroundId": "b48f4eda-5654-4760-b8a9-4fd3f7e7ed5e",
   "tilesetId": "",
   "colorModeOverride": "none",
@@ -108,5 +108,5 @@
   "playerHit1Script": [],
   "playerHit2Script": [],
   "playerHit3Script": [],
-  "collisions": "00460+0f50+00f0+"
+  "collisions": "00460+0f50+00140+"
 }
