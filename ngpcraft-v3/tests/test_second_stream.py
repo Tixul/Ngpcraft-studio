@@ -74,8 +74,10 @@ class SecondStreamTests(unittest.TestCase):
         allocation = self.allocation((160, 152), (160, 152))
         source = second_stream_source(allocation, scroll_x='75%', scroll_y='150%')
         self.assertIn('ngc_front_scroll_set((short)(ngc_scroll_next[0] / 100u * 75u + '
-                      'ngc_scroll_next[0] % 100u * 75u / 100u), (short)(ngc_scroll_next[1] / 100u * 150u + '
-                      'ngc_scroll_next[1] % 100u * 150u / 100u));', source)
+                      '(ngc_scroll_next[0] - ngc_scroll_next[0] / 100u * 100u) * 75u / 100u), '
+                      '(short)(ngc_scroll_next[1] / 100u * 150u + '
+                      '(ngc_scroll_next[1] - ngc_scroll_next[1] / 100u * 100u) * 150u / 100u));', source)
+        self.assertNotIn('%', source.split('void ngc_scroll_set', 1)[1].split('}', 1)[0])
         # The 16-bit split is exact over every clamped scroll and rate.
         for n in range(0, 401):
             for p in range(0, 2041):
@@ -194,7 +196,8 @@ class SecondProjectTests(unittest.TestCase):
         self.assertEqual(town['second_background']['second_size_px'], [688, 320])
         sources = '\n'.join(p.read_text(encoding='utf-8', errors='replace')
                             for p in (self.root/'export').rglob('*.c'))
-        self.assertIn('ngc_scroll_next[0] / 100u * 150u + ngc_scroll_next[0] % 100u * 150u / 100u', sources)
+        self.assertIn('ngc_scroll_next[0] / 100u * 150u + '
+                      '(ngc_scroll_next[0] - ngc_scroll_next[0] / 100u * 100u) * 150u / 100u', sources)
 
     def test_logo_extension_is_refused_instead_of_scripts_only_fallback(self):
         scene_path = next((self.project/'project/scenes').rglob('sample_town/scene.gbsres'))

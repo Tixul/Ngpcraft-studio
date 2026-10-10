@@ -51,8 +51,10 @@ def second_stream_source(allocation, *, scroll_x='1', scroll_y='1', shadow=False
         if percent is not None:
             # floor(p * N / 100) on 16 bits (no 32-bit helpers are linked):
             # p = 100q + r, floor = q*N + floor(r*N / 100); r*N <= 99 * 400.
+            # r = p - q*100 (no % in exported C: tests/test_generator_guards.py).
             p = f'ngc_scroll_next[{axis}]'
-            return (f'(short)({p} / 100u * {percent}u + {p} % 100u * {percent}u / 100u)')
+            return (f'(short)({p} / 100u * {percent}u + '
+                    f'({p} - {p} / 100u * 100u) * {percent}u / 100u)')
         shift = SCROLL_RATES[rate]
         return '0' if shift is None else f'(short)(ngc_scroll_next[{axis}] >> {shift})'
 
