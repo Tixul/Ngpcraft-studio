@@ -59,6 +59,36 @@ class NativeColorTests(unittest.TestCase):
         source = background_source(load_project(self.project), load_project(self.project).scenes[0])
         self.assertIsNone(source.backdrop)
 
+    def test_gb_studio_automatic_palettes_take_the_native_colours(self):
+        # GB Studio's "Automatic" (autoColor) reads the PNG's colours: on the
+        # NGPC, the native plan (it was refused before 2026-10-10).
+        (self.project / SIDECAR).unlink()
+        for res in (self.project / "assets/backgrounds").glob("*.gbsres"):
+            data = json.loads(res.read_text(encoding="utf-8"))
+            if data["id"] == self.bg:
+                write_json(res, {**data, "autoColor": True})
+        project = load_project(self.project)
+        self.assertEqual(background_source(project, project.scenes[0]).backdrop, 0x412)
+        manifest = export_project(self.project, self.root / "export")
+        self.assertEqual(manifest["scene_engine"]["background"]["palette_counts"], [16])
+
+    def test_native_background_with_a_native_second_background(self):
+        # Both NGPC planes in native colours: the scene's own image on SCR2, the
+        # same image as the second background on SCR1 (transparent on its
+        # backdrop colour), sharing the backdrop register.
+        project = load_project(self.project)
+        scene = project.scenes[0]
+        sidecar = json.loads((self.project / SIDECAR).read_text(encoding="utf-8"))
+        sidecar["resources"][scene["id"]] = {"second_background": {
+            "background_id": self.bg, "scroll_x": "fixed", "scroll_y": "fixed"}}
+        write_json(self.project / SIDECAR, sidecar)
+        manifest = export_project(self.project, self.root / "export")
+        self.assertIn("second_background", manifest["features"])
+        engine = manifest["scene_engine"]
+        self.assertEqual(engine["planes"]["front_usage"], "second_background")
+        self.assertEqual(engine["planes"]["backdrop_rgb444"], 0x412)
+        self.assertEqual(engine["second_background"]["status"], "emitted")
+
     def test_tile_with_four_colours_is_refused_with_its_place(self):
         def four(rows):
             rows[9][17] = (0xFF, 0xFF, 0xFF)       # tile (2, 1) gets a 4th colour

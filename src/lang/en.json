@@ -897,6 +897,8 @@
   "FIELD_NGPC_SELECT_SHORT": "Select = short press on Option (NGPC)",
   "FIELD_NGPC_SELECT_LONG": "Select = long press on Option, 1 second (NGPC)",
   "FIELD_NGPC_NATIVE_COLORS": "NGPC native (16 palettes)",
+  "FIELD_NGPC_COLOR_LOSS": "In this colour mode GB Studio reads the image as 4 shades from its green level only: different colours of the image become the same shade, for example",
+  "FIELD_NGPC_COLOR_LOSS_USE_NATIVE": "Use NGPC native colours",
   "FIELD_NGPC_BUDGET": "NGPC budget",
   "FIELD_NGPC_BUDGET_BUILD_FIRST": "Build or play the game to see what this scene uses on the NGPC.",
   "FIELD_NGPC_BUDGET_NOT_BUILT": "Not in the last build (scene not reached, or added since).",

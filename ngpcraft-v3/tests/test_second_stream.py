@@ -293,6 +293,18 @@ class SecondStreamRomTests(unittest.TestCase):
                 result = observe(root, Path(ENV[1]), Path(ENV[2]))
                 self.assertTrue(result['passed'], result['frames_with_mismatch'][:5])
 
+    def test_native_colours_on_both_planes(self):
+        # Both planes in native colours (shared backdrop, front transparent on
+        # its backdrop colour), scrolling, clamped and looping.
+        for x, y, loop in (('1/2', '1', False), ('75%', '150%', False), ('1/2', '1', True)):
+            with self.subTest(x=x, y=y, loop=loop), tempfile.TemporaryDirectory() as tmp:
+                root = Path(tmp)
+                build_case(root, Path(ENV[0]), scroll_x=x, scroll_y=y, native=True,
+                           front_size=(64, 48) if loop else (320, 272), loop_x=loop, loop_y=loop)
+                result = observe(root, Path(ENV[1]), Path(ENV[2]))
+                self.assertTrue(result['passed'], result['frames_with_mismatch'][:5])
+                self.assertGreater(result['negative_missing_front_pixels'], 0)
+
     def test_small_looping_image_wraps_on_both_axes(self):
         for x, y in (('1/2', '1'), ('75%', '150%')):
             with self.subTest(x=x, y=y), tempfile.TemporaryDirectory() as tmp:

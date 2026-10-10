@@ -732,7 +732,9 @@ const SceneView = memo(({ id, index, editable }: SceneViewProps) => {
       >
         {background && (
           <>
-            {!hideMainPlane && ngpcNative ? (
+            {!hideMainPlane &&
+            (ngpcNative ||
+              (gbcEnabled && background.autoColor && !previewAsMono)) ? (
               <NgpcNativeImage
                 width={scene.width * TILE_SIZE}
                 height={scene.height * TILE_SIZE}

@@ -3,6 +3,7 @@
 Uses source RGB words and GB transparency indices; never generated tile data.
 No instrumentation in ROM; timing and all counters come from the native core.
 """
+from dataclasses import replace
 import hashlib
 import json
 from pathlib import Path
@@ -32,10 +33,17 @@ def _source(width, height, front):
 
 def build_case(root, toolchain, *, main_size=(512, 512), front_size=(320, 272),
                scroll_x='1/2', scroll_y='1', witness=False, reserve_ui=False,
-               loop_x=False, loop_y=False):
+               loop_x=False, loop_y=False, native=False):
     root = Path(root)
     root.mkdir(parents=True, exist_ok=True)
     main, front = _source(*main_size, False), _source(*front_size, True)
+    if native:
+        # Native colours on both planes (native_color.native_source): the
+        # backdrop colour is a native image's index 0, so the front plane is
+        # transparent exactly where it has the backdrop colour (here 0x111).
+        main = replace(main, backdrop=0x111)
+        front = replace(front, backdrop=0x111,
+                        indices=bytes(0 if p == 0x111 else 1 for p in front.pixels))
     looped = front
     if loop_x or loop_y:
         # As scene_build does; observe() models the loop from the ORIGINAL image.

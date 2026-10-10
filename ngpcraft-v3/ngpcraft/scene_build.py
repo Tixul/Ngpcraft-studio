@@ -110,9 +110,9 @@ def build_engine_scene(project, scene, default_mode=None, sprite_switches=(), em
                            "(GB Studio scenes are at least 20x18 tiles)")
     if source.backdrop is not None:
         # docs/M7_NATIVE_COLOR.md: native colours have no GB palette slots.
-        if replace_ops or palette_slots or "second_background" in project.ngpc["resources"].get(scene["id"], {}):
-            raise CompileError(f"{where}: background {source.resource} with ngpc_color \"native\": replaced "
-                               "tiles, palette changes and a second background are not delivered")
+        if replace_ops or palette_slots:
+            raise CompileError(f"{where}: background {source.resource} with native colours: replaced "
+                               "tiles and palette changes are not delivered")
     replace_plan = None
     if replace_ops:
         from .replace_tiles import plan, tileset_options
@@ -244,9 +244,10 @@ def build_engine_scene(project, scene, default_mode=None, sprite_switches=(), em
         config = extension["second_background"]
         front_source = background_source(project, {**scene, "backgroundId": config["background_id"],
                                                   "name": scene["name"] + ".second_background"})
-        if front_source.backdrop is not None:
-            raise CompileError(f"{where}.second_background: background {front_source.resource} with ngpc_color "
-                               "\"native\" as a second background is not delivered")
+        # Native colours on either plane: a native image's backdrop pixels (its
+        # most frequent colour, or transparent ones) are its GB index 0, the
+        # front plane's transparency; the main plane's backdrop is the shared
+        # backdrop colour (compile_second_background).
         if config.get("loop_x") or config.get("loop_y"):
             # Loop: the image repeated over every offset the clamped camera can reach.
             from .background_stream import view_of

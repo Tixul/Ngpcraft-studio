@@ -170,6 +170,17 @@ refusé. Contrat et preuve : [M4_CAMERA_CONTROL](M4_CAMERA_CONTROL.md).
 - **Adapter le tuto** : rien. À l'import, un **rapport** liste les couleurs
   qui se sont rapprochées ou confondues ; retouchez-les si besoin. Profitez
   des 16 palettes.
+- **Modes de couleur d'un décor** (2026-10-10) : en mode *Manuel*, GB Studio
+  lit l'image en **4 teintes d'après son seul niveau de vert** (images
+  dessinées dans les verts de la Game Boy), puis applique les palettes de la
+  scène : deux couleurs de même niveau de vert (rouge et noir, par exemple)
+  deviennent la même teinte, et l'éditeur le signale. *Automatique* (GB
+  Studio) et **NGPC natif** prennent les **vraies couleurs du PNG** et
+  calculent seuls jusqu'à 16 palettes de 3 couleurs plus une couleur de fond
+  commune (la plus fréquente, ou les pixels transparents). Sur NGPC,
+  *Automatique* est compilé comme NGPC natif. Les couleurs natives marchent
+  sur les **deux plans** : décor principal et second décor (transparent là
+  où il a sa couleur de fond).
 
 ## 5. La « fenêtre » (overlay) de GB Studio devient un plan de texte — ✅
 

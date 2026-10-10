@@ -129,8 +129,12 @@ def background_source(project, scene):
         raise CompileError(f"{where}: unknown background {scene['backgroundId']}")
     rel, bg = backgrounds[scene["backgroundId"]]
     from .native_color import is_native, native_source
-    if is_native(project, bg["id"]):
-        # autoColor, paletteIds and tileColors are GB Studio's colours: ignored.
+    # GB Studio's "Automatic" palettes (autoColor) take the PNG's own colours:
+    # on the NGPC that is its native colour mode (docs/M7_NATIVE_COLOR.md).
+    # A mono project ignores autoColor, as GB Studio does.
+    auto = bool(bg.get("autoColor")) and project.settings.get("colorMode") != "mono"
+    if is_native(project, bg["id"]) or auto:
+        # paletteIds and tileColors are GB Studio's colours: ignored.
         width, height, rgba = read_png(project.root / PurePosixPath(rel).with_suffix(""))
         if width % 8 or height % 8:
             raise CompileError(f"{rel}: image {width}x{height} is not tile aligned")
@@ -138,8 +142,8 @@ def background_source(project, scene):
         attrs = bytes(attrs[n] if n < len(attrs) else 0 for n in range((width // 8) * (height // 8)))
         pixels, indices, attrs, backdrop = native_source(project, rel, width, height, rgba, attrs, where)
         return BackgroundSource(width, height, pixels, indices, attrs, rel, backdrop)
-    if bg.get("autoColor") or bg.get("monoOverrideId"):
-        raise CompileError(f"{where}: autoColor / monoOverride backgrounds are not supported yet")
+    if bg.get("monoOverrideId"):
+        raise CompileError(f"{where}: monoOverride backgrounds are not supported yet")
     slots = background_slots(project, scene, where)
     attrs = decompress_tile_colors(bg.get("tileColors") or "", f"{rel}")
     width, height, rgba = read_png(project.root / PurePosixPath(rel).with_suffix(""))

@@ -5,7 +5,9 @@
  * everywhere for that position), otherwise the camera of each screen of the
  * scene grid. A looping axis repeats the image. Colours: the second
  * background's tile colours with the scene palettes (V3 background_source);
- * GB colour index 0 is transparent.
+ * GB colour index 0 is transparent. A native-colour (or GB Studio
+ * "Automatic") second background shows its own colours on 4 bits,
+ * transparent on its backdrop colour (shared/lib/ngpcraft/nativeLayer).
  */
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import styled from "styled-components";
@@ -16,6 +18,8 @@ import { hex2NgpcRgb } from "shared/lib/ngpcraft/color";
 import { assetURL } from "shared/lib/helpers/assets";
 import { MonoBGPPalette, Palette } from "shared/lib/resources/types";
 import { useSecondBackground } from "./useSecondBackground";
+import { isNgpcNativeBackground } from "./NgpcNativePalettes";
+import { toNativeFrontLayer } from "shared/lib/ngpcraft/nativeLayer";
 import {
   SecondBackgroundConfig,
   secondBackgroundForCamera,
@@ -79,6 +83,12 @@ export const NgpcSecondBackgroundPreview = ({
   const sceneH = height * TILE_SIZE;
   const src = background ? assetURL("backgrounds", background) : "";
   const tiles = background?.tileColors;
+  const nativeColours = useAppSelector(
+    (state) =>
+      !!background &&
+      (isNgpcNativeBackground(state.ngpcraft.extension, background.id) ||
+        (!!background.autoColor && !previewAsMono)),
+  );
 
   // SCR1 colourised once per image / palettes, index 0 transparent.
   useEffect(() => {
@@ -104,6 +114,12 @@ export const NgpcSecondBackgroundPreview = ({
       ctx.drawImage(image, 0, 0);
       const data = ctx.getImageData(0, 0, w, h);
       const pixels = data.data;
+      if (nativeColours) {
+        toNativeFrontLayer(pixels);
+        ctx.putImageData(data, 0, 0);
+        setLayer(canvas);
+        return;
+      }
       const rgb = palettes.map((p) => p.colors.map(hex2NgpcRgb));
       const dmg = DMG_PALETTE.colors.map(hex2NgpcRgb);
       const bgp = monoBGP ?? [0, 1, 2, 3];
@@ -133,7 +149,7 @@ export const NgpcSecondBackgroundPreview = ({
     return () => {
       cancelled = true;
     };
-  }, [src, tiles, palettes, previewAsMono, monoBGP]);
+  }, [src, tiles, palettes, previewAsMono, monoBGP, nativeColours]);
 
   const config: SecondBackgroundConfig | undefined = useMemo(
     () =>

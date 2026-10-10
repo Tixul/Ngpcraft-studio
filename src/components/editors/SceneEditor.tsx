@@ -37,6 +37,8 @@ import { NoteField } from "ui/form/NoteField";
 import { SceneTypeSelect } from "components/forms/SceneTypeSelect";
 import { BackgroundSelectButton } from "components/forms/BackgroundSelectButton";
 import { NgpcSecondBackground } from "components/ngpcraft/NgpcSecondBackground";
+import { assetURL } from "shared/lib/helpers/assets";
+import { NgpcColorLossWarning } from "components/ngpcraft/NgpcColorLossWarning";
 import { PaletteSelectButton } from "components/forms/PaletteSelectButton";
 import { LabelButton, LabelColor } from "ui/buttons/LabelButton";
 import { CoordinateInput } from "ui/form/CoordinateInput";
@@ -1381,6 +1383,20 @@ export const SceneEditor = ({ id }: SceneEditorProps) => {
                         )}
                       </FormField>
                     </FormRow>
+
+                    {/* NgpCraft: "Automatic" also keeps the PNG colours (compiled as
+                        NGPC native by the V3); only the manual mode merges them. */}
+                    {background &&
+                      !ngpcNative &&
+                      !background.autoColor &&
+                      ngpcNativeAvailable && (
+                      <FormRow>
+                        <NgpcColorLossWarning
+                          src={assetURL("backgrounds", background)}
+                          onUseNative={onChangeNgpcNative}
+                        />
+                      </FormRow>
+                    )}
 
                     <FormRow>
                       <FormField

@@ -107,7 +107,8 @@ def compile_second_background(main_source, front_source, *, sprite_tiles=0,
     _validate(main_source, f"{where}.main")
     _validate(front_source, f"{where}.second")
     main = compile_scene_background(main_source.width, main_source.height,
-                                    main_source.pixels, where=f"{where}.main")
+                                    main_source.pixels, where=f"{where}.main",
+                                    backdrop=main_source.backdrop)
     if main.complement_cells:
         x, y = main.complement_cells[0]
         raise CompileError(f"{where}.main: tile[{x},{y}]: case C: second background "

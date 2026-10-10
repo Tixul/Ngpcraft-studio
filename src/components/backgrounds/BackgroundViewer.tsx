@@ -11,6 +11,8 @@ import ColorizedImage from "components/world/ColorizedImage";
 import { DMG_PALETTE, TILE_SIZE } from "consts";
 import { assetURL } from "shared/lib/helpers/assets";
 import AutoColorizedImage from "components/world/AutoColorizedImage";
+import { NgpcNativeImage } from "components/ngpcraft/NgpcNativeImage";
+import { isNgpcNativeBackground } from "components/ngpcraft/NgpcNativePalettes";
 import { Palette } from "shared/lib/resources/types";
 
 interface MetaspriteEditorProps {
@@ -68,6 +70,9 @@ const BackgroundViewer = ({ backgroundId }: MetaspriteEditorProps) => {
   );
 
   const zoom = useAppSelector((state) => state.editor.zoomImage) / 100;
+  const ngpcNative = useAppSelector((state) =>
+    isNgpcNativeBackground(state.ngpcraft.extension, background?.id),
+  );
   const previewAsSceneId = useAppSelector(
     (state) => state.editor.previewAsSceneId,
   );
@@ -106,6 +111,12 @@ const BackgroundViewer = ({ backgroundId }: MetaspriteEditorProps) => {
     );
   }, [scene, palettesLookup, defaultPaletteIds]);
 
+  // NgpCraft: native colours, and GB Studio's "Automatic" (compiled as native
+  // by the V3), are shown as the NGPC shows them: the PNG on 4 bits.
+  const nativeColours =
+    !!background &&
+    (ngpcNative || (colorsEnabled && background.autoColor && !previewAsMono));
+
   if (background) {
     return (
       <ScrollWrapper>
@@ -126,7 +137,13 @@ const BackgroundViewer = ({ backgroundId }: MetaspriteEditorProps) => {
                 transform: `translate3d(0px, 0px, 0px) scale(${zoom})`,
               }}
             >
-              {colorsEnabled && background.autoColor ? (
+              {nativeColours ? (
+                <NgpcNativeImage
+                  width={background.width * TILE_SIZE}
+                  height={background.height * TILE_SIZE}
+                  src={assetURL("backgrounds", background)}
+                />
+              ) : colorsEnabled && background.autoColor ? (
                 <AutoColorizedImage
                   width={background.width * TILE_SIZE}
                   height={background.height * TILE_SIZE}
