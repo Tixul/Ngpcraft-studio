@@ -80,6 +80,16 @@ class ReplaceStaticRomTests(unittest.TestCase):
             result = run(Path(tmp) / 'lab', *ROM_ENV, witness=True)
         self.assertGreater(result['phases'][1]['wrong_pixels'], 0)
 
+    def test_native_background_shows_the_tileset_colours(self):
+        # PLAN_MEGAMAN L5: ngpc_color "native", tiles drawn with the tileset PNG's colours.
+        from tools.lab_replace_tile_static import run
+        with tempfile.TemporaryDirectory() as tmp:
+            result = run(Path(tmp) / 'lab', *ROM_ENV, native=True)
+            witness = run(Path(tmp) / 'witness', *ROM_ENV, witness=True, native=True)
+        self.assertTrue(result['passed'], result['phases'])
+        self.assertTrue(all(result['phases'][1]['visible_changed_pixels']))
+        self.assertGreater(witness['phases'][1]['wrong_pixels'], 0)
+
 
 if __name__ == '__main__':
     unittest.main()

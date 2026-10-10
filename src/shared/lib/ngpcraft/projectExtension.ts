@@ -15,18 +15,27 @@ export interface NgpcProjectSettings {
   option_long_press?: "select" | "start";
   // Maximum NPCs per scene, 20 (GB Studio) to 30.
   actor_capacity?: number;
+  // Live projectiles at once, 5 (GB Studio) to 64.
+  projectile_capacity?: number;
   // Fixed frame rate, 60 or 30.
   frame_rate?: 60 | 30;
   // Script context pool: absent = computed by the V3 (never under GB
   // Studio's 16 when a game needs more, M4_CONTEXT_BUDGET.md); "gbvm-16" =
   // exactly GBVM's 16.
   vm_context_policy?: "gbvm-16";
+  // Colours of backgrounds and sprite sheets by default: "native" = their own
+  // PNG colours (V3 docs/M7_NATIVE_COLOR.md); absent = GB Studio palettes.
+  // A resource's ngpc_color ("native" / "gbs") overrides it.
+  default_color?: "native";
 }
 
 export type NgpcProjectSettingKey = keyof NgpcProjectSettings;
 
 export const NGPC_ACTOR_CAPACITY_MIN = 20;
 export const NGPC_ACTOR_CAPACITY_MAX = 30;
+// V3 projectile_runtime.py GBS_PROJECTILE_CAPACITY / NGPC_PROJECTILE_CAPACITY.
+export const NGPC_PROJECTILE_CAPACITY_MIN = 5;
+export const NGPC_PROJECTILE_CAPACITY_MAX = 64;
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
@@ -36,6 +45,36 @@ export const getNgpcProjectSettings = (
 ): NgpcProjectSettings => {
   const ngpc = extension?.ngpc;
   return isRecord(ngpc) ? (ngpc as NgpcProjectSettings) : {};
+};
+
+// The V3 rule (native_color.is_native): a background or sprite sheet is in
+// native colours if its own ngpc_color says "native", or says nothing and the
+// project default (ngpc.default_color) is "native".
+export const isNgpcNativeResource = (
+  extension: NgpcProjectExtension | null,
+  resourceId: string | undefined,
+): boolean => {
+  if (!resourceId) {
+    return false;
+  }
+  const own = getNgpcResourceSetting(extension, resourceId, "ngpc_color");
+  if (own === "native" || own === "gbs") {
+    return own === "native";
+  }
+  return getNgpcProjectSettings(extension).default_color === "native";
+};
+
+// What to store in a resource's ngpc_color for a choice: nothing when it is
+// the project default, else "native" or "gbs".
+export const ngpcColorValue = (
+  extension: NgpcProjectExtension | null,
+  native: boolean,
+): "native" | "gbs" | undefined => {
+  const byDefault = getNgpcProjectSettings(extension).default_color === "native";
+  if (native === byDefault) {
+    return undefined;
+  }
+  return native ? "native" : "gbs";
 };
 
 // Returns a new extension with one project setting set, or removed when

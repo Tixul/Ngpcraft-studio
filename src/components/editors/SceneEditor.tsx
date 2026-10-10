@@ -109,11 +109,10 @@ import {
   useNgpcNativeColorAvailable,
 } from "components/ngpcraft/NgpcNativePalettes";
 import { NgpcSceneBudget } from "components/ngpcraft/NgpcSceneBudget";
+import { NgpcColorVariants } from "components/ngpcraft/NgpcColorVariants";
 import { actions as ngpcraftActions } from "store/features/ngpcraft/ngpcraftState";
-import {
-  NGPC_COLOR_KEY,
-  NGPC_COLOR_NATIVE,
-} from "shared/lib/ngpcraft/palettePlan";
+import { NGPC_COLOR_KEY } from "shared/lib/ngpcraft/palettePlan";
+import { ngpcColorValue } from "shared/lib/ngpcraft/projectExtension";
 import { DMGPaletteSelectButton } from "components/forms/DMGPaletteSelectButton";
 
 interface SceneEditorProps {
@@ -548,17 +547,19 @@ export const SceneEditor = ({ id }: SceneEditorProps) => {
     dispatch(editorActions.setLockScriptEditor(!lockScriptEditor));
   };
 
+  const ngpcExtension = useAppSelector((state) => state.ngpcraft.extension);
   const onChangeAutoColor = useCallback(
     (value: boolean) => {
       if (!scene?.backgroundId) {
         return;
       }
-      // NgpCraft: back to a GB Studio mode, leave "NGPC native".
+      // NgpCraft: back to a GB Studio mode, leave "NGPC native" ("gbs" when
+      // the project default is native).
       dispatch(
         ngpcraftActions.setResourceSetting({
           resourceId: scene.backgroundId,
           key: NGPC_COLOR_KEY,
-          value: undefined,
+          value: ngpcColorValue(ngpcExtension, false),
         }),
       );
       dispatch(
@@ -568,24 +569,22 @@ export const SceneEditor = ({ id }: SceneEditorProps) => {
         }),
       );
     },
-    [dispatch, scene?.backgroundId],
+    [dispatch, scene?.backgroundId, ngpcExtension],
   );
 
   // NgpCraft: "NGPC native" colours of the background (16 palettes).
   const ngpcNativeAvailable = useNgpcNativeColorAvailable();
-  const ngpcNative = useAppSelector((state) =>
-    isNgpcNativeBackground(state.ngpcraft.extension, scene?.backgroundId),
-  );
+  const ngpcNative = isNgpcNativeBackground(ngpcExtension, scene?.backgroundId);
   const onChangeNgpcNative = useCallback(() => {
     scene?.backgroundId &&
       dispatch(
         ngpcraftActions.setResourceSetting({
           resourceId: scene.backgroundId,
           key: NGPC_COLOR_KEY,
-          value: NGPC_COLOR_NATIVE,
+          value: ngpcColorValue(ngpcExtension, true),
         }),
       );
-  }, [dispatch, scene?.backgroundId]);
+  }, [dispatch, scene?.backgroundId, ngpcExtension]);
 
   const onExtractPalettes = useCallback(() => {
     dispatch(
@@ -1324,10 +1323,15 @@ export const SceneEditor = ({ id }: SceneEditorProps) => {
                         }
                       >
                         {ngpcNative && scene.backgroundId ? (
-                          <NgpcNativePalettes
-                            backgroundId={scene.backgroundId}
-                            backgroundVersion={background?._v}
-                          />
+                          <>
+                            <NgpcNativePalettes
+                              backgroundId={scene.backgroundId}
+                              backgroundVersion={background?._v}
+                            />
+                            <NgpcColorVariants
+                              backgroundId={scene.backgroundId}
+                            />
+                          </>
                         ) : !background?.autoColor ? (
                           <PaletteButtons>
                             {[0, 1, 2, 3, 4, 5, 6, 7].map((index) => (

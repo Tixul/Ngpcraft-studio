@@ -27,7 +27,9 @@ KINDS = {'platform': ('plat', 'PLATFORM_', CALLBACKS, 'fallStart', 'platform'),
 CONSTANTS = {'PLATFORM_'+name:index for name,index in CALLBACKS.values()}
 # VM_CALL_NATIVE indexes (NGPC native table, assembler.py).
 CALL_NATIVES = {'plat_callback_attach':3,'plat_callback_detach':4,
-                'adv_callback_attach':5,'adv_callback_detach':6}
+                'adv_callback_attach':5,'adv_callback_detach':6,
+                # NGPC: background colour variant, argument on the VM stack (native_variants.py).
+                'ngc_bg_variant':7}
 
 
 def _runtime(kind):

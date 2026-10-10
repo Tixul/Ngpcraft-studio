@@ -229,4 +229,8 @@ def engine_files(scene, moves=None, updates=None, cancel=False, topdown=None, in
     if scene.palette_entries:
         # docs/M4_PALETTES.md: K2GE words of the slots a script rewrites.
         report["palette_entries"] = [list(e) for e in scene.palette_entries]
+    if scene.color_variants is not None:
+        # native_variants.py (PLAN_MEGAMAN L5): what ngc_bg_variant writes.
+        plane, sets = scene.color_variants
+        report["color_variants"] = {"plane": plane, "sets": [[list(words), backdrop] for words, backdrop in sets]}
     return files, report

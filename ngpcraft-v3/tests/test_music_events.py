@@ -17,6 +17,7 @@ from ngpcraft.toolchain import build_rom
 from tools.demo_scene_switch import derive_scenes, set_script, switch, num, ev
 from tools.reference import REFERENCE
 from test_music_library import library_fixture
+from test_music_streams import OVER_REV
 
 GBS2=REFERENCE/'appData/templates/gbs2'
 
@@ -52,9 +53,9 @@ def project_fixture(root,rate=60,text=False):
 
 class MusicEventTests(unittest.TestCase):
     @unittest.skipUnless(os.environ.get('NGC_TEST_CLANG'),'requires Clang')
+    @unittest.skipUnless(OVER_REV.is_dir(),'requires Over Rev audio (NGC_TEST_OVER_REV_AUDIO)')
     def test_pending_music_waits_for_load_and_service_is_guarded(self):
         from tools.music_library_probe import run_library
-        from test_music_streams import OVER_REV
         with tempfile.TemporaryDirectory() as temp:
             library=library_fixture(Path(temp))
             actions=[[0,'loading',1],[0,'play',0],[0,'service'],[1,'service'],
@@ -172,9 +173,10 @@ class ProjectMusicTests(unittest.TestCase):
                 export_project(project,Path(temp)/'out')
                 build=build_rom(Path(temp)/'out',os.environ['NGC_TEST_TOSHIBA'])
                 self.assertIn('_ngc_audio_service',build['link_audit']['public_symbols'])
-                if os.environ.get('NGC_TEST_EMULATOR') and os.environ.get('NGC_TEST_BIOS'):
+                # ROM proof: emulator + BIOS, and the reference library (Clang + Over Rev audio).
+                if (os.environ.get('NGC_TEST_EMULATOR') and os.environ.get('NGC_TEST_BIOS')
+                        and os.environ.get('NGC_TEST_CLANG') and OVER_REV.is_dir()):
                     from tools.probe_music_events import observe
-                    from test_music_streams import OVER_REV
                     proof=observe(Path(temp)/'out',os.environ['NGC_TEST_EMULATOR'],
                         os.environ['NGC_TEST_BIOS'],OVER_REV,Path(temp)/'proof')
                     self.assertTrue(proof['correct'])

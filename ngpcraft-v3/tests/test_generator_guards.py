@@ -31,6 +31,10 @@ def silent_fallbacks(source, filename):
             default = node.args[1]
             if isinstance(default, ast.Constant) and default.value is None:
                 continue
+            # Renaming map: `names.get(k, k)` keeps k when it is not renamed; no
+            # value is guessed (the key itself comes back).
+            if ast.dump(default) == ast.dump(node.args[0]):
+                continue
             if isinstance(default, ALLOWED_DEFAULTS) and not getattr(default, "elts", None) \
                     and not getattr(default, "keys", None):
                 continue
@@ -70,10 +74,12 @@ def example_projects():
 class SilentFallbackTests(unittest.TestCase):
     def test_detector_catches_v2_patterns(self):
         # Witness: the exact V2 shapes must be reported, legitimate ones not.
-        bad = "act_to_id.get(name, 0)\nt = hp or 1\nx = d.get('k', 'enter_region')\n"
-        self.assertEqual(len(silent_fallbacks(bad, "witness.py")), 3)
+        bad = ("act_to_id.get(name, 0)\nt = hp or 1\nx = d.get('k', 'enter_region')\n"
+               "y = names.get(a, b)\n")
+        self.assertEqual(len(silent_fallbacks(bad, "witness.py")), 4)
         good = ("a = scene.get('actors', [])\nb = obj.get('locals', {})\n"
-                "c = m.get('target')\nd = os.environ.get('HOME', '/')\ne = x or y\n")
+                "c = m.get('target')\nd = os.environ.get('HOME', '/')\ne = x or y\n"
+                "f = names.get(t.name, t.name)\n")
         self.assertEqual(silent_fallbacks(good, "witness.py"), [])
 
     def test_compiler_package_has_no_silent_fallback(self):

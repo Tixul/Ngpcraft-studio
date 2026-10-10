@@ -176,6 +176,32 @@ export const chromaKeyData = (mutData: Uint8ClampedArray) => {
 };
 
 /**
+ * NgpCraft: an "NGPC native" sprite as the V3 compiles it (ngpcraft-v3
+ * sprites.native_index): transparent by GB Studio's sprite rule (pure green,
+ * magenta, alpha < 200), every other pixel its own colour rounded to 4 bits
+ * per channel and shown as the console does (c4 x 17).
+ */
+export const nativeSpriteData = (mutData: Uint8ClampedArray) => {
+  for (let index = 0; index < mutData.length; index += 4) {
+    const r = mutData[index];
+    const g = mutData[index + 1];
+    const b = mutData[index + 2];
+    if (
+      (g > 249 && r < 180 && b < 20) ||
+      (b >= 200 && g < 20) ||
+      mutData[index + 3] < 200
+    ) {
+      mutData[index + 3] = 0;
+      continue;
+    }
+    mutData[index] = (r >> 4) * 17;
+    mutData[index + 1] = (g >> 4) * 17;
+    mutData[index + 2] = (b >> 4) * 17;
+    mutData[index + 3] = 255;
+  }
+};
+
+/**
  * Convert a raw hex color into its color-corrected display hex.
  *
  * @param hex Raw hex color ("RRGGBB", linear RGB)

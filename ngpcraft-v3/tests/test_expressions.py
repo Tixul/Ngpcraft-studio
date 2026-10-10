@@ -51,7 +51,8 @@ class ExpressionTests(unittest.TestCase):
 
     @unittest.skipUnless(os.environ.get("NGC_TEST_NODE_DEPS"), "local Node dependencies required")
     def test_released_full_compiler(self):
-        accepted = [text for text in EXPRESSIONS if not any(word in text for word in ("neg(", "abs(", "atan2(", "isqrt(", "@"))]
+        accepted = [text for text in EXPRESSIONS if not any(word in text for word in ("neg(", "@"))]
+        accepted += ["abs($0$)", "isqrt($1$)", "atan2($0$,$1$)"]
         accepted = [text for text in accepted if self.valid(text)]
         accepted = [text for text in accepted if "$V" not in text]
         cases = [{"methods": [["variableEvaluateExpression", ["12", text]]]} for text in accepted]
@@ -91,8 +92,33 @@ class ExpressionTests(unittest.TestCase):
         except CompileError:
             return False
 
+    def test_library_functions_match_gbvm(self):
+        import math
+        import re
+        from ngpcraft.gbvm.emit import RPN_LIBRARY
+        isqrt_c = RPN_LIBRARY["VM_OP_ISQRT"][2]
+        # Same loop as GBVM math.c's portable isqrt (the Game Boy runs its asm twin).
+        original = (REFERENCE / "appData/engine/gbvm/src/core/math.c").read_text(encoding="utf-8")
+        body = lambda text: re.sub(r"\s+|u\b|uint16_t|UWORD", "", re.search(r"m = 0x4000.*?return \(UBYTE\)y;", text, re.S)[0])
+        self.assertEqual(body(isqrt_c), body(original))
+        def model(x):                     # the emitted loop, on 16 bits
+            m, y = 0x4000, 0
+            while m:
+                b = y | m
+                y >>= 1
+                if x >= b:
+                    x, y = x - b, y | m
+                m >>= 2
+            return y & 255
+        self.assertEqual([model(x) for x in range(65536)], [math.isqrt(x) for x in range(65536)])
+        to_s16 = lambda v: v - 65536 if v >= 32768 else v
+        absolute = lambda v: to_s16((0 - v) & 0xFFFF) if v < 0 else v       # ngc_abs
+        self.assertEqual([absolute(to_s16(v)) for v in range(65536)],
+                         [to_s16(abs(to_s16(v)) & 0xFFFF) for v in range(65536)])
+
     def test_explicit_refusals(self):
-        for text in ("neg(4)", "abs($0$)", "atan2(1,2)", "isqrt(4)"):
+        # neg() only: abs, atan2, isqrt are computed in game (emit.RPN_LIBRARY).
+        for text in ("neg(4)",):
             with self.subTest(expression=text), self.assertRaises(NotDelivered):
                 ScriptBuilder([], {}).variable_evaluate_expression("0", text)
         for text in ("1+", "min(1)", "(3", "2(3)"):

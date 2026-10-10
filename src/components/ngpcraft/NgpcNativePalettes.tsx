@@ -12,13 +12,9 @@ import {
   loadPalettePlan,
 } from "store/features/ngpcraft/ngpcraftState";
 import {
-  getNgpcResourceSetting,
+  isNgpcNativeResource,
   NgpcProjectExtension,
 } from "shared/lib/ngpcraft/projectExtension";
-import {
-  NGPC_COLOR_KEY,
-  NGPC_COLOR_NATIVE,
-} from "shared/lib/ngpcraft/palettePlan";
 
 const Wrapper = styled.div`
   display: flex;
@@ -68,13 +64,11 @@ export const useNgpcNativeColorAvailable = (): boolean => {
   return available;
 };
 
+// Own ngpc_color, else the project default (V3 native_color.is_native).
 export const isNgpcNativeBackground = (
   extension: NgpcProjectExtension | null,
   backgroundId: string | undefined,
-) =>
-  !!backgroundId &&
-  getNgpcResourceSetting(extension, backgroundId, NGPC_COLOR_KEY) ===
-    NGPC_COLOR_NATIVE;
+) => isNgpcNativeResource(extension, backgroundId);
 
 interface NgpcNativePalettesProps {
   backgroundId: string;

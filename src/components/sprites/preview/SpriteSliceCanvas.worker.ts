@@ -1,4 +1,4 @@
-import { colorizeSpriteData } from "shared/lib/helpers/color";
+import { colorizeSpriteData, nativeSpriteData } from "shared/lib/helpers/color";
 
 // eslint-disable-next-line no-restricted-globals
 const workerCtx: Worker = self as unknown as Worker;
@@ -28,6 +28,8 @@ workerCtx.onmessage = async (evt) => {
   const objPalette = evt.data.objPalette;
   const palette = evt.data.palette;
   const colorCorrection = evt.data.colorCorrection;
+  // NgpCraft: an "NGPC native" sheet keeps its PNG colours (V3 native_index).
+  const native = !!evt.data.native;
 
   let img: ImageBitmap;
 
@@ -65,7 +67,11 @@ workerCtx.onmessage = async (evt) => {
 
   // Colorize
   const imageData = ctx.getImageData(0, 0, width, height);
-  colorizeSpriteData(imageData.data, objPalette, palette, colorCorrection);
+  if (native) {
+    nativeSpriteData(imageData.data);
+  } else {
+    colorizeSpriteData(imageData.data, objPalette, palette, colorCorrection);
+  }
   ctx.putImageData(imageData, 0, 0);
 
   const canvasImage = canvas.transferToImageBitmap();

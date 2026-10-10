@@ -8,6 +8,7 @@ import SpriteSliceCanvasWorker, {
 import { assetURL } from "shared/lib/helpers/assets";
 import { getSettings } from "store/features/settings/settingsState";
 import { MonoOBJPalette, Palette } from "shared/lib/resources/types";
+import { isNgpcNativeResource } from "shared/lib/ngpcraft/projectExtension";
 
 interface SpriteSliceCanvasProps {
   spriteSheetId: string;
@@ -48,6 +49,10 @@ export const SpriteSliceCanvas = ({
   });
   const colorCorrection = useAppSelector(
     (state) => getSettings(state).colorCorrection,
+  );
+  // NgpCraft: an "NGPC native" sheet is drawn with its own PNG colours.
+  const native = useAppSelector((state) =>
+    isNgpcNativeResource(state.ngpcraft.extension, spriteSheetId),
   );
 
   const onWorkerComplete = useCallback(
@@ -98,8 +103,10 @@ export const SpriteSliceCanvas = ({
       objPalette: palette ? [0, 1, 3] : objPalette,
       palette: (palette || DMG_PALETTE).colors,
       colorCorrection,
+      native,
     });
   }, [
+    native,
     canvasRef,
     offsetX,
     offsetY,

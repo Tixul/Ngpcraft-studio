@@ -920,6 +920,8 @@ def _event_if_flags_compare(input_, b):
 
 
 HANDLERS = {
+    # NGPC event of the NgpCraft Studio editor (src/lib/events/eventNgpcBackgroundVariant.js).
+    "EVENT_NGPC_BACKGROUND_VARIANT": lambda input_, b: b.ngpc_background_variant(input_.get("variant")),
     "EVENT_SET_FLAGS": lambda input_, b: b.variable_set_to_value(input_.get("variable"), _flag_mask(input_)),
     "EVENT_ADD_FLAGS": lambda input_, b: b.variable_add_flags(input_.get("variable"), _flag_mask(input_)),
     "EVENT_CLEAR_FLAGS": lambda input_, b: b.variable_clear_flags(input_.get("variable"), _flag_mask(input_)),

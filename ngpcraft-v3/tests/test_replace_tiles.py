@@ -252,7 +252,7 @@ class PriorityTests(unittest.TestCase):
         from ngpcraft.replace_tiles import plan
         project = SimpleNamespace(root=Path("unused"))
         source = SimpleNamespace(width=8, height=8, attributes=(128,),
-                                 indices=(0,) * 64, pixels=(0,) * 64)
+                                 indices=(0,) * 64, pixels=(0,) * 64, backdrop=None)
         tilesets = [{"symbol": "t", "_rel": "tiles.png.gbsres"}]
         with patch("ngpcraft.replace_tiles.read_png", return_value=(8, 8, [(0, 180, 0, 255)] * 64)):
             with self.assertRaisesRegex(CompileError, r"scene test: tile\[0,0\].*priority opacity"):

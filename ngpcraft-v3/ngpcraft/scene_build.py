@@ -47,6 +47,9 @@ class EngineScene:
     logo: bool = False  # GBVM LOGO: empty player metasprite, no genre update
     palette_entries: tuple = ()  # palette_load: (shadow index, GB slot, GB index) of the rewritten slots
     parallax: tuple = ()  # PARALLAX_STEP rows (ngpcraft/parallax.py compile_parallax), () without parallax
+    # native_variants (PLAN_MEGAMAN L5): (plane, ((palette words, backdrop), ...)), variant 0 = as drawn;
+    # None when no reachable script switches variants.
+    color_variants: object = None
 
 
 def tile_to_subpx(x):
@@ -92,9 +95,16 @@ def engine_blocker(project, scene):
     return None
 
 
-def build_engine_scene(project, scene, default_mode=None, sprite_switches=(), emotes=(), projectiles=(), projectile_capacity=5,
-                       replace_ops=(), palette_slots=frozenset(), sprite_palette_slots=frozenset()):
+def build_engine_scene(project, scene, default_mode=None, sprite_switches=(), emotes=(), projectiles=(), projectile_capacity=None,
+                       replace_ops=(), palette_slots=frozenset(), sprite_palette_slots=frozenset(),
+                       color_variants=False):
+    """projectile_capacity: None = the project's (ngpc.projectile_capacity, else GB Studio's 5).
+    color_variants: a reachable script switches background colour variants
+    (native_variants.py); the scene's are compiled, or only variant 0."""
     where = f"scene {scene['name']}"
+    if projectile_capacity is None:
+        from .projectile_runtime import projectile_capacity as project_capacity
+        projectile_capacity = project_capacity(project)
     logo = scene["type"] == "LOGO"
     if logo and (scene["actors"] or scene["triggers"]):
         raise CompileError(f"{where}: LOGO actors and triggers are not delivered yet")
@@ -110,9 +120,13 @@ def build_engine_scene(project, scene, default_mode=None, sprite_switches=(), em
                            "(GB Studio scenes are at least 20x18 tiles)")
     if source.backdrop is not None:
         # docs/M7_NATIVE_COLOR.md: native colours have no GB palette slots.
-        if replace_ops or palette_slots:
-            raise CompileError(f"{where}: background {source.resource} with native colours: replaced "
-                               "tiles and palette changes are not delivered")
+        # Replaced tiles: replace_tiles.plan, native branch. GB palette events
+        # target GB slots 0..7, which native colours do not have; colour
+        # changes of a native background are its PNG variants (PLAN_MEGAMAN L5).
+        if palette_slots:
+            raise CompileError(f"{where}: background {source.resource} with native colours: GB Studio "
+                               "background palette events are not delivered (native colours have no GB "
+                               "palette slots)")
     replace_plan = None
     if replace_ops:
         from .replace_tiles import plan, tileset_options
@@ -271,10 +285,36 @@ def build_engine_scene(project, scene, default_mode=None, sprite_switches=(), em
         for slot, palette in native_palettes:
             table[slot] = palette
         palettes = tuple(table)
+    variants = None
+    if color_variants:
+        variants = _color_variants(project, scene, source, background, second, where)
     return EngineScene(scene["name"], background, sheets, sheet_ids, palettes,
                        tuple(engine), ("player",) + tuple(a["name"] or a["id"] for a in actors),
                        tuple(boxes[sheet_ids[a["sheet"]]] for a in engine),
                        scene_collisions(scene, width >> 3, height >> 3), source, second,
                        tuple((index, sheet_ids.index(s), boxes[s]) for index, s in sprite_switches),
                        emote_frames, emote_sheets, origins, compiled_projectiles, projectile_capacity,
-                       replace_plan, logo, palette_entries, compile_parallax(scene))
+                       replace_plan, logo, palette_entries, compile_parallax(scene), variants)
+
+
+def _color_variants(project, scene, source, background, second, where):
+    """(plane, ((palette words, backdrop), ...)): variant 0 = the background as drawn."""
+    from pathlib import PurePosixPath
+    from .background_rom import palette_words
+    from .native_variants import KEY, variant_palettes, variant_pixels
+    from .png import read_png
+    original = (tuple(palette_words(background.palettes[0])), background.backdrop)
+    entries = project.ngpc["resources"].get(scene["backgroundId"], {}).get(KEY, ())
+    if not entries:
+        return background.planes[0], (original,)
+    if second is not None:
+        raise CompileError(f"{where}: background colour variants with a second background are not delivered")
+    sets = [original]
+    for entry in entries:
+        at = f"{where}: colour variant {entry['name']!r} ({entry['image']})"
+        w, h, rgba = read_png(project.root / PurePosixPath(entry["image"]))
+        if (w, h) != (background.width, background.height):
+            raise CompileError(f"{at}: {w}x{h}, the background is {background.width}x{background.height}")
+        palettes, backdrop = variant_palettes(background, source.pixels, variant_pixels(rgba), at)
+        sets.append((tuple(palette_words(palettes)), backdrop))
+    return background.planes[0], tuple(sets)

@@ -123,7 +123,9 @@ class SceneLinkTests(unittest.TestCase):
         self.assertEqual(text.count(record), 1)
         self.assertIn("static Cache cache[5];", text)
         self.assertEqual(report["ram_bytes"], 40 + 4 + 5 + 2)
-        with self.assertRaisesRegex(CompileError, "record Cache declared differently"):
+        # Homonym records become per-scene variants (Cache__v1); the shared
+        # variable then has two types and is refused.
+        with self.assertRaisesRegex(CompileError, "variable cache declared differently"):
             link_file("src/x.c", [a, b.replace("short x, y;", "short x;")])
         for invalid in (record.replace("short x, y;", "char x;"),
                         record.replace("short x, y;", "short key;")):
@@ -152,7 +154,7 @@ class SceneLinkTests(unittest.TestCase):
 
     def test_unknown_lines_and_differences_are_refused(self):
         with self.assertRaisesRegex(CompileError, "unrecognised top-level line"):
-            link_file("src/x.c", [self.A + "int *p;\n"])
+            link_file("src/x.c", [self.A + "int x = 3;\n"])  # pointers are linked (translated plugins)
         with self.assertRaisesRegex(CompileError, "differs"):
             link_file("src/x.c", [self.A, self.B.replace("ngc_go(unsigned char i)", "ngc_go(unsigned short i)")])
         with self.assertRaisesRegex(CompileError, "declared differently"):

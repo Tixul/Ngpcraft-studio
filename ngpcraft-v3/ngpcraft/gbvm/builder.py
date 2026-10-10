@@ -705,6 +705,20 @@ class ScriptBuilder:
         self._stack_pop(1 if remove else 3)
         self._add_nl()
 
+    # -- NGPC events (not in GB Studio) ----------------------------------------
+    def ngpc_background_variant(self, variant):
+        """EVENT_NGPC_BACKGROUND_VARIANT (native_variants.py, PLAN_MEGAMAN L5): the
+        GB Studio plugin idiom, argument pushed, native called, argument popped."""
+        if type(variant) is not int or not 0 <= variant <= 15:
+            raise CompileError(f"{self.source}: background colour variant {variant!r}: expected 0..15 "
+                               "(0 = as drawn)")
+        self._add_comment(f"NGPC background colour variant {variant}")
+        self._stack_push_const(variant)
+        self.dependencies += ["b_ngc_bg_variant", "_ngc_bg_variant"]
+        self._add_cmd("VM_CALL_NATIVE", "b_ngc_bg_variant", "_ngc_bg_variant")
+        self._stack_pop(1)
+        self._add_nl()
+
     # -- input scripts (scriptBuilder.ts inputScriptSet / inputScriptRemove) --
     def input_script_set(self, input_, override, script, symbol=None):
         from .custom_events import compile_sub_script
@@ -1337,8 +1351,8 @@ class ScriptBuilder:
                 op = OPERATORS[value] if kind == "OP" else value
                 if kind == "FUN" and value == "neg":
                     raise NotDelivered("neg() in Evaluate Expression emits binary SUB in GB Studio 4.3.2; use unary '-' instead")
-                if op in ("abs", "atan2", "isqrt"):
-                    raise NotDelivered(f"expression function {op!r} (library function not delivered)")
+                # abs, atan2, isqrt: GBDK library calls in vm_rpn, replaced by
+                # NGPC functions with the same results (emit.RPN_LIBRARY).
                 rpn.operator(SCRIPT_OPERATORS[op])
         if result_variable is not _UNDEFINED:
             rpn.ref_set_variable(result_variable)
@@ -1411,12 +1425,9 @@ class ScriptBuilder:
             elif kind in ("numberSymbol", "indirect"):
                 raise NotDelivered(f"script value operand of type {kind!r} (not delivered yet)")
             elif kind in SCRIPT_OPERATORS:
-                operator = SCRIPT_OPERATORS[kind]
-                if operator in (".ABS", ".ATAN2", ".ISQRT"):
-                    # vm_rpn calls GBDK library functions for these (abs,
-                    # atan2, isqrt): not delivered. randw (.RND) is (emit.rand_support).
-                    raise NotDelivered(f"script value operator {kind!r} (library function not delivered)")
-                rpn.operator(operator)
+                # .ABS, .ATAN2, .ISQRT, .RND: GBDK library calls in vm_rpn,
+                # replaced by NGPC functions (emit.RPN_LIBRARY, rand_support).
+                rpn.operator(SCRIPT_OPERATORS[kind])
             else:
                 # valueFunctionToScriptOperator: assertUnreachable.
                 raise CompileError(f"script value operation {kind!r} unknown to GB Studio")

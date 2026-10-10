@@ -24,10 +24,19 @@ export interface NgpcCatalogue {
 
 export type NgpcEventDelivery = "delivered" | "adapted" | "refused" | "plugin";
 
+// Events of NgpCraft Studio itself (src/lib/events/eventNgpc*.js), not in GB
+// Studio: the V3 compiles them natively (ngpcraft-v3/ngpcraft/parity NGPC_EVENTS).
+export const NGPC_EVENTS: ReadonlySet<string> = new Set([
+  "EVENT_NGPC_BACKGROUND_VARIANT",
+]);
+
 export const ngpcEventDelivery = (
   catalogue: NgpcCatalogue,
   eventId: string,
 ): NgpcEventDelivery => {
+  if (NGPC_EVENTS.has(eventId)) {
+    return "delivered";
+  }
   const entry = catalogue.events[eventId];
   if (!entry) {
     return "plugin";
@@ -51,6 +60,9 @@ export const ngpcEventNote = (
   catalogue: NgpcCatalogue,
   eventId: string,
 ): string => {
+  if (NGPC_EVENTS.has(eventId)) {
+    return "NGPC event (NgpCraft Studio only)";
+  }
   const entry = catalogue.events[eventId];
   if (!entry) {
     return "NGPC: plugin event, compiled by the NgpCraft V3 when it only uses ScriptBuilder methods the V3 has (checked at build)";

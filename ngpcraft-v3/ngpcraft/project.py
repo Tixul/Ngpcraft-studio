@@ -42,9 +42,14 @@ RESOURCE_DIRS = ("project", "assets", "plugins")
 #   on Option gives, "select" (default: short = Start) or "start" (short = Select).
 # - frame_rate (core, docs/M2_PERF_PISTES.md section 3): 60 (default) or 30, a
 #   fixed cadence chosen by the author; same speed in seconds as GB Studio.
-NGPC_PROJECT_KEYS = frozenset({"option_long_press", "actor_capacity", "frame_rate", "native_sfx", "vm_context_policy"})
+# - projectile_capacity (core, docs/PLAN_MEGAMAN.md L2): live projectiles at
+#   once, 5 (GB Studio) to 64; 29 bytes of RAM each, in the scene budget.
+# - default_color (core, docs/M7_NATIVE_COLOR.md): "native" = every background
+#   and sprite sheet in its PNG colours unless its own ngpc_color says "gbs".
+NGPC_PROJECT_KEYS = frozenset({"option_long_press", "actor_capacity", "frame_rate", "native_sfx", "vm_context_policy",
+                               "projectile_capacity", "default_color"})
 FRAME_RATES = (60, 30)
-NGPC_RESOURCE_KEYS = frozenset({"second_background", "native_music", "ngpc_color"})
+NGPC_RESOURCE_KEYS = frozenset({"second_background", "native_music", "ngpc_color", "ngpc_color_variants"})
 from .second_background import is_rate as second_is_rate
 OPTION_LONG_PRESS = ("select", "start")
 
@@ -397,6 +402,16 @@ def _load_sidecar(root, ids, errors, files):
         if type(value) is not int or not GBS_ACTOR_CAPACITY <= value <= NGPC_ACTOR_CAPACITY:
             errors.append(f"{SIDECAR}.ngpc.actor_capacity: expected integer in "
                           f"{GBS_ACTOR_CAPACITY}..{NGPC_ACTOR_CAPACITY}, NPCs excluding player")
+    if "projectile_capacity" in project_ext:
+        from .projectile_runtime import GBS_PROJECTILE_CAPACITY, NGPC_PROJECTILE_CAPACITY
+        value = project_ext["projectile_capacity"]
+        if type(value) is not int or not GBS_PROJECTILE_CAPACITY <= value <= NGPC_PROJECTILE_CAPACITY:
+            errors.append(f"{SIDECAR}.ngpc.projectile_capacity: expected integer in "
+                          f"{GBS_PROJECTILE_CAPACITY}..{NGPC_PROJECTILE_CAPACITY}, live projectiles at once")
+    if "default_color" in project_ext and project_ext["default_color"] != "native":
+        errors.append(f"{SIDECAR}.ngpc.default_color: {project_ext['default_color']!r}, expected \"native\" "
+                      "(omit the key for GB Studio colours by default)")
+    default_native = project_ext.get("default_color") == "native"
     resources = data.get("resources", {})
     if not isinstance(resources, dict):
         errors.append(f"{SIDECAR}.resources: expected an object")
@@ -414,9 +429,22 @@ def _load_sidecar(root, ids, errors, files):
             # docs/M7_NATIVE_COLOR.md: background colours read from the PNG.
             if rid in ids and files[ids[rid]]["_resourceType"] not in ("background", "sprite"):
                 errors.append(f"{where}.ngpc_color: extension belongs to a background or sprite sheet resource")
-            if ext["ngpc_color"] != "native":
-                errors.append(f"{where}.ngpc_color: {ext['ngpc_color']!r}, expected \"native\" "
-                              "(omit the key for GB Studio colours)")
+            if ext["ngpc_color"] not in ("native", "gbs"):
+                errors.append(f"{where}.ngpc_color: {ext['ngpc_color']!r}, expected \"native\" or \"gbs\" "
+                              "(omit the key for the project default, ngpc.default_color)")
+        if "ngpc_color_variants" in ext:
+            # docs/PLAN_MEGAMAN.md L5: recoloured PNGs of a native background.
+            from .native_variants import validate_variants
+            if rid in ids and files[ids[rid]]["_resourceType"] != "background":
+                errors.append(f"{where}.ngpc_color_variants: extension belongs to a background resource")
+            native = ext["ngpc_color"] == "native" if "ngpc_color" in ext else default_native
+            if not native:
+                errors.append(f"{where}.ngpc_color_variants: needs native colours on the same background "
+                              "(ngpc_color \"native\", or ngpc.default_color \"native\")")
+            try:
+                validate_variants(ext["ngpc_color_variants"], where + ".ngpc_color_variants", root)
+            except ValueError as exc:
+                errors.append(str(exc))
         if "native_music" in ext:
             from .project_music import validate_binding
             if rid in ids and files[ids[rid]]["_resourceType"] != "music":

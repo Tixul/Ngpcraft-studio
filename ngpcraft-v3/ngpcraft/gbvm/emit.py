@@ -571,9 +571,25 @@ def validate_logo_scripts(scene, macros, text):
         raise CompileError(f"scene {scene['name']}: LOGO overlay/dialogue is not delivered yet (fullscreen LCD mode)")
     if re.search(r"\bEXCEPTION_(SAVE|LOAD)\b", text):
         raise CompileError(f"scene {scene['name']}: LOGO save/load is not delivered yet")
-# RPN cases that call library functions GBVM takes from GBDK (atan2, isqrt,
-# randw, abs): not delivered.
-RPN_NOT_DELIVERED = { "VM_OP_ISQRT", "VM_OP_ABS"}
+# RPN cases that call library functions GBVM takes from GBDK: each one is
+# replaced in the vendored vm_rpn by an NGPC function with the same results
+# (atan2: projectiles.atan2_source; abs, isqrt: below; randw: rand_support).
+RPN_NOT_DELIVERED = frozenset()
+# vm.c vm_rpn call -> NGPC call, and the C emitted once when the case is used.
+RPN_LIBRARY = {
+    "VM_OP_ABS": ("abs(*B)", "ngc_abs(*B)",
+                  "/* GBDK abs() on a 16-bit int: -32768 stays -32768 (two's complement). */\n"
+                  "static INT16 ngc_abs(INT16 v)\n{\n"
+                  "    return v < 0 ? (INT16)(0u - (UWORD)v) : v;\n}\n"),
+    "VM_OP_ISQRT": ("isqrt((UWORD)*B)", "ngc_isqrt((UWORD)*B)",
+                    "/* GBVM math.c isqrt (MIT, Copyright (c) 2020 Toxa), portable C version:\n"
+                    " * floor(sqrt(x)) for 16-bit x, no 32-bit arithmetic. */\n"
+                    "static UBYTE ngc_isqrt(UWORD x)\n{\n"
+                    "    UWORD m, y, b;\n    m = 0x4000u;\n    y = 0u;\n"
+                    "    while (m != 0u) {\n        b = y | m;\n        y >>= 1;\n"
+                    "        if (x >= b) {\n            x -= b;\n            y |= m;\n        }\n"
+                    "        m >>= 2;\n    }\n    return (UBYTE)y;\n}\n"),
+}
 
 # Scene engine API (scene_actors.c) for the vm_actor.c handlers below.
 ACTOR_API = (
@@ -1266,7 +1282,7 @@ def gbvm_source(runtime, macros, rpn, natives, memory, model, fade_style=0, scen
                 input_contexts=None, ui=None, heap_words=None, stack_words=None, tick_frames=1, platform_callbacks=(), callback_attach=False, callback_detach=False, callback_contexts=None,
                 adventure_callbacks=(), adventure_attach=False, adventure_detach=False, constant_pairs=0, timer_contexts=None, projectile_actors=None, save=None, thread_contexts=None,
                 projectile_slots=False,
-                palette_maps=None, text_sound=(False, False)):
+                palette_maps=None, text_sound=(False, False), color_variants=None):
     """save: None, or (saves, loads) when the scripts save or load data
     (docs/M5_SAVE.md): EXCEPTION_SAVE / EXCEPTION_LOAD on the flash journal.
     scene_palettes: the scene engine is linked: it has loaded the palettes before
@@ -1508,6 +1524,8 @@ void ngc_actors_scroll(short cx, short cy);
         c.append("extern unsigned char ngc_joy, ngc_last_joy;  /* scene_input.c */")
     if "VM_OP_ATAN2" in rpn:
         c.append(atan2_source())
+    for case in sorted(rpn & RPN_LIBRARY.keys()):
+        c.append(RPN_LIBRARY[case][2])
     if rand_fns:
         c.append(rand_support(rand_fns))
     if shake:
@@ -1584,6 +1602,12 @@ void ngc_actors_scroll(short cx, short cy);
             if callback_detach: c.append("    if (ptr == 4u) plat_callback_detach(THIS);")
             if adventure_attach: c.append("    if (ptr == 5u) adv_callback_attach(THIS);")
             if adventure_detach: c.append("    if (ptr == 6u) adv_callback_detach(THIS);")
+            if color_variants is not None:
+                # native_variants.py: the variant tables and switch, before the dispatcher.
+                from ..native_variants import runtime_source
+                at = c.index("static void vm_call_native(SCRIPT_CTX *THIS, UBYTE bank, UWORD ptr)")
+                c.insert(at, runtime_source(color_variants, scenes=scenes, shadow=fade or scenes, fade=fade))
+                c.append("    if (ptr == 7u) ngc_bg_variant(THIS);")
             c.append("}")
         elif fn == "vm_rpn":
             rpn_c = rpn_source(functions, rpn, constant_pairs)
@@ -1592,6 +1616,11 @@ void ngc_actors_scroll(short cx, short cy);
                 if rpn_c.count(original) != 1:
                     raise CompileError("selected original ATAN2 call changed")
                 rpn_c = rpn_c.replace(original, "ngc_atan2((INT16)*A, (INT16)*B)")
+            for case in sorted(rpn & RPN_LIBRARY.keys()):
+                original, ngpc, _ = RPN_LIBRARY[case]
+                if rpn_c.count(original) != 1:
+                    raise CompileError(f"selected original {case} call changed")
+                rpn_c = rpn_c.replace(original, ngpc)
             c.append(rpn_c)
         elif "VM_REF_TO_PTR" in functions[fn]:
             # vm.h's macro, whatever else the export emits (a scene may move
@@ -2359,9 +2388,10 @@ def generate_project(project, inits, variables_lookup):
     palette_slots = changed_slots(texts, f"scene {resources[start_id]['name']}")
     if blocker and palette_slots:
         raise CompileError(f"palette changes need the scene engine, which this start scene cannot use: {blocker}")
+    variants_used = "b_ngc_bg_variant" in text      # native_variants.py, VM_CALL_NATIVE
     engine_c, engine_report = ({}, {"built": False, "reason": blocker}) if blocker else \
         engine_files(build_engine_scene(project, resources[start_id], sprite_switches=sprite_assets(texts, shared["sprites"]), emotes=emote_assets(texts, shared["emotes"]),
-                                        replace_ops=replace_ops(texts), palette_slots=palette_slots,
+                                        replace_ops=replace_ops(texts), palette_slots=palette_slots, color_variants=variants_used,
                                         sprite_palette_slots=changed_sprite_slots(texts, f"scene {resources[start_id]['name']}"),
                                         projectiles=projectiles[0] if projectiles else ()), moves, actor_updates, cancel, topdown,
                      actor_interactions, trigger_data, hit_data, text=prints,
@@ -2428,7 +2458,8 @@ def generate_project(project, inits, variables_lookup):
                                    projectile_actors=len(projectiles[1]) if projectiles and projectiles[2] else None,
                                    projectile_slots=bool(projectiles) and any(s.index >= SLOT_BASE for s in projectiles[0]),
                                    palette_maps=[[tuple(e) for e in engine_report.get("palette_entries", ())] +
-                                                 [tuple(e) for e in (start_ui.palette_entries if prints else ())]])
+                                                 [tuple(e) for e in (start_ui.palette_entries if prints else ())]],
+                                   color_variants=[engine_report.get("color_variants")] if variants_used else None)
     if blocker and timers:
         raise CompileError(f"timer scripts need the scene engine, which this start scene cannot use: {blocker}")
     if not blocker:
@@ -2735,9 +2766,11 @@ def generate_scenes(project, inits, graph, resources, variables, model, shared, 
     adventure_attach, adventure_detach = callback_natives(text, "adventure")
     callback_attach = "b_plat_callback_attach" in text
     callback_detach = "b_plat_callback_detach" in text
+    variants_used = "b_ngc_bg_variant" in text      # native_variants.py, VM_CALL_NATIVE
     text = any(m in macros for m in UI_DECODERS)
     scene_uis = []
     palette_maps = []      # docs/M4_PALETTES.md, per scene index
+    variant_maps = []      # native_variants.py, per scene index
     second = any("second_background" in project.ngpc["resources"].get(sid, {}) for sid in table)
     from ..parallax import compile_parallax
     parallax_export = any(compile_parallax(resources[sid]) for sid in table)
@@ -2806,6 +2839,7 @@ def generate_scenes(project, inits, graph, resources, variables, model, shared, 
         palette_slots = changed_slots(scene_texts, f"scene {scene['name']}")
         files, report = engine_files(build_engine_scene(project, scene, sprite_switches=sprite_assets(scene_texts, shared["sprites"]), emotes=emote_assets(scene_texts, shared["emotes"]),
                                                         replace_ops=replace_ops(scene_texts), palette_slots=palette_slots,
+                                                        color_variants=variants_used,
                                                         sprite_palette_slots=changed_sprite_slots(scene_texts, f"scene {scene['name']}"),
                                                         projectiles=projectiles[0] if projectiles else ()), moves, actor_updates, cancel, topdown,
                                      actor_interactions, trigger_data, hit_data, shadow=True, text=text, track_front=second,
@@ -2836,6 +2870,7 @@ def generate_scenes(project, inits, graph, resources, variables, model, shared, 
             report["ui_palette_entries"] = [list(e) for e in scene_uis[-1].palette_entries]
         palette_maps.append([tuple(e) for e in report.get("palette_entries", ())] +
                             [tuple(e) for e in (scene_uis[-1].palette_entries if text else ())])
+        variant_maps.append(report.get("color_variants"))
         if "src/scene_input.c" in files:
             input_c = files.pop("src/scene_input.c")
         report = {"index": k, "id": sid, "init_address": addresses[compiled[sid][0]],
@@ -2896,7 +2931,8 @@ def generate_scenes(project, inits, graph, resources, variables, model, shared, 
                                    stack_words=stacks["words_per_context"], tick_frames=tick_frames, constant_pairs=constant_rpn_pairs(texts, model, rpn), text_sound=text_sound_use(texts),
                                    projectile_actors=projectile_actors, save=(save, loads) if save else None,
                                    projectile_slots=projectile_slots,
-                                   palette_maps=palette_maps)
+                                   palette_maps=palette_maps,
+                                   color_variants=variant_maps if variants_used else None)
     engine_c, link = link_scenes(engines, publish={"src/scene_actors.c": {} if set(macros) & {"VM_CAMERA_MOVE_TO", "VM_CAMERA_SET_POS"}
                                                 else {"cam_settings": "ngc_camera_settings"}},
                                  extra={"src/scene_actors.c": keep_source(used["hits"])

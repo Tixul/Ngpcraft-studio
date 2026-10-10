@@ -19,6 +19,8 @@ import {
   getNgpcProjectSettings,
   NGPC_ACTOR_CAPACITY_MAX,
   NGPC_ACTOR_CAPACITY_MIN,
+  NGPC_PROJECTILE_CAPACITY_MAX,
+  NGPC_PROJECTILE_CAPACITY_MIN,
 } from "shared/lib/ngpcraft/projectExtension";
 
 interface SettingsSectionNgpcProps {
@@ -39,8 +41,34 @@ export const SettingsSectionNgpc = ({
 
   const optionLongPress = settings.option_long_press ?? "select";
   const actorCapacity = settings.actor_capacity ?? NGPC_ACTOR_CAPACITY_MIN;
+  const projectileCapacity =
+    settings.projectile_capacity ?? NGPC_PROJECTILE_CAPACITY_MIN;
   const frameRate = settings.frame_rate ?? 60;
   const contextPolicy = settings.vm_context_policy ?? "auto";
+  const defaultColor = settings.default_color ?? "gbs";
+
+  const colorOptions: ValueOption<"gbs" | "native">[] = useMemo(
+    () => [
+      { value: "gbs", label: l10n("FIELD_NGPC_DEFAULT_COLOR_GBS") },
+      { value: "native", label: l10n("FIELD_NGPC_DEFAULT_COLOR_NATIVE") },
+    ],
+    [],
+  );
+
+  const onChangeDefaultColor = useCallback(
+    (option: SingleValue<ValueOption<"gbs" | "native">>) => {
+      if (!option) {
+        return;
+      }
+      dispatch(
+        ngpcraftActions.setProjectSetting({
+          key: "default_color",
+          value: option.value === "native" ? "native" : undefined,
+        }),
+      );
+    },
+    [dispatch],
+  );
 
   const longPressOptions: ValueOption<"select" | "start">[] = useMemo(
     () => [
@@ -130,6 +158,27 @@ export const SettingsSectionNgpc = ({
     [dispatch],
   );
 
+  const onChangeProjectileCapacity = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const value = Math.round(Number(e.currentTarget.value));
+      if (Number.isNaN(value)) {
+        return;
+      }
+      const capacity = Math.min(
+        NGPC_PROJECTILE_CAPACITY_MAX,
+        Math.max(NGPC_PROJECTILE_CAPACITY_MIN, value),
+      );
+      dispatch(
+        ngpcraftActions.setProjectSetting({
+          key: "projectile_capacity",
+          value:
+            capacity === NGPC_PROJECTILE_CAPACITY_MIN ? undefined : capacity,
+        }),
+      );
+    },
+    [dispatch],
+  );
+
   return (
     <SearchableCard
       searchTerm={searchTerm}
@@ -137,6 +186,8 @@ export const SettingsSectionNgpc = ({
         l10n("SETTINGS_NGPC"),
         l10n("FIELD_NGPC_OPTION_LONG_PRESS"),
         l10n("FIELD_NGPC_ACTOR_CAPACITY"),
+        l10n("FIELD_NGPC_PROJECTILE_CAPACITY"),
+        l10n("FIELD_NGPC_DEFAULT_COLOR"),
         l10n("FIELD_NGPC_FRAME_RATE"),
         l10n("FIELD_NGPC_VM_CONTEXTS"),
       ]}
@@ -163,6 +214,21 @@ export const SettingsSectionNgpc = ({
 
       <SearchableSettingRow
         searchTerm={searchTerm}
+        searchMatches={[l10n("FIELD_NGPC_DEFAULT_COLOR")]}
+      >
+        <SettingRowLabel>{l10n("FIELD_NGPC_DEFAULT_COLOR")}</SettingRowLabel>
+        <SettingRowInput>
+          <Select
+            value={colorOptions.find((o) => o.value === defaultColor)}
+            options={colorOptions}
+            onChange={onChangeDefaultColor}
+          />
+          <FormInfo>{l10n("FIELD_NGPC_DEFAULT_COLOR_INFO")}</FormInfo>
+        </SettingRowInput>
+      </SearchableSettingRow>
+
+      <SearchableSettingRow
+        searchTerm={searchTerm}
         searchMatches={[l10n("FIELD_NGPC_ACTOR_CAPACITY")]}
       >
         <SettingRowLabel>{l10n("FIELD_NGPC_ACTOR_CAPACITY")}</SettingRowLabel>
@@ -175,6 +241,25 @@ export const SettingsSectionNgpc = ({
             onChange={onChangeActorCapacity}
           />
           <FormInfo>{l10n("FIELD_NGPC_ACTOR_CAPACITY_INFO")}</FormInfo>
+        </SettingRowInput>
+      </SearchableSettingRow>
+
+      <SearchableSettingRow
+        searchTerm={searchTerm}
+        searchMatches={[l10n("FIELD_NGPC_PROJECTILE_CAPACITY")]}
+      >
+        <SettingRowLabel>
+          {l10n("FIELD_NGPC_PROJECTILE_CAPACITY")}
+        </SettingRowLabel>
+        <SettingRowInput>
+          <NumberField
+            name="ngpcProjectileCapacity"
+            value={projectileCapacity}
+            min={NGPC_PROJECTILE_CAPACITY_MIN}
+            max={NGPC_PROJECTILE_CAPACITY_MAX}
+            onChange={onChangeProjectileCapacity}
+          />
+          <FormInfo>{l10n("FIELD_NGPC_PROJECTILE_CAPACITY_INFO")}</FormInfo>
         </SettingRowInput>
       </SearchableSettingRow>
 

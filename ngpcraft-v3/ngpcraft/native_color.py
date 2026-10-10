@@ -120,10 +120,21 @@ def palette_plan(root, background_id):
             "errors": errors, "palette_limit": PALETTE_LIMIT}
 
 
+GBS = "gbs"                     # ngpc_color "gbs": GB Studio palettes despite a native project default
+
+
 def is_native(project, resource_id):
-    """No ngpcraft.json extension (or a bare project stand-in): GB Studio colours."""
+    """A background or sprite sheet in native colours: its own ngpc_color
+    ("native" / "gbs") wins; else the project default ngpc.default_color
+    ("native"), ignored in a mono project (as GB Studio's autoColor). No
+    ngpcraft.json extension (or a bare project stand-in): GB Studio colours."""
     ngpc = getattr(project, "ngpc", None) or {}
-    return ngpc.get("resources", {}).get(resource_id, {}).get("ngpc_color") == NATIVE
+    own = ngpc.get("resources", {}).get(resource_id, {}).get("ngpc_color")
+    if own is not None:
+        return own == NATIVE
+    settings = getattr(project, "settings", None) or {}
+    return (ngpc.get("ngpc", {}).get("default_color") == NATIVE
+            and settings.get("colorMode") != "mono")
 
 
 def native_source(project, rel, width, height, rgba, attrs, where):

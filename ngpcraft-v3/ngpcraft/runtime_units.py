@@ -593,7 +593,7 @@ def select_units(features, target="rom"):
                 swaps[name] = replace(unit, symbols=tuple(s for s in unit.symbols if s.startswith("_ngc_")) + data,
                                       provenance=provenance, license=licence,
                                       tests=("tests/test_translated_plugins.py",))
-    return tuple(swaps.get(unit.name, unit) for unit in UNITS if unit.name in selected)
+    return tuple(swaps[unit.name] if unit.name in swaps else unit for unit in UNITS if unit.name in selected)
 
 
 def public_symbols(features, target="rom"):

@@ -93,3 +93,8 @@ IMPLEMENTED_EVENTS = frozenset({"EVENT_ACTOR_GET_DIRECTION", "EVENT_SOUND_PLAY_E
                                 "EVENT_PLATFORMER_STATE_SET", "EVENT_PLAYER_BOUNCE",
                                 "EVENT_ENGINE_FIELD_SET",
                                 "EVENT_SAVE_DATA", "EVENT_LOAD_DATA", "EVENT_IF_SAVED_DATA"})
+
+# Events of the NgpCraft Studio editor that GB Studio does not have (NGPC
+# extensions, outside the parity catalogue): contract, generator, lab, probe.
+# EVENT_NGPC_BACKGROUND_VARIANT: native_variants.py, tools/lab_bg_variants.py.
+NGPC_EVENTS = frozenset({"EVENT_NGPC_BACKGROUND_VARIANT"})

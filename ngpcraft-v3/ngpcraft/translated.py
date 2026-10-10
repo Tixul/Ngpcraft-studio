@@ -127,7 +127,8 @@ def _writers(project, key):
             if isinstance(args, dict):
                 if command and command.startswith("EVENT_ENGINE_FIELD") and args.get("engineFieldKey") == key:
                     found.append(f"{where}: {command}")
-                if command == "EVENT_GBVM_SCRIPT" and f"_{key}" in str(args.get("script", "")):
+                script = args.get("script")
+                if command == "EVENT_GBVM_SCRIPT" and isinstance(script, str) and f"_{key}" in script:
                     found.append(f"{where}: {command}")
             for k, v in value.items():
                 walk(v, where)

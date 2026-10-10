@@ -13,6 +13,18 @@ from .projectile_motion import projectile_motion_source
 # 5 * global table + entry (getGlobalProjectile's tables of five).
 SLOT_BASE = 16
 
+# Live projectiles at once: GB Studio 4.3.2 MAX_PROJECTILES (projectiles.h) by
+# default; ngpcraft.json ngpc.projectile_capacity raises it, up to the 64
+# hardware sprites (a projectile needs at least one). 29 bytes of RAM each.
+GBS_PROJECTILE_CAPACITY = 5
+NGPC_PROJECTILE_CAPACITY = 64
+
+
+def projectile_capacity(project):
+    """ngpcraft.json ngpc.projectile_capacity: GB Studio's 5 when absent."""
+    ext = project.ngpc["ngpc"]
+    return ext["projectile_capacity"] if "projectile_capacity" in ext else GBS_PROJECTILE_CAPACITY
+
 
 @dataclass(frozen=True)
 class ProjectileDefinition:

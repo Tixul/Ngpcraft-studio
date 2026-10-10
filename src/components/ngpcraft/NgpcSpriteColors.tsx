@@ -15,10 +15,12 @@ import { FormInfo } from "ui/form/FormInfo";
 import { Select } from "ui/form/Select";
 import { useAppDispatch, useAppSelector } from "store/hooks";
 import { actions as ngpcraftActions } from "store/features/ngpcraft/ngpcraftState";
-import { getNgpcResourceSetting } from "shared/lib/ngpcraft/projectExtension";
+import {
+  isNgpcNativeResource,
+  ngpcColorValue,
+} from "shared/lib/ngpcraft/projectExtension";
 import {
   NGPC_COLOR_KEY,
-  NGPC_COLOR_NATIVE,
   NgpcSpritePalettePlan,
 } from "shared/lib/ngpcraft/palettePlan";
 import { useNgpcNativeColorAvailable } from "components/ngpcraft/NgpcNativePalettes";
@@ -72,14 +74,8 @@ export const NgpcSpriteColors = ({
 }: NgpcSpriteColorsProps) => {
   const dispatch = useAppDispatch();
   const available = useNgpcNativeColorAvailable();
-  const native = useAppSelector(
-    (state) =>
-      getNgpcResourceSetting(
-        state.ngpcraft.extension,
-        spriteId,
-        NGPC_COLOR_KEY,
-      ) === NGPC_COLOR_NATIVE,
-  );
+  const extension = useAppSelector((state) => state.ngpcraft.extension);
+  const native = isNgpcNativeResource(extension, spriteId);
   const [plan, setPlan] = useState<NgpcSpritePalettePlan>();
   const [error, setError] = useState("");
 
@@ -124,11 +120,12 @@ export const NgpcSpriteColors = ({
         ngpcraftActions.setResourceSetting({
           resourceId: spriteId,
           key: NGPC_COLOR_KEY,
-          value: option.value === "native" ? NGPC_COLOR_NATIVE : undefined,
+          // Nothing stored when it is the project default (Settings > NGPC).
+          value: ngpcColorValue(extension, option.value === "native"),
         }),
       );
     },
-    [dispatch, spriteId],
+    [dispatch, spriteId, extension],
   );
 
   if (!available && !native) {

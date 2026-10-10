@@ -52,7 +52,8 @@ class HoldInputTests(unittest.TestCase):
             self.assertNotIn(name,source+branches)
         base=compile_fixture(*fixture())
         self.assertNotIn('stream_extensions.json',generate_music(base))
-        self.assertNotIn('Ngc_BgmHold',driver_source(OVER_REV,generate_music(base)))
+        if OVER_REV.is_dir():  # local Over Rev driver (NGC_TEST_OVER_REV_AUDIO)
+            self.assertNotIn('Ngc_BgmHold',driver_source(OVER_REV,generate_music(base)))
         with self.assertRaises(MusicError):adapt_driver('unknown native C',['hold'])
 
 

@@ -17,7 +17,7 @@ from ngpcraft.compiler import CompileError
 from ngpcraft.gbvm.assembler import assemble, load_model
 from ngpcraft.gbvm.builder import NotDelivered, ScriptBuilder, fade_speed, js_object_keys
 from ngpcraft.gbvm.emit import DECODERS, RUNTIME, fade_tables, gbvm_source
-from ngpcraft.parity import IMPLEMENTED_EVENTS
+from ngpcraft.parity import IMPLEMENTED_EVENTS, NGPC_EVENTS
 from ngpcraft.gbvm.events import HANDLERS, compile_entity_events
 from ngpcraft.pipeline import export_project
 from ngpcraft.project import encode_resource
@@ -207,7 +207,8 @@ class AssemblerTests(unittest.TestCase):
 
 class DeliveryTests(unittest.TestCase):
     def test_delivered_set_is_the_handler_set(self):
-        self.assertEqual(set(HANDLERS), set(IMPLEMENTED_EVENTS))
+        self.assertEqual(set(HANDLERS), set(IMPLEMENTED_EVENTS) | NGPC_EVENTS)
+        self.assertFalse(IMPLEMENTED_EVENTS & NGPC_EVENTS)
 
     def test_decoders_read_fields_in_vm_i_order(self):
         model = load_model()
@@ -248,7 +249,10 @@ class HeapSizingTests(unittest.TestCase):
     def test_empty_heap_keeps_context_stack_storage(self):
         source = self.source(0)
         self.assertIn("#define VM_HEAP_SIZE 0\n", source)
-        self.assertIn("script_memory[VM_HEAP_SIZE + (VM_MAX_CONTEXTS * VM_CONTEXT_STACK_SIZE)]", source)
+        # 16-bit operands: cc900 folds 164 + (25*64) to 228 on 8 bits otherwise
+        # (docs/M8_PLUGINS_TRADUITS.md, test_translated_plugins).
+        self.assertIn("script_memory[(unsigned short)VM_HEAP_SIZE + (unsigned short)VM_MAX_CONTEXTS"
+                      " * (unsigned short)VM_CONTEXT_STACK_SIZE]", source)
 
     def test_invalid_or_overflowing_reference_storage_is_refused(self):
         for words in (-1, True, 1.5, "1"):
@@ -325,10 +329,15 @@ class ExportTests(unittest.TestCase):
         source, _ = gbvm_source(runtime, {"VM_RPN"}, {"VM_OP_ATAN2"}, [], [], load_model())
         self.assertIn("static unsigned char ngc_atan2", source)
         self.assertIn("ngc_atan2((INT16)*A, (INT16)*B)", source)
-        for operation in ("VM_OP_ABS", "VM_OP_ISQRT"):
-            with self.subTest(operation=operation), self.assertRaisesRegex(
-                    CompileError, "RPN operations not delivered: " + operation):
-                gbvm_source(runtime, {"VM_RPN"}, {operation}, [], [], load_model())
+        # abs / isqrt: replaced like atan2, and only when used (emit.RPN_LIBRARY).
+        for operation, call in (("VM_OP_ABS", "ngc_abs(*B)"), ("VM_OP_ISQRT", "ngc_isqrt((UWORD)*B)")):
+            with self.subTest(operation=operation):
+                used, _ = gbvm_source(runtime, {"VM_RPN"}, {operation}, [], [], load_model())
+                self.assertIn(call, used)
+                self.assertNotIn(call, source)
+        unknown = {"operator 99"}
+        with self.assertRaisesRegex(CompileError, "RPN operations not delivered: operator 99"):
+            gbvm_source(runtime, {"VM_RPN"}, unknown, [], [], load_model())
 
     def test_undelivered_event_and_value_form_are_refused_with_location(self):
         with tempfile.TemporaryDirectory() as tmp:

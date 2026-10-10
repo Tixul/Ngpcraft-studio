@@ -9,7 +9,7 @@ from pathlib import Path
 
 from . import plugins, translated
 from .compiler import CompileError
-from .parity import IMPLEMENTED_EVENTS
+from .parity import IMPLEMENTED_EVENTS, NGPC_EVENTS
 from .gbvm.emit import generate_project
 from .project import _atomic_write, load_project
 from .scene_init import INTERNAL_PREFIX, build_inits, used_events
@@ -54,6 +54,7 @@ def plan_project(root, project=None):
         # A command outside the 4.3.2 catalogue comes from a plugin (or a project
         # saved by another GB Studio): refused below, named, never a crash.
         status = ("coeur" if command.startswith(INTERNAL_PREFIX) else
+                  "ngpc" if command in NGPC_EVENTS else
                   "plugin" if command in project.plugin_events else
                   catalogue[command]["status"] if command in catalogue else "plugin_ou_inconnu")
         events[command] = {"status": status, "uses": len(where), "first": where[0]}
@@ -64,7 +65,7 @@ def plan_project(root, project=None):
             entry = catalogue[command]
             events[command]["reason"] = entry.get("raison") or f"not available on the NGPC (ECARTS {entry['ecart']})"
     refused = sorted(c for c in used if not c.startswith(INTERNAL_PREFIX) and c not in IMPLEMENTED_EVENTS
-                     and c not in project.plugin_events)
+                     and c not in NGPC_EVENTS and c not in project.plugin_events)
     return {
         "format": "ngpcraft-project-plan/0.1",
         "project": str(Path(root)),

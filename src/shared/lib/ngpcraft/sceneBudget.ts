@@ -17,6 +17,8 @@ export interface NgpcSceneBudget {
   spriteTiles: number;
   backgroundPalettes: number;
   actors: number;
+  // Projectile pool of a scene that launches projectiles (ngpc.projectile_capacity).
+  projectiles?: { capacity: number; ramBytes: number };
   // Height of the shown view: 152, or 144 for a scene drawn between bands.
   viewHeight: number;
   // Warnings of the V3 for this scene, in English.

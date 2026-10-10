@@ -859,12 +859,12 @@
   },
   "EVENT_ACTOR_MOVE_RELATIVE": {
    "gbs2": true,
-   "partiel": "tuiles ou pixels, murs et acteurs, verrou de direction, horizontal / vertical / diagonal ; valeurs calculees livrees, position et direction d'acteur comprises (docs/M4_EXPRESSIONS.md) ; refuses : image d'acteur, proprietes de camera, champ moteur lu, abs/atan2/isqrt ; moveType ou units inconnus refuses ; necessite le moteur de scene (scene de depart non LOGO)",
+   "partiel": "tuiles ou pixels, murs et acteurs, verrou de direction, horizontal / vertical / diagonal ; valeurs calculees livrees, position et direction d'acteur comprises (docs/M4_EXPRESSIONS.md) ; refuses : image d'acteur, proprietes de camera, champ moteur lu ; moveType ou units inconnus refuses ; necessite le moteur de scene (scene de depart non LOGO)",
    "status": "identique"
   },
   "EVENT_ACTOR_MOVE_TO": {
    "gbs2": true,
-   "partiel": "tuiles ou pixels, murs et acteurs, verrou de direction, horizontal / vertical / diagonal ; valeurs calculees livrees, position et direction d'acteur comprises (docs/M4_EXPRESSIONS.md) ; refuses : image d'acteur, proprietes de camera, champ moteur lu, abs/atan2/isqrt ; moveType ou units inconnus refuses ; necessite le moteur de scene (scene de depart non LOGO)",
+   "partiel": "tuiles ou pixels, murs et acteurs, verrou de direction, horizontal / vertical / diagonal ; valeurs calculees livrees, position et direction d'acteur comprises (docs/M4_EXPRESSIONS.md) ; refuses : image d'acteur, proprietes de camera, champ moteur lu ; moveType ou units inconnus refuses ; necessite le moteur de scene (scene de depart non LOGO)",
    "status": "identique"
   },
   "EVENT_ACTOR_MOVE_TO_VALUE": {
@@ -892,12 +892,12 @@
   },
   "EVENT_ACTOR_SET_DIRECTION": {
    "gbs2": true,
-   "partiel": "valeurs calculees livrees, position et direction d'acteur comprises (docs/M4_EXPRESSIONS.md) ; refuses : image d'acteur, proprietes de camera, champ moteur lu, abs/atan2/isqrt ; necessite le moteur de scene (scene de depart non LOGO)",
+   "partiel": "valeurs calculees livrees, position et direction d'acteur comprises (docs/M4_EXPRESSIONS.md) ; refuses : image d'acteur, proprietes de camera, champ moteur lu ; necessite le moteur de scene (scene de depart non LOGO)",
    "status": "identique"
   },
   "EVENT_ACTOR_SET_FRAME": {
    "gbs2": true,
-   "partiel": "valeurs calculees livrees, position et direction d'acteur comprises (docs/M4_EXPRESSIONS.md) ; refuses : image d'acteur, proprietes de camera, champ moteur lu, abs/atan2/isqrt ; acteur sans animation posee : sans effet (GBVM divise par zero) ; necessite le moteur de scene (scene de depart non LOGO)",
+   "partiel": "valeurs calculees livrees, position et direction d'acteur comprises (docs/M4_EXPRESSIONS.md) ; refuses : image d'acteur, proprietes de camera, champ moteur lu ; acteur sans animation posee : sans effet (GBVM divise par zero) ; necessite le moteur de scene (scene de depart non LOGO)",
    "status": "identique"
   },
   "EVENT_ACTOR_SET_FRAME_TO_VALUE": {
@@ -911,7 +911,7 @@
   },
   "EVENT_ACTOR_SET_POSITION": {
    "gbs2": true,
-   "partiel": "tuiles ou pixels, valeurs calculees livrees, position et direction d'acteur comprises (docs/M4_EXPRESSIONS.md) ; refuses : image d'acteur, proprietes de camera, champ moteur lu, abs/atan2/isqrt ; necessite le moteur de scene (scene de depart non LOGO)",
+   "partiel": "tuiles ou pixels, valeurs calculees livrees, position et direction d'acteur comprises (docs/M4_EXPRESSIONS.md) ; refuses : image d'acteur, proprietes de camera, champ moteur lu ; necessite le moteur de scene (scene de depart non LOGO)",
    "status": "identique"
   },
   "EVENT_ACTOR_SET_POSITION_RELATIVE": {
@@ -1085,7 +1085,7 @@
   "EVENT_IF": {
    "ecart": "§20",
    "gbs2": true,
-   "partiel": "condition : valeurs livrees : nombre, vrai, faux, variable (globale, locale, temporaire), direction, constante de projet ou du moteur (docs/M6_CONSTANTS.md), et toute operation calculee (RPN) sur elles, sauf abs, atan2 et isqrt (fonctions de bibliotheque GBDK non livrees) ; position et direction d'acteur livrees ; refusees a la compilation : image d'acteur, proprietes de camera, champ moteur lu, operandes indirect/numberSymbol ; expressions texte selon docs/M4_EXPRESSIONS.md, erreurs refusees explicitement (§20)",
+   "partiel": "condition : valeurs livrees : nombre, vrai, faux, variable (globale, locale, temporaire), direction, constante de projet ou du moteur (docs/M6_CONSTANTS.md), et toute operation calculee (RPN) sur elles, abs, atan2 et isqrt compris (calcules en jeu, docs/PLAN_MEGAMAN.md L4) ; position et direction d'acteur livrees ; refusees a la compilation : image d'acteur, proprietes de camera, champ moteur lu, operandes indirect/numberSymbol ; expressions texte selon docs/M4_EXPRESSIONS.md, erreurs refusees explicitement (§20)",
    "status": "adapte"
   },
   "EVENT_IF_ACTOR_AT_POSITION": {
@@ -1461,7 +1461,7 @@
   "EVENT_SET_VALUE": {
    "ecart": "§20",
    "gbs2": true,
-   "partiel": "valeurs livrees : nombre, vrai, faux, variable (globale, locale, temporaire), direction, constante de projet ou du moteur (docs/M6_CONSTANTS.md), et toute operation calculee (RPN) sur elles, sauf abs, atan2 et isqrt (fonctions de bibliotheque GBDK non livrees) ; position et direction d'acteur livrees ; refusees a la compilation : image d'acteur, proprietes de camera, champ moteur lu, operandes indirect/numberSymbol ; expressions texte selon docs/M4_EXPRESSIONS.md, erreurs refusees explicitement (§20)",
+   "partiel": "valeurs livrees : nombre, vrai, faux, variable (globale, locale, temporaire), direction, constante de projet ou du moteur (docs/M6_CONSTANTS.md), et toute operation calculee (RPN) sur elles, abs, atan2 et isqrt compris (calcules en jeu, docs/PLAN_MEGAMAN.md L4) ; position et direction d'acteur livrees ; refusees a la compilation : image d'acteur, proprietes de camera, champ moteur lu, operandes indirect/numberSymbol ; expressions texte selon docs/M4_EXPRESSIONS.md, erreurs refusees explicitement (§20)",
    "status": "adapte"
   },
   "EVENT_SHOW_SPRITES": {
@@ -1536,13 +1536,13 @@
   "EVENT_VARIABLE_MATH_EVALUATE": {
    "ecart": "§20",
    "gbs2": false,
-   "partiel": "expressions texte : nombres, variables directes/indirectes, operateurs arithmetiques/logiques/bitwise, min/max/rnd ; constantes @id@ et @engine::NOM@ (docs/M6_CONSTANTS.md) ; abs/atan2/isqrt dynamiques refuses ; neg() refuse dans Evaluate Expression (SUB binaire dans la reference), moins unaire accepte ; erreurs ScriptValue refusees au lieu du repli a zero",
+   "partiel": "expressions texte : nombres, variables directes/indirectes, operateurs arithmetiques/logiques/bitwise, min/max/rnd ; constantes @id@ et @engine::NOM@ (docs/M6_CONSTANTS.md) ; abs/atan2/isqrt calcules en jeu (docs/PLAN_MEGAMAN.md L4) ; neg() refuse dans Evaluate Expression (SUB binaire dans la reference), moins unaire accepte ; erreurs ScriptValue refusees au lieu du repli a zero",
    "status": "adapte"
   },
   "EVENT_WAIT": {
    "ecart": "§20",
    "gbs2": true,
-   "partiel": "duree en secondes ou en images ; valeurs livrees : nombre, vrai, faux, variable (globale, locale, temporaire), direction, constante de projet ou du moteur (docs/M6_CONSTANTS.md), et toute operation calculee (RPN) sur elles, sauf abs, atan2 et isqrt (fonctions de bibliotheque GBDK non livrees) ; position et direction d'acteur livrees ; refusees a la compilation : image d'acteur, proprietes de camera, champ moteur lu, operandes indirect/numberSymbol ; expressions texte selon docs/M4_EXPRESSIONS.md, erreurs refusees explicitement (§20)",
+   "partiel": "duree en secondes ou en images ; valeurs livrees : nombre, vrai, faux, variable (globale, locale, temporaire), direction, constante de projet ou du moteur (docs/M6_CONSTANTS.md), et toute operation calculee (RPN) sur elles, abs, atan2 et isqrt compris (calcules en jeu, docs/PLAN_MEGAMAN.md L4) ; position et direction d'acteur livrees ; refusees a la compilation : image d'acteur, proprietes de camera, champ moteur lu, operandes indirect/numberSymbol ; expressions texte selon docs/M4_EXPRESSIONS.md, erreurs refusees explicitement (§20)",
    "status": "adapte"
   },
   "EVENT_WEAPON_ATTACK": {

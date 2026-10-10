@@ -82,9 +82,14 @@ def sequence(iterations):
 
 
 def expected_scene(project, scene, applied):
-    """The scene's RGB444 pixels with each op's group showing tileset tile `applied[op]`."""
+    """The scene's RGB444 pixels with each op's group showing tileset tile `applied[op]`.
+
+    Native colours (ngpc_color "native", docs/M7_NATIVE_COLOR.md): the tile is
+    shown with the tileset PNG's own colours (transparent = the backdrop),
+    no GB palette or flips (native backgrounds ignore tileColors)."""
     source = background_source(project, scene)
-    slots = background_slots(project, scene, "oracle")
+    native = source.backdrop is not None
+    slots = None if native else background_slots(project, scene, "oracle")
     w, h = source.width, source.height
     cols = w // 8
     _, _, raw = read_png(project.root / PurePosixPath(source.resource).with_suffix(""))
@@ -105,7 +110,10 @@ def expected_scene(project, scene, applied):
         if index >= (tw // 8) * (th // 8):
             continue                        # ECARTS 19: unchanged
         tc = tw // 8
-        tile = [gb_index(trgba[((index // tc) * 8 + yy) * tw + (index % tc) * 8 + xx]) for yy in range(8) for xx in range(8)]
+        cell_rgba = [trgba[((index // tc) * 8 + yy) * tw + (index % tc) * 8 + xx] for yy in range(8) for xx in range(8)]
+        tile = [gb_index(p) for p in cell_rgba]
+        colours = [source.backdrop if p[3] < 128 else (p[0] >> 4) | (p[1] >> 4) << 4 | (p[2] >> 4) << 8
+                   for p in cell_rgba] if native else None
         target = keys[y * cols + x]
         for n, k in enumerate(keys):
             if k != target:
@@ -116,7 +124,8 @@ def expected_scene(project, scene, applied):
                 for xx in range(8):
                     sx = 7 - xx if attr & 32 else xx
                     sy = 7 - yy if attr & 64 else yy
-                    pixels[(ty * 8 + yy) * w + tx * 8 + xx] = slots[attr & 7][tile[sy * 8 + sx]]
+                    pixels[(ty * 8 + yy) * w + tx * 8 + xx] = (colours[yy * 8 + xx] if native else
+                                                               slots[attr & 7][tile[sy * 8 + sx]])
     return pixels, w, h
 
 

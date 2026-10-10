@@ -1,5 +1,9 @@
 import { DMG_PALETTE } from "consts";
-import { colorizeSpriteData, chromaKeyData } from "shared/lib/helpers/color";
+import {
+  colorizeSpriteData,
+  chromaKeyData,
+  nativeSpriteData,
+} from "shared/lib/helpers/color";
 import { ObjPalette } from "shared/lib/resources/types";
 
 // eslint-disable-next-line no-restricted-globals
@@ -125,11 +129,7 @@ workerCtx.onmessage = async (evt) => {
       const nativeCtx = nativeCanvas.getContext("2d");
       if (nativeCtx) {
         const data = new Uint8ClampedArray(tileImageData.data);
-        for (let i = 0; i < data.length; i += 4) {
-          data[i] = (data[i] >> 4) * 17;
-          data[i + 1] = (data[i + 1] >> 4) * 17;
-          data[i + 2] = (data[i + 2] >> 4) * 17;
-        }
+        nativeSpriteData(data);
         nativeCtx.putImageData(
           new ImageData(data, tileImageData.width, tileImageData.height),
           0,

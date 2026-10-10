@@ -110,6 +110,7 @@ interface V3ExportScene {
   sprite_tiles?: number;
   scr2_palettes?: number;
   actors?: unknown[];
+  projectiles?: { capacity?: number; pool_ram_bytes?: number };
   view?: { height?: number };
   warnings?: unknown[];
 }
@@ -141,6 +142,13 @@ const readSceneBudgets = async (
         scene.scr2_palettes ??
         Math.max(0, ...(scene.background?.palette_counts ?? [])),
       actors: scene.actors?.length ?? 0,
+      projectiles:
+        scene.projectiles?.capacity !== undefined
+          ? {
+              capacity: scene.projectiles.capacity,
+              ramBytes: scene.projectiles.pool_ram_bytes ?? 0,
+            }
+          : undefined,
       viewHeight: scene.view?.height ?? 152,
       warnings: (scene.warnings ?? []).filter(
         (w): w is string => typeof w === "string",

@@ -64,13 +64,26 @@ class ReplacePlan:
 
 
 def plan(project, scene, source, slots, ops, tilesets, where):
-    """source: scene_assets.BackgroundSource; slots: the 8 GB background palettes (RGB444)."""
+    """source: scene_assets.BackgroundSource; slots: the 8 GB background palettes (RGB444).
+
+    Native colours (source.backdrop set, docs/M7_NATIVE_COLOR.md): the cells
+    are grouped as GB Studio would (tile data from the PNG's green, no
+    attributes), and a replacement tile is drawn with the tileset PNG's own
+    colours (RGB444, transparent = the backdrop); compile_background then
+    gives the group one native palette holding every variant, or refuses."""
     width, height = source.width, source.height
     cols, rows = width // 8, height // 8
     by_symbol = {t["symbol"]: (i, t) for i, t in enumerate(tilesets)}
+    native = source.backdrop is not None
+    if native:
+        from .native_color import to_rgb444
+        w, _, rgba = read_png(project.root / PurePosixPath(source.resource).with_suffix(""))
+        native_keys = [_tile_indices(w, rgba, n) for n in range(cols * rows)]
 
     def key(n):
         """The cell's tile data as stored (screen pixels un-flipped) and its VRAM bank."""
+        if native:
+            return native_keys[n], 0
         attr = source.attributes[n]
         tx, ty = n % cols, n // cols
         data = tuple(source.indices[(ty * 8 + (7 - y if attr & 64 else y)) * width + tx * 8 + (7 - x if attr & 32 else x)]
@@ -88,7 +101,14 @@ def plan(project, scene, source, slots, ops, tilesets, where):
         index, tileset = by_symbol[symbol]
         if symbol not in loaded:
             w, h, rgba = read_png(project.root / PurePosixPath(tileset["_rel"]).with_suffix(""))
-            loaded[symbol] = [_tile_indices(w, rgba, n) for n in range((w // 8) * (h // 8))]
+            count = (w // 8) * (h // 8)
+            loaded[symbol] = [_tile_indices(w, rgba, n) for n in range(count)]
+            if native:
+                loaded[symbol, "rgb"] = [
+                    tuple(source.backdrop if p[3] < 128 else to_rgb444(*p[:3])
+                          for p in (rgba[((n // (w // 8)) * 8 + y) * w + (n % (w // 8)) * 8 + x]
+                                    for y in range(8) for x in range(8)))
+                    for n in range(count)]
         target = keys[y * cols + x]
         groups.setdefault(target, set()).add(symbol)
     variants, offsets = {}, {}
@@ -101,6 +121,9 @@ def plan(project, scene, source, slots, ops, tilesets, where):
         cell = [drawn]
         for symbol in sorted(groups[keys[n]]):
             offsets[(n, symbol)] = len(cell)
+            if native:
+                cell.extend(loaded[symbol, "rgb"])
+                continue
             palette = slots[attr & 7]
             for tile in loaded[symbol]:
                 if attr & 128 and any(bool(a) != bool(b) for a, b in zip(keys[n][0], tile)):

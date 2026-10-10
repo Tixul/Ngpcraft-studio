@@ -20,6 +20,12 @@ CASES = [("$01$ * $00$", 21), ("2+3*4", 14), ("(2+3)*4", 20),
          ("!$0$", 0), ("$0$ < $1$ && $1$ != 0", 1),
          ("min($0$,max(4,$1$))", 3), ("0x8000+$1$", -32761),
          ("$0$||0", 1), ("$0$==$1$", 0), ("", 0)]
+# GBDK library calls of vm_rpn (emit.RPN_LIBRARY), computed in game ($0$ = 3,
+# $1$ = 7), from variable 50. atan2 on the axes: exact for any implementation.
+LIBRARY_CASES = [("abs(-$1$)", 7), ("abs($1$)", 7), ("abs(0x8000+$0$-3)", -32768),
+                 ("isqrt($1$*$1$*100)", 70), ("isqrt($1$*$1$*100-1)", 69), ("isqrt($0$-3)", 0),
+                 ("isqrt(-$0$+2)", 255), ("isqrt(255*255+$0$-3)", 255), ("isqrt(255*255+$0$-4)", 254),
+                 ("atan2(0,$1$)", 64), ("atan2($1$,0)", 128), ("atan2(0,-$1$)", 192), ("atan2(-$1$,0)", 0)]
 
 def project_case(root):
     project = Path(root) / "project"
@@ -29,7 +35,7 @@ def project_case(root):
     script, expected = [], {}
     for index, value in ((0, 3), (1, 7)):
         script.append(ev(f"seed-{index}", "EVENT_SET_VALUE", variable=str(index), value=num(value)))
-    for index, (expression, value) in enumerate(CASES, 20):
+    for index, (expression, value) in [*enumerate(CASES, 20), *enumerate(LIBRARY_CASES, 50)]:
         script.append(ev(f"expression-{index}", "EVENT_VARIABLE_MATH_EVALUATE", variable=str(index), expression=expression))
         expected[index] = value & 65535
     script.append(ev("folded-value", "EVENT_SET_VALUE", variable="40", value={"type": "expression", "value": "abs(-4)+isqrt(16)"}))

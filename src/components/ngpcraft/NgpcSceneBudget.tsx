@@ -109,6 +109,17 @@ export const NgpcSceneBudget = ({ sceneId }: NgpcSceneBudgetProps) => {
         <span>{l10n("FIELD_NGPC_BUDGET_ACTORS")}</span>
         <span>{budget.actors}</span>
       </Line>
+      {budget.projectiles && (
+        <Line>
+          <span>{l10n("FIELD_NGPC_BUDGET_PROJECTILES")}</span>
+          <span>
+            {l10n("FIELD_NGPC_BUDGET_PROJECTILES_DETAIL", {
+              capacity: budget.projectiles.capacity,
+              bytes: budget.projectiles.ramBytes,
+            })}
+          </span>
+        </Line>
+      )}
       {warnings.map((warning) => (
         <Warning key={warning}>{warning}</Warning>
       ))}

@@ -45,7 +45,7 @@ def wait(key, frames):
 PHASES = ((43, (None, None, None)), (44, (2, 1, 3)), (45, (0, 1, 3)))
 
 
-def project_case(root, start=(20, 10)):
+def project_case(root, start=(20, 10), native=False):
     project = base_project(root, start)
     path = next((project / "project/scenes").rglob("scene.gbsres"))
     scene = json.loads(path.read_text(encoding="utf-8"))
@@ -61,14 +61,24 @@ def project_case(root, start=(20, 10)):
         setv("f45", 45, 1),
         {"command": "EVENT_LOOP", "args": {}, "children": {"true": [wait("idle", 1)]}, "id": "loop"}]
     write_json(path, scene)
+    if native:   # docs/M7_NATIVE_COLOR.md, PLAN_MEGAMAN L5: the tileset PNG's own colours
+        from ngpcraft.project import SCHEMA, SIDECAR
+        write_json(project / SIDECAR, {"schema": SCHEMA, "ngpc": {},
+                                       "resources": {scene["backgroundId"]: {"ngpc_color": "native"}}})
+        # Native colours ignore tileColors and refuse GB priority tiles in them.
+        for res in (project / "assets/backgrounds").glob("*.gbsres"):
+            data = json.loads(res.read_text(encoding="utf-8"))
+            if data["id"] == scene["backgroundId"]:
+                data["tileColors"] = ""
+                write_json(res, data)
     return project
 
 
-def run(out, toolchain, emulator, bios, witness=False, start=(20, 10)):
+def run(out, toolchain, emulator, bios, witness=False, start=(20, 10), native=False):
     out = Path(out)
     if out.exists():
         raise ValueError("output must be a new directory")
-    project_path = project_case(out, start)
+    project_path = project_case(out, start, native)
     manifest = export_project(project_path, out / "export")
     if witness:
         # Witness: the generated scene code ignores every write request.
@@ -142,7 +152,8 @@ if __name__ == "__main__":
         p.add_argument("--" + n, required=True)
     p.add_argument("--witness", action="store_true")
     p.add_argument("--start", type=int, nargs=2, default=(20, 10), help="player start tile (camera)")
+    p.add_argument("--native", action="store_true", help="ngpc_color native background")
     a = p.parse_args()
-    r = run(a.out, a.toolchain, a.emulator, a.bios, a.witness, tuple(a.start))
+    r = run(a.out, a.toolchain, a.emulator, a.bios, a.witness, tuple(a.start), a.native)
     print(json.dumps(r, indent=2))
     raise SystemExit(0 if r["passed"] else 1)
