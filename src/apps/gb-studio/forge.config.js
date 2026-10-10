@@ -8,6 +8,17 @@ const rendererPreloadConfig = {
   plugins: [],
 };
 
+// NgpCraft: Linux packages (deb, rpm), named like the AppImage below.
+const ngpcraftLinuxPackage = {
+  name: "ngpcraft-studio",
+  bin: "ngpcraft-studio",
+  productName: "NgpCraft Studio",
+  description: "Neo Geo Pocket Color game maker based on GB Studio",
+  homepage: "https://github.com/Tixul/Ngpcraft-studio",
+  icon: "src/assets/app/icon/app_icon.png",
+  categories: ["Development", "IDE"],
+};
+
 module.exports = async () => {
   const { MakerAppImage } = await import("@reforged/maker-appimage");
 
@@ -47,20 +58,23 @@ module.exports = async () => {
           categories: ["Development", "IDE"],
         },
       }),
+      // NgpCraft: deb / rpm default to package.json's name ("gb-studio", kept
+      // for plugin compatibility) for the package and its binary; the binary
+      // is packagerConfig.executableName, and the package must not take the
+      // name of an installed GB Studio.
       {
         name: "@electron-forge/maker-deb",
         config: {
           options: {
-            icon: "src/assets/app/icon/app_icon.png",
+            ...ngpcraftLinuxPackage,
+            maintainer: "Tixul",
           },
         },
       },
       {
         name: "@electron-forge/maker-rpm",
         config: {
-          options: {
-            icon: "src/assets/app/icon/app_icon.png",
-          },
+          options: ngpcraftLinuxPackage,
         },
       },
     ],
