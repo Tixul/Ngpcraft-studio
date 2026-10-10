@@ -335,6 +335,12 @@ const SceneView = memo(({ id, index, editable }: SceneViewProps) => {
   const ngpcNative = useAppSelector((state) =>
     isNgpcNativeBackground(state.ngpcraft.extension, scene?.backgroundId),
   );
+  // Backdrop of the V3 plan (chosen or automatic), for transparent pixels.
+  const ngpcBackdrop = useAppSelector((state) =>
+    scene?.backgroundId
+      ? state.ngpcraft.palettePlans[scene.backgroundId]?.plan?.backdrop
+      : undefined,
+  );
   const zoomRatio = zoom / 100;
   // NgpCraft: NGPC planes (advanced mode = a second background on SCR1).
   const secondBackground = useSecondBackground(id);
@@ -739,6 +745,7 @@ const SceneView = memo(({ id, index, editable }: SceneViewProps) => {
                 width={scene.width * TILE_SIZE}
                 height={scene.height * TILE_SIZE}
                 src={assetURL("backgrounds", background)}
+                backdrop={ngpcBackdrop}
               />
             ) : hideMainPlane ? null : gbcEnabled && background.autoColor ? (
               <AutoColorizedImage

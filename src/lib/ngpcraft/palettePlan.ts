@@ -58,13 +58,23 @@ export const hasNativeColorSupport = async (): Promise<boolean> => {
 export const readPalettePlan = async (
   projectPath: string,
   backgroundId: string,
+  // ngpc_backdrop "rrggbb" from the editor state (maybe not saved yet).
+  backdrop?: string,
 ): Promise<PalettePlanResult> => {
   if (!(await hasNativeColorSupport())) {
     return { error: "This NgpCraft V3 has no palette-plan command." };
   }
   const result = await run(
     getPython(),
-    ["palette-plan", Path.dirname(projectPath), "--background", backgroundId],
+    [
+      "palette-plan",
+      Path.dirname(projectPath),
+      "--background",
+      backgroundId,
+      ...(backdrop && /^[0-9a-fA-F]{6}$/.test(backdrop)
+        ? ["--backdrop", backdrop]
+        : []),
+    ],
     await getV3Root(),
   );
   if (result.code !== 0) {

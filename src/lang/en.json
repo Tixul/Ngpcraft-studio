@@ -917,6 +917,8 @@
   "FIELD_NGPC_BUDGET_LAST_BUILD": "At the last build.",
   "FIELD_NGPC_PALETTES_LOADING": "Computing NGPC palettes…",
   "FIELD_NGPC_BACKDROP": "Backdrop colour:",
+  "FIELD_NGPC_BACKDROP_AUTO": "auto",
+  "FIELD_NGPC_BACKDROP_INFO": "Backdrop: the colour shown where the image is transparent, and free in every tile (it does not count in the 3 colours of a tile). Automatic = the most frequent colour of the image; click the square to choose another one.",
   "FIELD_NGPC_PALETTES_COUNT": "NGPC palettes: {count} / {limit}, computed from the PNG colours",
   "FIELD_NGPC_PALETTES_ERRORS": "{count} tile(s) cannot be coloured (more than 3 colours plus the backdrop, or beyond 16 palettes), first at tile {x}, {y}. They are marked in red on the scene; the build refuses them.",
   "FIELD_NGPC_COLOR_VARIANTS": "Colour variants",

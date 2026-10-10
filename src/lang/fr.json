@@ -889,6 +889,8 @@
   "FIELD_NGPC_BUDGET_LAST_BUILD": "À la dernière construction.",
   "FIELD_NGPC_PALETTES_LOADING": "Calcul des palettes NGPC…",
   "FIELD_NGPC_BACKDROP": "Couleur de fond :",
+  "FIELD_NGPC_BACKDROP_AUTO": "auto",
+  "FIELD_NGPC_BACKDROP_INFO": "Couleur de fond : celle qui s'affiche là où l'image est transparente, et gratuite dans chaque tuile (elle ne compte pas dans les 3 couleurs d'une tuile). Automatique = la couleur la plus fréquente de l'image ; cliquez sur le carré pour en choisir une autre.",
   "FIELD_NGPC_PALETTES_COUNT": "Palettes NGPC : {count} / {limit}, calculées à partir des couleurs du PNG",
   "FIELD_NGPC_PALETTES_ERRORS": "{count} tuile(s) impossible(s) à colorier (plus de 3 couleurs en plus du fond, ou au-delà de 16 palettes), la première en {x}, {y}. Elles sont encadrées en rouge sur la scène ; la construction les refuse.",
   "FIELD_NGPC_COLOR_VARIANTS": "Variantes de couleurs",

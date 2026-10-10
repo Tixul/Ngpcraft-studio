@@ -1344,8 +1344,10 @@ ipcMain.handle("ngpcraft:get-catalogue", () => loadNgpcCatalogue());
 
 // NgpCraft: "NGPC native" background colours (docs/ETUDE_16_PALETTES.md).
 ipcMain.handle("ngpcraft:native-color-support", () => hasNativeColorSupport());
-ipcMain.handle("ngpcraft:palette-plan", (_, backgroundId: string) =>
-  readPalettePlan(projectPath, backgroundId),
+ipcMain.handle(
+  "ngpcraft:palette-plan",
+  (_, backgroundId: string, backdrop?: string) =>
+    readPalettePlan(projectPath, backgroundId, backdrop),
 );
 ipcMain.handle("ngpcraft:sprite-palette-plan", (_, spriteId: string) =>
   readSpritePalettePlan(projectPath, spriteId),

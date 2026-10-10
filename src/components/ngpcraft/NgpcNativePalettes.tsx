@@ -3,18 +3,22 @@
  * (docs/ETUDE_16_PALETTES.md). Shows what the V3 computed from the PNG:
  * backdrop, palettes (3 colours each, 16 at most), tiles in error.
  */
-import React, { useEffect } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import styled from "styled-components";
 import l10n from "shared/lib/lang/l10n";
 import { useAppDispatch, useAppSelector } from "store/hooks";
 import {
+  actions as ngpcraftActions,
   loadNativeColorSupport,
   loadPalettePlan,
 } from "store/features/ngpcraft/ngpcraftState";
 import {
+  getNgpcResourceSetting,
   isNgpcNativeResource,
   NgpcProjectExtension,
 } from "shared/lib/ngpcraft/projectExtension";
+import { NGPC_BACKDROP_KEY } from "shared/lib/ngpcraft/palettePlan";
+import { Button } from "ui/buttons/Button";
 
 const Wrapper = styled.div`
   display: flex;
@@ -36,6 +40,19 @@ const Swatch = styled.span<{ $color: string }>`
   height: 14px;
   background: #${(props) => props.$color};
   border: 1px solid ${(props) => props.theme.colors.input.border};
+`;
+
+const BackdropInput = styled.input`
+  width: 22px;
+  height: 16px;
+  padding: 0;
+  border: 1px solid ${(props) => props.theme.colors.input.border};
+  background: none;
+  cursor: pointer;
+`;
+
+const Muted = styled.span`
+  opacity: 0.7;
 `;
 
 const Palette = styled.span`
@@ -82,10 +99,33 @@ export const NgpcNativePalettes = ({
 }: NgpcNativePalettesProps) => {
   const dispatch = useAppDispatch();
   const state = useAppSelector((s) => s.ngpcraft.palettePlans[backgroundId]);
+  // ngpc_backdrop: the backdrop chosen by the author, or automatic.
+  const chosen = useAppSelector((s) => {
+    const value = getNgpcResourceSetting(
+      s.ngpcraft.extension,
+      backgroundId,
+      NGPC_BACKDROP_KEY,
+    );
+    return typeof value === "string" ? value : undefined;
+  });
+  const [draft, setDraft] = useState<string>();
 
   useEffect(() => {
     dispatch(loadPalettePlan(backgroundId));
-  }, [dispatch, backgroundId, backgroundVersion]);
+  }, [dispatch, backgroundId, backgroundVersion, chosen]);
+
+  const setBackdrop = useCallback(
+    (value: string | undefined) => {
+      dispatch(
+        ngpcraftActions.setResourceSetting({
+          resourceId: backgroundId,
+          key: NGPC_BACKDROP_KEY,
+          value,
+        }),
+      );
+    },
+    [dispatch, backgroundId],
+  );
 
   if (!state || (state.loading && !state.plan)) {
     return <Wrapper>{l10n("FIELD_NGPC_PALETTES_LOADING")}</Wrapper>;
@@ -101,9 +141,29 @@ export const NgpcNativePalettes = ({
   const first = plan.errors[0];
   return (
     <Wrapper>
-      <Row title={`#${plan.backdrop}`}>
+      <Row title={l10n("FIELD_NGPC_BACKDROP_INFO")}>
         {l10n("FIELD_NGPC_BACKDROP")}
-        <Swatch $color={plan.backdrop} />
+        <BackdropInput
+          type="color"
+          value={`#${draft ?? plan.backdrop}`}
+          onChange={(e) => setDraft(e.currentTarget.value.slice(1))}
+          onBlur={() => {
+            if (draft && draft !== plan.backdrop) {
+              setBackdrop(draft);
+            }
+            setDraft(undefined);
+          }}
+        />
+        <Muted>
+          {chosen
+            ? `#${plan.backdrop}`
+            : `#${plan.backdrop} (${l10n("FIELD_NGPC_BACKDROP_AUTO")})`}
+        </Muted>
+        {chosen && (
+          <Button size="small" onClick={() => setBackdrop(undefined)}>
+            {l10n("FIELD_NGPC_BACKDROP_AUTO")}
+          </Button>
+        )}
       </Row>
       <Row>
         {l10n("FIELD_NGPC_PALETTES_COUNT", {

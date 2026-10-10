@@ -25,8 +25,12 @@ import {
   setNgpcSoundEffects,
   NgpcNativeSfxStep,
   setNgpcResourceSetting,
+  getNgpcResourceSetting,
 } from "shared/lib/ngpcraft/projectExtension";
-import type { NgpcPalettePlan } from "shared/lib/ngpcraft/palettePlan";
+import {
+  NGPC_BACKDROP_KEY,
+  type NgpcPalettePlan,
+} from "shared/lib/ngpcraft/palettePlan";
 import type { NgpcSceneBudget } from "shared/lib/ngpcraft/sceneBudget";
 
 export interface NgpcPalettePlanState {
@@ -81,9 +85,19 @@ export const loadNativeColorSupport = createAsyncThunk<boolean>(
 export const loadPalettePlan = createAsyncThunk<
   { plan: NgpcPalettePlan } | { error: string },
   string
->("ngpcraftView/loadPalettePlan", (backgroundId) =>
-  API.ngpcraft.palettePlan(backgroundId),
-);
+>("ngpcraftView/loadPalettePlan", (backgroundId, { getState }) => {
+  // The backdrop chosen in the editor (ngpc_backdrop), saved or not.
+  const { ngpcraft } = getState() as { ngpcraft: NgpcraftState };
+  const backdrop = getNgpcResourceSetting(
+    ngpcraft.extension,
+    backgroundId,
+    NGPC_BACKDROP_KEY,
+  );
+  return API.ngpcraft.palettePlan(
+    backgroundId,
+    typeof backdrop === "string" ? backdrop : undefined,
+  );
+});
 
 const ngpcraftSlice = createSlice({
   name: "ngpcraft",

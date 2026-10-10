@@ -60,6 +60,8 @@ def main():
     kind = cmd.add_mutually_exclusive_group(required=True)
     kind.add_argument("--background", help="background resource id")
     kind.add_argument("--sprite", help="sprite sheet resource id")
+    cmd.add_argument("--backdrop", help="background: backdrop colour rrggbb (default: the project's choice "
+                                        "is not read; automatic = the most frequent colour)")
     cmd = subs.add_parser("convert-sfx", help="sound effect file (.sav FX Hammer, .vgm) -> native NGPC effect steps")
     cmd.add_argument("sound", type=Path)
     cmd.add_argument("--effect", type=int, default=0, help="effect index in an FX Hammer bank (GB Studio's)")
@@ -114,7 +116,7 @@ def main():
             result = export_library(args.library, args.out)
         elif args.command == "palette-plan":
             from .native_color import palette_plan, sprite_plan
-            result = (palette_plan(args.project, args.background) if args.background
+            result = (palette_plan(args.project, args.background, args.backdrop) if args.background
                       else sprite_plan(args.project, args.sprite))
         elif args.command == "convert-sfx":
             from .sfx_convert import convert

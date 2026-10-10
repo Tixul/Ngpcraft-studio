@@ -34,12 +34,33 @@ def hex_color(word):
     return "".join(f"{((word >> s) & 15) * 17:02x}" for s in (0, 4, 8))
 
 
-def native_pixels(width, height, rgba):
-    """(pixels as RGB444 words, backdrop): transparent pixels take the backdrop."""
+def native_pixels(width, height, rgba, backdrop=None):
+    """(pixels as RGB444 words, backdrop): transparent pixels take the backdrop.
+    backdrop: the author's choice (ngpc_backdrop, RGB444), else the most
+    frequent colour (ties: the smallest word)."""
     raw = [to_rgb444(r, g, b) if a >= 128 else None for r, g, b, a in rgba]
-    counts = Counter(c for c in raw if c is not None)
-    backdrop = min(counts, key=lambda c: (-counts[c], c)) if counts else 0
+    if backdrop is None:
+        counts = Counter(c for c in raw if c is not None)
+        backdrop = min(counts, key=lambda c: (-counts[c], c)) if counts else 0
     return tuple(backdrop if c is None else c for c in raw), backdrop
+
+
+BACKDROP_KEY = "ngpc_backdrop"
+
+
+def parse_backdrop(value, where):
+    """ngpc_backdrop "rrggbb" -> RGB444 word (each channel >> 4, as the PNG colours)."""
+    import re
+    if not isinstance(value, str) or not re.fullmatch(r"[0-9a-fA-F]{6}", value):
+        raise ValueError(f"{where}: {value!r}, expected a colour \"rrggbb\" (6 hex digits)")
+    return to_rgb444(int(value[0:2], 16), int(value[2:4], 16), int(value[4:6], 16))
+
+
+def backdrop_choice(project, resource_id):
+    """The author's backdrop of a native background (RGB444), or None (automatic)."""
+    ngpc = getattr(project, "ngpc", None) or {}
+    value = ngpc.get("resources", {}).get(resource_id, {}).get(BACKDROP_KEY)
+    return None if value is None else parse_backdrop(value, f"{resource_id}.{BACKDROP_KEY}")
 
 
 def plan_native(width, height, pixels, backdrop, palette_limit=PALETTE_LIMIT):
@@ -91,8 +112,11 @@ def background_resource(root, background_id):
     raise ValueError(f"background {background_id!r}: no background resource has this id")
 
 
-def palette_plan(root, background_id):
-    """The `palette-plan` command output (format ngpcraft-palette-plan/1)."""
+def palette_plan(root, background_id, backdrop=None):
+    """The `palette-plan` command output (format ngpcraft-palette-plan/1).
+    backdrop: "rrggbb" chosen in the editor (not saved yet), else automatic."""
+    if backdrop is not None:
+        backdrop = parse_backdrop(backdrop, "--backdrop")
     from pathlib import Path
     root = Path(root)
     if root.is_file():
@@ -104,7 +128,7 @@ def palette_plan(root, background_id):
     width, height, rgba = read_png(png)
     if width % 8 or height % 8:
         raise ValueError(f"{rel}: image {width}x{height} is not tile aligned")
-    pixels, backdrop = native_pixels(width, height, rgba)
+    pixels, backdrop = native_pixels(width, height, rgba, backdrop)
     plan = plan_native(width, height, pixels, backdrop)
     errors = []
     for x, y, colours, reason in plan["errors"]:
@@ -137,7 +161,7 @@ def is_native(project, resource_id):
             and settings.get("colorMode") != "mono")
 
 
-def native_source(project, rel, width, height, rgba, attrs, where):
+def native_source(project, rel, width, height, rgba, attrs, where, backdrop=None):
     """BackgroundSource fields of a native background: (pixels, indices,
     attributes). GB index 0 = backdrop (transparent for sprite priority and a
     second background), 1 otherwise; no GB attributes (palettes, flips)."""
@@ -147,7 +171,7 @@ def native_source(project, rel, width, height, rgba, attrs, where):
     if any(a & 0x80 for a in attrs):
         raise CompileError(f"{where}: {rel}: GB priority tiles in tileColors with ngpc_color \"native\" "
                            "are not delivered (native colours ignore tileColors)")
-    pixels, backdrop = native_pixels(width, height, rgba)
+    pixels, backdrop = native_pixels(width, height, rgba, backdrop)
     plan = plan_native(width, height, pixels, backdrop)
     if plan["errors"]:
         x, y, colours, reason = plan["errors"][0]

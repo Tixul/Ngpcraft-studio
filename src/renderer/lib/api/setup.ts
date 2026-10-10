@@ -190,8 +190,9 @@ const APISetup = {
       ipcRenderer.invoke("ngpcraft:native-color-support"),
     palettePlan: (
       backgroundId: string,
+      backdrop?: string,
     ): Promise<{ plan: NgpcPalettePlan } | { error: string }> =>
-      ipcRenderer.invoke("ngpcraft:palette-plan", backgroundId),
+      ipcRenderer.invoke("ngpcraft:palette-plan", backgroundId, backdrop),
     spritePalettePlan: (
       spriteId: string,
     ): Promise<{ plan: NgpcSpritePalettePlan } | { error: string }> =>

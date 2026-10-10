@@ -73,6 +73,12 @@ const BackgroundViewer = ({ backgroundId }: MetaspriteEditorProps) => {
   const ngpcNative = useAppSelector((state) =>
     isNgpcNativeBackground(state.ngpcraft.extension, background?.id),
   );
+  // Backdrop of the V3 plan (chosen or automatic), for transparent pixels.
+  const ngpcBackdrop = useAppSelector((state) =>
+    background?.id
+      ? state.ngpcraft.palettePlans[background.id]?.plan?.backdrop
+      : undefined,
+  );
   const previewAsSceneId = useAppSelector(
     (state) => state.editor.previewAsSceneId,
   );
@@ -142,6 +148,7 @@ const BackgroundViewer = ({ backgroundId }: MetaspriteEditorProps) => {
                   width={background.width * TILE_SIZE}
                   height={background.height * TILE_SIZE}
                   src={assetURL("backgrounds", background)}
+                  backdrop={ngpcBackdrop}
                 />
               ) : colorsEnabled && background.autoColor ? (
                 <AutoColorizedImage

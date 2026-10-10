@@ -49,7 +49,8 @@ RESOURCE_DIRS = ("project", "assets", "plugins")
 NGPC_PROJECT_KEYS = frozenset({"option_long_press", "actor_capacity", "frame_rate", "native_sfx", "vm_context_policy",
                                "projectile_capacity", "default_color"})
 FRAME_RATES = (60, 30)
-NGPC_RESOURCE_KEYS = frozenset({"second_background", "native_music", "ngpc_color", "ngpc_color_variants"})
+NGPC_RESOURCE_KEYS = frozenset({"second_background", "native_music", "ngpc_color", "ngpc_color_variants",
+                                "ngpc_backdrop"})
 from .second_background import is_rate as second_is_rate
 OPTION_LONG_PRESS = ("select", "start")
 
@@ -432,6 +433,15 @@ def _load_sidecar(root, ids, errors, files):
             if ext["ngpc_color"] not in ("native", "gbs"):
                 errors.append(f"{where}.ngpc_color: {ext['ngpc_color']!r}, expected \"native\" or \"gbs\" "
                               "(omit the key for the project default, ngpc.default_color)")
+        if "ngpc_backdrop" in ext:
+            # docs/M7_NATIVE_COLOR.md: the backdrop of a native background, chosen.
+            from .native_color import parse_backdrop
+            if rid in ids and files[ids[rid]]["_resourceType"] != "background":
+                errors.append(f"{where}.ngpc_backdrop: extension belongs to a background resource")
+            try:
+                parse_backdrop(ext["ngpc_backdrop"], where + ".ngpc_backdrop")
+            except ValueError as exc:
+                errors.append(str(exc))
         if "ngpc_color_variants" in ext:
             # docs/PLAN_MEGAMAN.md L5: recoloured PNGs of a native background.
             from .native_variants import validate_variants

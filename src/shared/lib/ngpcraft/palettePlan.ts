@@ -11,6 +11,9 @@ export const NGPC_PALETTE_PLAN_FORMAT = "ngpcraft-palette-plan/1";
 // ngpcraft.json resources.<background id>.ngpc_color
 export const NGPC_COLOR_KEY = "ngpc_color";
 export const NGPC_COLOR_NATIVE = "native";
+// ngpcraft.json resources.<background id>.ngpc_backdrop: "rrggbb", the
+// backdrop of a native background; absent = the most frequent colour.
+export const NGPC_BACKDROP_KEY = "ngpc_backdrop";
 
 export interface NgpcPalettePlanError {
   x: number;

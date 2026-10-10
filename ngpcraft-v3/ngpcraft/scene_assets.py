@@ -140,7 +140,9 @@ def background_source(project, scene):
             raise CompileError(f"{rel}: image {width}x{height} is not tile aligned")
         attrs = decompress_tile_colors(bg.get("tileColors") or "", f"{rel}")
         attrs = bytes(attrs[n] if n < len(attrs) else 0 for n in range((width // 8) * (height // 8)))
-        pixels, indices, attrs, backdrop = native_source(project, rel, width, height, rgba, attrs, where)
+        from .native_color import backdrop_choice
+        pixels, indices, attrs, backdrop = native_source(project, rel, width, height, rgba, attrs, where,
+                                                         backdrop_choice(project, bg["id"]))
         return BackgroundSource(width, height, pixels, indices, attrs, rel, backdrop)
     if bg.get("monoOverrideId"):
         raise CompileError(f"{where}: monoOverride backgrounds are not supported yet")
