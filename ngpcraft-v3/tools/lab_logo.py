@@ -39,7 +39,7 @@ def pattern_png(width=160, height=144):
     return b'\x89PNG\r\n\x1a\n' + chunk(b'IHDR', struct.pack('>IIBBBBB', width, height, 8, 2, 0, 0, 0)) + chunk(b'IDAT', zlib.compress(raw)) + chunk(b'IEND', b'')
 
 
-def project_case(root):
+def project_case(root, height=144):
     root = Path(root)
     project = root / "project"
     derive(REFERENCE / "appData/templates/gbs2", project, "cave", (0, 0), False)
@@ -55,11 +55,11 @@ def project_case(root):
     callback["children"] = {"true": [ev("press-count", "EVENT_INC_VALUE", variable="11")]}
     scene["script"] = [ev("visit", "EVENT_INC_VALUE", variable="10"), callback]
     write_json(path, scene)
-    atomic_bytes(project / "assets/backgrounds/logo-pattern.png", pattern_png())
+    atomic_bytes(project / "assets/backgrounds/logo-pattern.png", pattern_png(160, height))
     write_json(project / "assets/backgrounds/logo-pattern.png.gbsres", {
         "_resourceType": "background", "id": "logo-pattern", "name": "Logo pattern",
-        "symbol": "bg_logo_pattern", "filename": "logo-pattern.png", "width": 20, "height": 18,
-        "imageWidth": 160, "imageHeight": 144,
+        "symbol": "bg_logo_pattern", "filename": "logo-pattern.png", "width": 20, "height": height // 8,
+        "imageWidth": 160, "imageHeight": height,
         "tileColors": "", "autoColor": False, "monoOverrideId": ""})
     settings = project / "project/settings.gbsres"
     data = json.loads(settings.read_text())
@@ -74,10 +74,11 @@ def project_case(root):
     return project
 
 
-def run(out, toolchain, emulator, bios):
+def run(out, toolchain, emulator, bios, height=144):
+    """height 144: GB Studio's 360-tile LOGO between the 4 px bands; 152: the NGPC screen, 380 tiles."""
     out = Path(out)
     out.mkdir(parents=True, exist_ok=False)
-    project = project_case(out)
+    project = project_case(out, height)
     manifest = export_project(project, out / "export")
     build = build_rom(out / "export", toolchain)
     rom = (out / "export/rom/game.ngc").read_bytes()
@@ -93,7 +94,8 @@ def run(out, toolchain, emulator, bios):
     machine.set_breakpoints([])
     loaded = load_project(project)
     _, _, expected = background_pixels(loaded, loaded.scenes[0])
-    expected = [0] * 640 + list(expected) + [0] * 640
+    band = [0] * (160 * (152 - height) // 2)
+    expected = band + list(expected) + band
     symbols = build["link_audit"]["public_symbols"]
     base = symbols["_script_memory"]["address"]
     rows, mismatch = [], []
@@ -121,7 +123,7 @@ def run(out, toolchain, emulator, bios):
               "no_player_sprites": all(r["oam_used"] == 0 for r in rows[30:]),
               "no_directional_motion": all(r["player"] == [0, 0] for r in rows),
               "visits": variable("VAR_LOGO_VISITS"), "input_calls": variable("VAR_LOGO_INPUT"),
-              "source_tiles": 360, "sprite_tiles": manifest["scene_engine"]["sprite_tiles"],
+              "source_tiles": 20 * height // 8, "sprite_tiles": manifest["scene_engine"]["sprite_tiles"],
               "rows": rows, "source_sha256": {p: hashlib.sha256((source_root / p).read_bytes()).hexdigest() for p in source_files},
               "rom_sha256": hashlib.sha256(rom).hexdigest(), "emulator_core_sha256": hashlib.sha256(Path(machine._lib._name).read_bytes()).hexdigest(),
               "silicon_timing": [10, 8], "ram": "noise", "console_validated": False}

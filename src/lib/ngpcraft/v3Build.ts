@@ -32,6 +32,7 @@ import {
 } from "lib/ngpcraft/projectExtension";
 import {
   NgpcProjectExtension,
+  projectResourceIds,
   withoutOrphanResources,
 } from "shared/lib/ngpcraft/projectExtension";
 import type { NgpcSceneBudget } from "shared/lib/ngpcraft/sceneBudget";
@@ -214,30 +215,6 @@ const writeSnapshot = async (
       encodeNgpcExtension(extension),
     );
   }
-};
-
-// Every resource id of the project, the same set the V3 checks
-// (ngpcraft.json resources.<id>): top-level resources, scene actors/triggers.
-const projectResourceIds = (project: ProjectResources): Set<string> => {
-  const ids = new Set<string>();
-  const add = (item: unknown) => {
-    if (item && typeof item === "object" && "id" in item) {
-      const id = (item as { id: unknown }).id;
-      if (typeof id === "string") {
-        ids.add(id);
-      }
-    }
-  };
-  for (const value of Object.values(project)) {
-    if (Array.isArray(value)) {
-      value.forEach(add);
-    }
-  }
-  for (const scene of project.scenes) {
-    scene.actors.forEach(add);
-    scene.triggers.forEach(add);
-  }
-  return ids;
 };
 
 const runV3 = async (

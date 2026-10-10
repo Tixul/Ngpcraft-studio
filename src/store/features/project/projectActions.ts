@@ -13,6 +13,11 @@ import type { LoadProjectResult } from "lib/project/loadProjectData";
 import { ProjectResources } from "shared/lib/resources/types";
 import { compressProjectResources } from "shared/lib/resources/compression";
 import { buildCompressedProjectResourcesPatch } from "shared/lib/resources/patch";
+import {
+  projectResourceIds,
+  withoutOrphanResources,
+} from "shared/lib/ngpcraft/projectExtension";
+import { dropOrphanResources } from "store/features/ngpcraft/ngpcraftViewActions";
 
 let saving = false;
 
@@ -217,8 +222,19 @@ const saveProject = createAsyncThunk<void>(
 
       thunkApi.dispatch(setSaveStep("writing"));
       await API.project.saveProject(patch);
-      // NgpCraft: ngpcraft.json is saved with the project.
-      await API.ngpcraft.writeExtension(state.ngpcraft.extension);
+      // NgpCraft: ngpcraft.json is saved with the project, without the
+      // settings of resources deleted or recreated since (the V3 refuses
+      // unknown ids; the build would only warn about them).
+      const cleaned = state.ngpcraft.extension
+        ? withoutOrphanResources(
+            state.ngpcraft.extension,
+            projectResourceIds(normalizedProject),
+          )
+        : { extension: null, removed: [] };
+      await API.ngpcraft.writeExtension(cleaned.extension);
+      if (cleaned.removed.length > 0) {
+        thunkApi.dispatch(dropOrphanResources(cleaned.removed));
+      }
 
       thunkApi.dispatch(setSaveStep("complete"));
     } catch (e) {

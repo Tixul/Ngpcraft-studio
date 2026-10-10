@@ -16,6 +16,7 @@ import {
 } from "@reduxjs/toolkit";
 import API from "renderer/lib/api";
 import projectActions from "store/features/project/projectActions";
+import { dropOrphanResources } from "./ngpcraftViewActions";
 import {
   NgpcProjectExtension,
   NgpcProjectSettingKey,
@@ -58,6 +59,8 @@ export const initialState: NgpcraftState = {
 export const setSceneBudgets = createAction<NgpcSceneBudget[]>(
   "ngpcraftView/setSceneBudgets",
 );
+
+export { dropOrphanResources };
 
 export const setCameraPreview = createAction<{
   sceneId: string;
@@ -144,6 +147,24 @@ const ngpcraftSlice = createSlice({
       })
       .addCase(setPlaneVisibility, (state, action) => {
         state.planeVisibility[action.payload.plane] = action.payload.visible;
+      })
+      .addCase(dropOrphanResources, (state, action) => {
+        const resources = state.extension?.resources;
+        if (
+          !state.extension ||
+          !resources ||
+          typeof resources !== "object" ||
+          action.payload.length === 0
+        ) {
+          return;
+        }
+        const drop = new Set(action.payload);
+        state.extension = {
+          ...state.extension,
+          resources: Object.fromEntries(
+            Object.entries(resources).filter(([id]) => !drop.has(id)),
+          ),
+        };
       })
       .addCase(setSceneBudgets, (state, action) => {
         state.sceneBudgets = Object.fromEntries(

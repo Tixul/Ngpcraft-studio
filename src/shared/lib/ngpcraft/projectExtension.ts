@@ -47,6 +47,33 @@ export const getNgpcProjectSettings = (
   return isRecord(ngpc) ? (ngpc as NgpcProjectSettings) : {};
 };
 
+// Every resource id of a project (ProjectResources), the set the V3 checks
+// ngpcraft.json resources.<id> against: top-level resources, scene
+// actors/triggers.
+export const projectResourceIds = (project: {
+  scenes: readonly { actors: readonly unknown[]; triggers: readonly unknown[] }[];
+}): Set<string> => {
+  const ids = new Set<string>();
+  const add = (item: unknown) => {
+    if (item && typeof item === "object" && "id" in item) {
+      const id = (item as { id: unknown }).id;
+      if (typeof id === "string") {
+        ids.add(id);
+      }
+    }
+  };
+  for (const value of Object.values(project)) {
+    if (Array.isArray(value)) {
+      value.forEach(add);
+    }
+  }
+  for (const scene of project.scenes) {
+    scene.actors.forEach(add);
+    scene.triggers.forEach(add);
+  }
+  return ids;
+};
+
 // The extension without the resources.<id> entries of resources the project
 // no longer has (a scene or asset deleted after an NGPC setting was given to
 // it): the V3 refuses unknown ids. `removed` lists them, to be reported.

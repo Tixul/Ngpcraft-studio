@@ -5,7 +5,17 @@
  * Case met by Wilfried: a second background set on the template's scene,
  * the scene replaced by new ones.
  */
-import { withoutOrphanResources } from "shared/lib/ngpcraft/projectExtension";
+import {
+  projectResourceIds,
+  withoutOrphanResources,
+} from "shared/lib/ngpcraft/projectExtension";
+import ngpcraftReducer, {
+  initialState,
+} from "store/features/ngpcraft/ngpcraftState";
+import { dropOrphanResources } from "store/features/ngpcraft/ngpcraftViewActions";
+import documentReducer, {
+  initialState as documentInitialState,
+} from "store/features/document/documentState";
 
 test("entries of missing resources are removed and listed", () => {
   const extension = {
@@ -31,4 +41,31 @@ test("nothing to remove keeps the same object", () => {
   const result = withoutOrphanResources(extension, new Set(["a"]));
   expect(result.removed).toEqual([]);
   expect(result.extension).toBe(extension);
+});
+
+test("project ids include scene actors and triggers", () => {
+  const ids = projectResourceIds({
+    scenes: [{ id: "s", actors: [{ id: "a" }], triggers: [{ id: "t" }] }],
+    backgrounds: [{ id: "b" }],
+  } as unknown as Parameters<typeof projectResourceIds>[0]);
+  expect([...ids].sort()).toEqual(["a", "b", "s", "t"]);
+});
+
+test("after a save, orphans leave the state without marking the project modified", () => {
+  const state = ngpcraftReducer(
+    {
+      ...initialState,
+      extension: {
+        schema: "ngpcraft-project/1",
+        resources: { gone: { ngpc_color: "native" }, kept: {} },
+      },
+    },
+    dropOrphanResources(["gone"]),
+  );
+  expect(state.extension?.resources).toEqual({ kept: {} });
+  const document = documentReducer(
+    documentInitialState,
+    dropOrphanResources(["gone"]),
+  );
+  expect(document.modified).toBe(false);
 });

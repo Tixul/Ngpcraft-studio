@@ -18,10 +18,10 @@ class LogoTests(unittest.TestCase):
     def test_logo_refuses_sizes_outside_the_original_fixed_360_tile_map(self):
         with tempfile.TemporaryDirectory() as tmp:
             path = project_case(Path(tmp))
-            for width, height in ((168, 144), (160, 152), (160, 136)):
+            for width, height in ((168, 144), (160, 160), (160, 136)):
                 atomic_bytes(path / "assets/backgrounds/logo-pattern.png", pattern_png(width, height))
                 project = load_project(path)
-                with self.assertRaisesRegex(CompileError, "LOGO background.*must be 160x144"):
+                with self.assertRaisesRegex(CompileError, "LOGO background.*must be 160x144.*or 160x152"):
                     build_engine_scene(project, project.scenes[0])
 
     def test_empty_player_ignores_configured_sheet_without_loading_assets(self):
@@ -86,6 +86,13 @@ class LogoRomTests(unittest.TestCase):
         self.assertEqual(report["pixel_checked_frames"], 210)
         self.assertEqual(report["pixel_mismatch_frames"], [])
         self.assertEqual(report["sprite_tiles"], 0)
+
+    def test_ngpc_screen_logo_160x152_exact_pixels(self):
+        # The NGPC's full screen: 380 distinct tiles, no black bands.
+        with tempfile.TemporaryDirectory() as tmp:
+            report = run(Path(tmp) / "proof", *ENV, height=152)
+        self.assertTrue(report["passed"], {k: v for k, v in report.items() if k != "rows"})
+        self.assertEqual(report["source_tiles"], 380)
 
 
 if __name__ == "__main__":

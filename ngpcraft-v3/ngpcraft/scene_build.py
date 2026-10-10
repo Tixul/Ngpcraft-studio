@@ -112,9 +112,11 @@ def build_engine_scene(project, scene, default_mode=None, sprite_switches=(), em
         raise CompileError(f"{where}: LOGO sprite changes, emotes, projectiles and tile replacement are not delivered yet")
     source = background_source(project, scene)
     width, height, pixels = source.width, source.height, source.pixels
-    if logo and (width, height) != (160, 144):
-        raise CompileError(f"{where}: LOGO background {width}x{height} must be 160x144 "
-                           "(GB Studio emits a fixed 360-tile map)")
+    # GB Studio emits a fixed 360-tile map (160x144, between black bands on
+    # the NGPC); 160x152 is the NGPC's full screen, 380 tiles (docs/M4_LOGO.md).
+    if logo and (width, height) not in ((160, 144), (160, 152)):
+        raise CompileError(f"{where}: LOGO background {width}x{height} must be 160x144 (GB Studio's "
+                           "fixed 360-tile map) or 160x152 (the NGPC screen); a LOGO does not scroll")
     if height < 144 or width < 160:
         raise CompileError(f"{where}: background {width}x{height} px is smaller than the 160x144 GB screen "
                            "(GB Studio scenes are at least 20x18 tiles)")
