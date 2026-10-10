@@ -19,3 +19,6 @@ _work/
 !/docs/ECARTS_GBSTUDIO.md
 /AGENTS.md
 /DEVLOG.md
+# Personal demo (MegaX): hard-coded local paths and ripped assets, kept locally
+/tools/demo_megax.py
+/tools/probe_megax.py

@@ -200,6 +200,16 @@ class NativeSpriteTests(unittest.TestCase):
         with self.assertRaisesRegex(CompileError, "17 palettes, 16 at most"):
             place_native_palettes((many(17),), "t")
 
+    def test_short_palettes_fill_a_three_colour_slot(self):
+        # A sheet of 1 or 2 colours (a small shot) packs a shorter palette; the K2GE slot
+        # table expects 3 colours (scene_sprites refused "8 sprite palettes of 3 colors").
+        from ngpcraft.sprites import HardwareSprite, NgpcSheet, place_native_palettes
+        spr = lambda p: HardwareSprite(0, 0, 0, False, False, p)
+        shot = NgpcSheet("shot", "8x16", (), ((spr(0),),), (0,), (), palettes=((0x0FF, 0xFFF),))
+        dot = NgpcSheet("dot", "8x16", (), ((spr(0),),), (0,), (), palettes=((0x0F0,),))
+        self.assertEqual(place_native_palettes((shot, dot), "t")[1],
+                         ((8, (0x0FF, 0xFFF, 0)), (9, (0x0F0, 0, 0))))
+
     def test_sprite_plan_cli(self):
         from tools.lab_native_sprites import project_case as sprite_case
         with tempfile.TemporaryDirectory() as tmp:

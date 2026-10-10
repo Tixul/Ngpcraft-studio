@@ -2,7 +2,7 @@
 /*
  * NgpCraft: settings left in ngpcraft.json by a deleted or recreated scene or
  * asset are not sent to the V3 (it refuses unknown ids) and are reported.
- * Case met by Wilfried: a second background set on the template's scene,
+ * Case met in use: a second background set on the template's scene,
  * the scene replaced by new ones.
  */
 import {

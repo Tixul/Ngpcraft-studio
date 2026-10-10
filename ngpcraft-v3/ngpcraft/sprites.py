@@ -418,7 +418,9 @@ def place_native_palettes(sheets, where, reserved=frozenset()):
         raise CompileError(f"{where}: native sprite sheets need {len(table)} palettes, {len(free)} at most "
                            f"in this scene (16 K2GE sprite palettes; GB Studio sprite palettes "
                            f"{', '.join(map(str, taken)) or 'none'} in use)")
-    return tuple(out), tuple(zip(free, table))
+    # A sheet of 1 or 2 colours packs a shorter palette: the slot is still 3 colours
+    # (unused entries black, as palette_words pads the background ones).
+    return tuple(out), tuple((slot, tuple(p) + (0,) * (3 - len(p))) for slot, p in zip(free, table))
 
 
 def editor_frame_origin(sheet, sx, sy):
