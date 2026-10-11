@@ -8,6 +8,8 @@ project is compiled into an NGPC ROM by the **NgpCraft V3 compiler**
 game uses, then builds it with the Toshiba TLCS-900 toolchain.
 
 > Work in progress. Not affiliated with GB Studio, Chris Maltby or SNK.
+>
+> Join us on Discord. https://discord.gg/Xm82EVDbgj
 
 ## What works
 
@@ -83,6 +85,8 @@ The editor finds the compiler in `ngpcraft-v3/`. Packages:
 Branches: `ngpcraft` is NgpCraft Studio, based on the GB Studio 4.3.2
 release; `develop` follows GB Studio's own development (future 5.0, new
 project format) and is not used by NgpCraft.
+
+
 
 ## License and credits
 
