@@ -10,6 +10,7 @@ from .background_rom import c_array
 
 
 def projectile_motion_source():
+    from .world import pos_t
     frozen = json.loads((Path(__file__).parent / "runtime/projectile_motion.json").read_text(encoding="utf-8"))
     lines = ["/* GBVM bd6f41c projectiles.c / sincos.h; MIT (c) 2020 Toxa. */"]
     c_array(lines, "proj_sine", frozen["sine_wave"], "signed char")
@@ -60,5 +61,6 @@ void ngc_projectile_motion(unsigned short *pos, short *delta,
         delta[1] = (short)(-((cosv * (short)speed) >> 7));
     }
 }
-'''.strip().splitlines())
+'''.strip().replace("unsigned short *pos", f"{pos_t()} *pos").replace(
+        "(unsigned short)(pos[", f"({pos_t()})(pos[").splitlines())   # world.py: position width
     return lines + [""]

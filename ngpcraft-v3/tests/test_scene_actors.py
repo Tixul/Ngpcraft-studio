@@ -82,8 +82,9 @@ class ActorsSourceTests(unittest.TestCase):
         one = {"sheet": 0, "x": 0, "y": 0, "dir": 0, "flags": 0, "anim_tick": 3, "move_speed": 0}
         with self.assertRaisesRegex(CompileError, "0 actors"):
             actors_source([], [sheet], 256)
-        with self.assertRaisesRegex(CompileError, "32 actors"):
-            actors_source([one] * 32, [sheet], 256)
+        from ngpcraft.scene_actors import MAX_ACTORS     # actor_capacity 64 + the player
+        with self.assertRaisesRegex(CompileError, f"{MAX_ACTORS + 1} actors, NGPC allows 1..{MAX_ACTORS}"):
+            actors_source([one] * (MAX_ACTORS + 1), [sheet], 256)
         with self.assertRaisesRegex(CompileError, "actor 0 uses an unknown sheet 3"):
             actors_source([dict(one, sheet=3)], [sheet], 256)
         with self.assertRaisesRegex(CompileError, "actor 0 direction"):

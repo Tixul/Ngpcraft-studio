@@ -14,8 +14,10 @@ BACK_PLANE = 2
 
 
 def compile_scene_background(width, height, pixels, *, where, animated=None, symbols=False, backdrop=None):
+    # recycle: over 16 palettes, slots shared between palettes never streamed together
+    # (palette_recycle.py); refused where a consumer needs them all loaded.
     asset = compile_background(width, height, pixels, planes=(BACK_PLANE, FRONT_PLANE), where=where,
-                               animated=animated, symbols=symbols, backdrop=backdrop)
+                               animated=animated, symbols=symbols, backdrop=backdrop, recycle=True)
     if asset.complement_cells:
         # The packer's primary layer belongs behind; its fourth-colour
         # complement belongs in front. Keep the asset's front-to-back contract.

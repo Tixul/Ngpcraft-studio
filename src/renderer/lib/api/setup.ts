@@ -4,7 +4,14 @@ import type {
   NgpcPalettePlan,
   NgpcSpritePalettePlan,
 } from "shared/lib/ngpcraft/palettePlan";
-import type { NgpcSceneBudget } from "shared/lib/ngpcraft/sceneBudget";
+import type {
+  NgpcBudgetEstimate,
+  NgpcSceneBudget,
+} from "shared/lib/ngpcraft/sceneBudget";
+import type {
+  AutoMusicBinding,
+  AutoSfxBinding,
+} from "shared/lib/ngpcraft/projectExtension";
 import type {
   ChooseNativeSongResult,
   ConvertSfxResult,
@@ -193,6 +200,10 @@ const APISetup = {
       backdrop?: string,
     ): Promise<{ plan: NgpcPalettePlan } | { error: string }> =>
       ipcRenderer.invoke("ngpcraft:palette-plan", backgroundId, backdrop),
+    estimateBudget: (
+      sceneId: string,
+    ): Promise<NgpcBudgetEstimate | { error: string }> =>
+      ipcRenderer.invoke("ngpcraft:estimate-budget", sceneId),
     spritePalettePlan: (
       spriteId: string,
     ): Promise<{ plan: NgpcSpritePalettePlan } | { error: string }> =>
@@ -599,6 +610,14 @@ const APISetup = {
       sceneBudgets: createSubscribeAPI<
         (event: IpcRendererEvent, budgets: NgpcSceneBudget[]) => void
       >("ngpcraft:scene-budgets"),
+      // Songs converted for the NGPC by the build (autoConvertMusic).
+      autoMusic: createSubscribeAPI<
+        (event: IpcRendererEvent, converted: AutoMusicBinding[]) => void
+      >("ngpcraft:auto-music"),
+      autoSfx:
+        createSubscribeAPI<
+          (event: IpcRendererEvent, converted: AutoSfxBinding[]) => void
+        >("ngpcraft:auto-sfx"),
     },
     project: {
       saveProgress: createSubscribeAPI<

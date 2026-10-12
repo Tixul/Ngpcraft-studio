@@ -104,6 +104,7 @@ class Gbs2Tests(unittest.TestCase):
                     manifest["sha256"][rel] = hashlib.sha256((dst / rel).read_bytes()).hexdigest()
             from ngpcraft.runtime_units import describe_unit, select_units
             manifest["features"] = list(manifest["features"]) + ["save_state"]
+            manifest["save_slots"] = 3      # save_journal.c as linked: SJ_SLOTS 3u (emit.py writes it)
             manifest["runtime_units"] = [describe_unit(u) for u in select_units(manifest["features"], "rom")]
             (dst / "export.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
             import ngpcraft.toolchain as toolchain

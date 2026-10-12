@@ -102,6 +102,17 @@ def observe(dest,emulator,bios_path,driver,out,frames=360,flash=None,save_slot=0
                 captured.add(at);pictures.append((f'frame-{at}.png',png(list(machine.framebuffer()))))
         machine.set_breakpoints([]);machine.run(1,record=False);machine.set_breakpoints(breakpoints)
     else:raise ValueError('audio probe did not reach its frame horizon')
+    # The last API calls before the horizon reach the PSG through the Z80 (relay, music_pan.py) a
+    # little later: drain 40 000 cycles, no new action recorded. Writes past the expected bytes come
+    # from calls after the horizon and are not compared (2026-10-12: a packet cut at the horizon).
+    horizon=len(writes)
+    machine.set_breakpoints([])
+    for _ in range(2):
+        machine.run(20_000,record=False);pcm.append(machine.audio(8192))
+    count=machine.apu_write_count();delta=count-previous_writes
+    if not 0<=delta<=machine.APU_LOG_SIZE:raise ValueError('PSG observation overflow')
+    observed=machine.apu_writes(delta) if delta else []
+    writes.extend({'cycle':int(w.cycle),'address':int(w.address),'value':int(w.value),'kind':int(w.kind)} for w in observed)
     if machine.audio_dropped():raise ValueError('audio ring overflow')
     if machine.z80().trapped or not machine.z80().running:
         raise ValueError('audio Z80 stopped or trapped')
@@ -112,10 +123,13 @@ def observe(dest,emulator,bios_path,driver,out,frames=360,flash=None,save_slot=0
     expected += [b for row in reference['trace'] for packet in row['packets'] for b in packet]
     mirrored=len(writes)%2==0 and all(a['address']==0x4001 and b['address']==0x4000
         and a['kind']==b['kind']==1 and a['value']==b['value'] for a,b in zip(writes[::2],writes[1::2]))
-    actual=[w['value'] for w in writes[::2]]
+    actual=[w['value'] for w in writes[:horizon:2]]          # up to the horizon, as observed
+    drained=[w['value'] for w in writes[horizon::2]]         # landed in the drain
     result={'schema':'ngpcraft-music-events-proof/1',
-        'correct':mirrored and actual==expected and exported['trace']==reference['trace'],
-        'actions':actions,'actual_bytes':actual,'expected_bytes':expected,'mirrored_ports':mirrored,
+        'correct':mirrored and (actual+drained)[:len(expected)]==expected and len(actual)<=len(expected)
+                  and exported['trace']==reference['trace'],
+        'actions':actions,'actual_bytes':actual,'drained_bytes':drained,'expected_bytes':expected,
+        'mirrored_ports':mirrored,
         'host_exported':exported,'host_reference':reference,'frames':frames,'game_ticks':tick_count,
         'rom_bytes':len(rom),'static_ram_bytes':build['link_audit']['static_ram_bytes'],
         'z80_executed':int(machine.z80().executed),'silicon_timing':{'word_wait':10,'bios_wait':8},

@@ -26,6 +26,22 @@ def selected_effects(shared):
     return shared['nativeSfxSelected'] if 'nativeSfxSelected' in shared else frozenset()
 
 
+def _voices(rows):
+    """Bit 0: the effect sounds on the tone voice, bit 1: on the noise voice.
+    music_play_sfx mutes only the effect's channels (its MASK); a voice the
+    effect never makes heard stays the music's."""
+    return (1 if any(r['tone_attenuation'] < 15 for r in rows) else 0) |            (2 if any(r['noise_attenuation'] < 15 for r in rows) else 0)
+
+
+def used_voices(shared):
+    """OR of _voices over the selected effects: the driver entries to keep."""
+    mask = 0
+    for i, rows in enumerate(shared['nativeSfx'].values()):
+        if i in selected_effects(shared):
+            mask |= _voices(rows)
+    return mask
+
+
 def sound_options(project):
     """compileData options.sounds, as soundPlay / textSetSound read them:
     {sound id: (type, numEffects)}; numEffects is readFXHammerNumEffects
@@ -222,16 +238,16 @@ def attach(audio, shared):
     arrays, pointers = [], []
     for i, (name, rows) in enumerate(definitions.items()):
         if i not in selected:
-            pointers.append('{0, 0}')
+            pointers.append('{0, 0, 0}')
             continue
         body = ',\n'.join('    {' + ', '.join(str(r[f]) for f in
                             ('frames', 'tone_divider', 'tone_attenuation', 'noise', 'noise_attenuation')) + '}' for r in rows)
         arrays.append(f'static const NgcSfxStep ngc_sfx_steps{i}[] = {{\n{body}\n}};')
-        pointers.append(f'{{ngc_sfx_steps{i}, {len(rows)}}}')
+        pointers.append(f'{{ngc_sfx_steps{i}, {len(rows)}, {_voices(rows)}}}')
     source = '''
 typedef struct { unsigned char frames; unsigned short tone_divider;
     unsigned char tone_attenuation, noise, noise_attenuation; } NgcSfxStep;
-typedef struct { const NgcSfxStep *steps; unsigned short count; } NgcSfxEffect;
+typedef struct { const NgcSfxStep *steps; unsigned short count; unsigned char voices; } NgcSfxEffect;
 '''
     source += '\n'.join(arrays) + '\nstatic const NgcSfxEffect ngc_sfx_effects[] = {\n' + ',\n'.join(pointers) + '\n};\n'
     source += '''
@@ -246,12 +262,7 @@ static void ngc_sfx_step(void)
         ngc_sfx_id = 65535u; ngc_sfx_priority = 0u; return;
     }
     step = &ngc_sfx_effects[ngc_sfx_id].steps[ngc_sfx_row++];
-    Sfx_PlayToneEx(1u, step->tone_divider ? step->tone_divider : 1u,
-                  step->tone_attenuation, (unsigned char)(step->frames + 1u),
-                  1u, 0, 1u, 0u, 0u, 0u, 1u, 1u);
-    Sfx_PlayNoiseEx((unsigned char)(step->noise & 3u),
-                   (unsigned char)((step->noise >> 2) & 1u), step->noise_attenuation,
-                   (unsigned char)(step->frames + 1u), 0u, 1u, 0u, 1u, 1u);
+TONE_NOISE
     ngc_sfx_remaining = (unsigned char)(step->frames - 1u);
 }
 void ngc_sfx_play(unsigned short id, unsigned char priority)
@@ -261,6 +272,18 @@ void ngc_sfx_play(unsigned short id, unsigned char priority)
     ngc_sfx_remaining = 0u; ngc_sfx_priority = priority;
 }
 '''.replace('NGC_SFX_COUNT', str(len(definitions)) + 'u')
+    voices = used_voices(shared)
+    tone = '''    if (ngc_sfx_effects[ngc_sfx_id].voices & 1u)
+        Sfx_PlayToneEx(1u, step->tone_divider ? step->tone_divider : 1u,
+                      step->tone_attenuation, (unsigned char)(step->frames + 1u),
+                      1u, 0, 1u, 0u, 0u, 0u, 1u, 1u);
+''' if voices & 1 else ''
+    noise = '''    if (ngc_sfx_effects[ngc_sfx_id].voices & 2u)
+        Sfx_PlayNoiseEx((unsigned char)(step->noise & 3u),
+                       (unsigned char)((step->noise >> 2) & 1u), step->noise_attenuation,
+                       (unsigned char)(step->frames + 1u), 0u, 1u, 0u, 1u, 1u);
+''' if voices & 2 else ''
+    source = source.replace('TONE_NOISE\n', tone + noise)
     if shared.get('nativeSfxCut'):
         source += '''/* music_manager.h music_play_sfx(bank, NULL, ...): the running effect
  * stops if the priority allows (sfx_play_isr returns FALSE on a NULL sample). */

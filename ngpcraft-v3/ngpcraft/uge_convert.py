@@ -29,6 +29,11 @@ POLICY = {
 }
 
 
+# 'mono': NR51 only mutes a channel routed nowhere. 'nr51': each side the GB
+# routes a channel to plays it, the other side is silent (music_pan.py).
+STEREO = ('mono','nr51')
+
+
 def read_policy(path):
     raw=Path(path).read_bytes()
     p=json.loads(raw.decode('utf-8-sig'),object_pairs_hook=_unique_object,parse_constant=_finite_json)
@@ -36,6 +41,7 @@ def read_policy(path):
     if 'cycle_alignment' in p and p['cycle_alignment'] != 'exact-repeat':
         raise MusicError('policy.cycle_alignment: expected exact-repeat')
     for key,value in POLICY.items():
+        if key=='stereo' and p[key] in STEREO:continue
         if p[key]!=value or type(p[key]) is not type(value):
             raise MusicError(f'policy.{key}: this closed profile requires {value!r}')
     if not isinstance(p['transpose_semitones'],list) or len(p['transpose_semitones'])!=3:
@@ -143,6 +149,7 @@ def convert(song_path,apu_path,policy_path):
             value=regs[envelope_addr]
             attenuation=volume_attenuation(ch,value)
             if not regs[0xff25]&((1<<ch)|(16<<ch)):attenuation=None
+            pan=(0 if regs[0xff25]&(16<<ch) else 15,0 if regs[0xff25]&(1<<ch) else 15)
             key=(ch,state['instrument'])
             if state['instrument'] is not None:
                 raw_instruments[key]=song[GROUPS[KINDS[ch]]][state['instrument']]
@@ -165,6 +172,7 @@ def convert(song_path,apu_path,policy_path):
                 note,divider,error=tone_note(state['period'],ch,policy['transpose_semitones'][ch])
                 pitch[(ch,state['period'])]=error
             row.append({'note':note,'divider':divider,'instrument':inst,'attenuation':attenuation,'attack':attacks[ch]})
+            if policy['stereo']=='nr51':row[-1]['pan']=pan
             if tick<total:locations.append(loc)
         if tick<total:
             for addr,value in writes:
@@ -217,7 +225,10 @@ def convert(song_path,apu_path,policy_path):
         ngps_rows.append(cells)
     for ch in range(4):
         if not active[ch]:score['channels'].append(None);continue
-        def section(start,stop):
+        # 'pan' exists only under the nr51 stereo policy (row building above).
+        panned=policy['stereo']=='nr51' and any(row[ch] is not None and row[ch]['pan']!=(0,0) for row in frames[:total])
+        def section(start,stop,sent):
+            # A song starts centred; the loop entry is reached from elsewhere.
             events=[]
             for tick in range(start,stop):
                 current=frames[tick][ch]
@@ -232,12 +243,14 @@ def convert(song_path,apu_path,policy_path):
                     if current['note']!=old['note']:
                         event['noise_note' if ch==3 else 'divider']=current['note'] if ch==3 else current['divider']
                 if (tick,ch) in carried:event['routine']=carried[(tick,ch)]
+                if panned and current is not None and current['pan']!=sent:
+                    sent=current['pan'];event['pan']={'left':sent[0],'right':sent[1]}
                 # Extend a preceding timed event only if there is no boundary
                 # action; never combine attacks, updates or repeated note-offs.
                 if event=={'kind':'hold','duration_frames':1} and events:events[-1]['duration_frames']+=1
                 else:events.append(event)
             return events
-        score['channels'].append({'first':section(0,prefix),'repeat':section(prefix,total)})
+        score['channels'].append({'first':section(0,prefix,(0,0)),'repeat':section(prefix,total,None)})
     score['notes']=[{'id':n,'divider':d} for n,d in sorted(dividers.items())]
     patterns=[]
     def patterns_for(start,count):
@@ -274,7 +287,8 @@ def convert(song_path,apu_path,policy_path):
             'losses':['Pulse duty and wave samples replaced by fixed square wave.',
                       'Relative register amplitude quantized to 2 dB attenuation; cross-chip full-scale loudness is uncalibrated.',
                       'Hardware envelope, length, sweep, phase and DAC evolution discarded, not simulated.',
-                      'Stereo becomes mono; fully unrouted channels are muted.',
+                      ('NR51 routing kept as a silent side (pan); fully unrouted channels are muted.'
+                       if policy['stereo']=='nr51' else 'Stereo becomes mono; fully unrouted channels are muted.'),
                       'Noise pitch/width/subpatterns replaced by the explicit fixed noise preset.',
                       'Ordered writes inside one hUGE call collapse to its final mapped state.',
                       'Editable .ngps retriggers on held pitch/level changes; held-score.json preserves updates.',

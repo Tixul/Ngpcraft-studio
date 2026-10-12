@@ -99,15 +99,18 @@ export const NgpcSfxBinding = ({ sound }: NgpcSfxBindingProps) => {
     );
   }, [dispatch, sound.id]);
 
+  // FX Hammer banks and VGM files are converted by the build (autoConvertSounds).
+  const automatic =
+    bound.length < total && (sound.type === "fxhammer" || sound.type === "vgm");
   const status = bound.length
     ? l10n("FIELD_NGPC_SFX_LINKED", { count: bound.length, total })
-    : l10n("FIELD_NGPC_SFX_UNLINKED");
+    : l10n(automatic ? "FIELD_NGPC_SFX_AUTO" : "FIELD_NGPC_SFX_UNLINKED");
 
   return (
     <Bar>
       <Label>{l10n("FIELD_NGPC_SFX")}</Label>
       <Status
-        $warning={bound.length < total || Boolean(error)}
+        $warning={(bound.length < total && !automatic) || Boolean(error)}
         title={error || status}
       >
         {error || status}

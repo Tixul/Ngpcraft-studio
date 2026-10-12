@@ -23,8 +23,14 @@ PALETTES = [(0x00F + i, 0x0F0 + i, 0xF00 + i) for i in range(8)]
 NAMES = ("player", "cat", "npc_gardener", "elephant")
 
 
+def distinct_tile(k):
+    """Tile k: its base-3 digits on the first row (+1, never 0) and a 2 in the last pixel, so no two
+    tiles (or their flips) are equal and scene_sprites.pool_tiles keeps them apart."""
+    return tuple(1 + (k // 3 ** i) % 3 if i < 8 else (2 if i == 63 else 1) for i in range(64))
+
+
 def sheet(frames, tiles=1):
-    return NgpcSheet("t", "8x8", tuple((1,) * 64 for _ in range(tiles)), tuple(frames), (0,), ((0, 0),) * 8)
+    return NgpcSheet("t", "8x8", tuple(distinct_tile(k) for k in range(tiles)), tuple(frames), (0,), ((0, 0),) * 8)
 
 
 class SceneSpritesTests(unittest.TestCase):

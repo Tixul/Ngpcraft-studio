@@ -86,7 +86,7 @@ unsigned short probe(void){
             self.assertEqual(same,pairs);self.assertEqual(again,result)
         with patch.object(module,'read_png',side_effect=AssertionError('unreachable PNG')):
             self.assertEqual(build_projectile_assets(project,[]),((),compile_projectiles([],[],{})))
-        oversized=replace(sheet(),tiles=((0,)*64,)*513)
+        oversized=replace(sheet(),tiles=tuple(tuple((k>>i)&1 for i in range(10))+(0,)*53+(2,) for k in range(513)))
         with self.assertRaisesRegex(CompileError,'513 tiles'):
             build_projectile_assets(project,[],[('actor',oversized)])
 

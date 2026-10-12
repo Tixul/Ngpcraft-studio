@@ -475,7 +475,7 @@ def _load_sidecar(root, ids, errors, files):
             errors.append(f"{where}: expected an object")
             continue
         required = {"background_id", "scroll_x", "scroll_y"}
-        optional = {"loop_x", "loop_y"}
+        optional = {"loop_x", "loop_y", "behind"}
         for key in sorted(config.keys() - required - optional):
             errors.append(f"{where}.{key}: unknown field")
         for key in sorted(required - config.keys()):

@@ -176,7 +176,7 @@ def add_state(files):
     return out, units
 
 
-def check_rom(rom, symbols, units, where="export"):
+def check_rom(rom, symbols, units, where="export", slots=3):
     """The capacity gate on the linked ROM: the sizes cc900 computed."""
     total = 0
     for u in ["vm"] + list(units):
@@ -187,4 +187,4 @@ def check_rom(rom, symbols, units, where="export"):
         if not 0 <= offset < len(rom) - 1:
             raise CompileError(f"{where}: save state: ngc_state_bytes_{u} is not in the cartridge ROM")
         total += rom[offset] | (rom[offset + 1] << 8)
-    return total, check_capacity(total, where)
+    return total, check_capacity(total, where, slots)

@@ -9,6 +9,7 @@ from .compiler import CompileError
 from .project import load_model
 from .scene_init import _Builder, _commented
 from .scene_updates import ActorUpdate
+from .world import at_pos_width, pos_mask, pos_max, pos_t, tile_t
 
 
 def has_events(events):
@@ -106,10 +107,11 @@ void ngc_input_update(void)
 
 
 def topdown_source(n, grid, interact_mask, interactions, triggers=None, hits=None):
+    P, T = pos_t(), tile_t()   # world.py: GB Studio's widths, or the wide world's
     lines = ["/* GBVM states/topdown.c; actor arrays, collision helpers above. */",
              "extern unsigned char ngc_joy;", "extern unsigned char ngc_joy_pressed;",
              "extern unsigned char ngc_recent_joy;",
-             "static unsigned char player_moving;", "static unsigned short player_max_pos;"]
+             "static unsigned char player_moving;", f"static {P} player_max_pos;"]
     if hits:
         from .scene_collisions import collision_source
         lines += collision_source(hits)
@@ -124,12 +126,12 @@ def topdown_source(n, grid, interact_mask, interactions, triggers=None, hits=Non
     lines += ["void ngc_topdown_init(void)", "{", "    player_moving = 0u; player_max_pos = 0u;",
               *(["    trigger_last = 255u;"] if triggers else []),
               *(["    collision_iframes = 0u; collision_pending = 255u;"] if hits else []),
-              "    act_x[0] &= " + ("0xFE00u;" if grid == 16 else "0xFF00u;"),
-              ("    act_y[0] = (unsigned short)((act_y[0] & 0xFE00u) + 256u);" if grid == 16
-               else "    act_y[0] &= 0xFF00u;"), "}", ""]
+              "    act_x[0] &= " + (f"{pos_mask(0xFE00)};" if grid == 16 else f"{pos_mask(0xFF00)};"),
+              (f"    act_y[0] = ({P})((act_y[0] & {pos_mask(0xFE00)}) + 256u);" if grid == 16
+               else f"    act_y[0] &= {pos_mask(0xFF00)};"), "}", ""]
     # actor_in_front_of_player / actor_with_script_in_front_of_player: same
     # list order and UWORD boxes. Script lookup includes actors without collision.
-    lines += ["static unsigned char player_front(unsigned char scripted)", "{",
+    lines += at_pos_width(["static unsigned char player_front(unsigned char scripted)", "{",
               "    unsigned short x = act_x[0];", "    unsigned short y = act_y[0];",
               "    unsigned short l;", "    unsigned short r;", "    unsigned short t;", "    unsigned short b;",
               "    unsigned char i;", "    const short *box;",
@@ -149,10 +151,10 @@ def topdown_source(n, grid, interact_mask, interactions, triggers=None, hits=Non
               "            (unsigned short)(act_x[i] + (unsigned short)box[1]) >= l &&",
               "            (unsigned short)(act_y[i] + (unsigned short)box[2]) <= b &&",
               "            (unsigned short)(act_y[i] + (unsigned short)box[3]) >= t) return i;",
-              "        i = act_prev[i];", "    }", "    return 255u;", "}", "",
+              "        i = act_prev[i];", "    }", "    return 255u;", "}", ""]) + [
               "void ngc_topdown_update(void)", "{", "    unsigned char dir = 255u;",
-              "    unsigned char dirs;", "    unsigned char ts;", "    unsigned char te;",
-              "    unsigned char tile;", *(["    unsigned char hit;"] if interactions or hits else []),
+              "    unsigned char dirs;", f"    {T} ts;", f"    {T} te;",
+              f"    {T} tile;", *(["    unsigned char hit;"] if interactions or hits else []),
               ("    if (((act_x[0] >> 5) & 15u) == 0u && ((act_y[0] >> 5) & 15u) == 8u) {" if grid == 16
                else "    if (((act_x[0] | act_y[0]) & 0xFFu) == 0u) {"),
               "        player_moving = 0u;",
@@ -162,23 +164,23 @@ def topdown_source(n, grid, interact_mask, interactions, triggers=None, hits=Non
               "        else if (dirs & 4u) dir = 2u; else if (dirs & 8u) dir = 0u;",
               "        if (dir != 255u) {", "            player_moving = 1u;",
               "            if (dir == 3u || dir == 1u) {",
-              "                ts = (unsigned char)((unsigned short)(act_y[0] + (unsigned short)act_bounds[2]) >> 8);",
-              "                te = (unsigned char)((unsigned short)(act_y[0] + (unsigned short)act_bounds[3]) >> 8);",
+              f"                ts = ({T})(({P})(act_y[0] + ({P})act_bounds[2]) >> 8);",
+              f"                te = ({T})(({P})(act_y[0] + ({P})act_bounds[3]) >> 8);",
               "                if (dir == 3u) {",
-              "                    tile = (unsigned char)((unsigned short)(act_x[0] + (unsigned short)act_bounds[0]) >> 8);",
-              "                    if (col_range_y(8u, (unsigned char)(tile - 1u), ts, te)) player_moving = 0u;",
+              f"                    tile = ({T})(({P})(act_x[0] + ({P})act_bounds[0]) >> 8);",
+              f"                    if (col_range_y(8u, ({T})(tile - 1u), ts, te)) player_moving = 0u;",
               "                } else {",
-              "                    tile = (unsigned char)((unsigned short)(act_x[0] + (unsigned short)act_bounds[1]) >> 8);",
-              "                    if (col_range_y(4u, (unsigned char)(tile + 1u), ts, te)) player_moving = 0u;", "                }",
+              f"                    tile = ({T})(({P})(act_x[0] + ({P})act_bounds[1]) >> 8);",
+              f"                    if (col_range_y(4u, ({T})(tile + 1u), ts, te)) player_moving = 0u;", "                }",
               "            } else {",
-              "                ts = (unsigned char)((unsigned short)(act_x[0] + (unsigned short)act_bounds[0]) >> 8);",
-              "                te = (unsigned char)((unsigned short)(act_x[0] + (unsigned short)act_bounds[1]) >> 8);",
+              f"                ts = ({T})(({P})(act_x[0] + ({P})act_bounds[0]) >> 8);",
+              f"                te = ({T})(({P})(act_x[0] + ({P})act_bounds[1]) >> 8);",
               "                if (dir == 2u) {",
-              "                    tile = (unsigned char)((unsigned short)(act_y[0] + (unsigned short)act_bounds[2]) >> 8);",
-              "                    if (col_range_x(2u, (unsigned char)(tile - 1u), ts, te)) player_moving = 0u;",
+              f"                    tile = ({T})(({P})(act_y[0] + ({P})act_bounds[2]) >> 8);",
+              f"                    if (col_range_x(2u, ({T})(tile - 1u), ts, te)) player_moving = 0u;",
               "                } else {",
-              "                    tile = (unsigned char)((unsigned short)(act_y[0] + (unsigned short)act_bounds[3]) >> 8);",
-              "                    if (col_range_x(1u, (unsigned char)(tile + 1u), ts, te)) player_moving = 0u;", "                }",
+              f"                    tile = ({T})(({P})(act_y[0] + ({P})act_bounds[3]) >> 8);",
+              f"                    if (col_range_x(1u, ({T})(tile + 1u), ts, te)) player_moving = 0u;", "                }",
               "            }", "            ngc_actor_set_dir(0u, dir, player_moving);",
               "        } else set_anim(0u, act_dir[0]);",
               *(["        hit = player_overlap();",
@@ -199,16 +201,17 @@ def topdown_source(n, grid, interact_mask, interactions, triggers=None, hits=Non
                   "            }", "        }"]
     off = 2 if grid == 16 else 1
     for direction, axis, sign in ((1, "x", "+"), (3, "x", "-"), (0, "y", "+"), (2, "y", "-")):
+        tile = f"({P})(act_{axis}[0] >> 8)" if P != "unsigned short" else f"(act_{axis}[0] >> 8)"
         lines.append(f"        {'if' if direction == 1 else 'else if'} (act_dir[0] == {direction}u) "
-                     f"player_max_pos = (unsigned short)(((act_{axis}[0] >> 8) {sign} {off}u) << 8);")
+                     f"player_max_pos = ({P})(({tile} {sign} {off}u) << 8);")
     lines += ["    }", "    if (player_moving) {"]
     for direction, axis, sign, cmp in ((1, "x", "+", ">"), (3, "x", "-", "<"), (0, "y", "+", ">"), (2, "y", "-", "<")):
         pos = f"act_{axis}[0]"
         lines += [f"        {'if' if direction == 1 else 'else if'} (act_dir[0] == {direction}u) {{",
-                  f"            {pos} = (unsigned short)({pos} {sign} act_speed[0]);",
+                  f"            {pos} = ({P})({pos} {sign} act_speed[0]);",
                   f"            if ({pos} {cmp} player_max_pos) {pos} = player_max_pos;"]
         if sign == "-":
-            lines.append(f"            else if (player_max_pos == 0u && {pos} >= (unsigned short)(0xFFFFu - act_speed[0])) {pos} = 0u;")
+            lines.append(f"            else if (player_max_pos == 0u && {pos} >= ({P})({pos_max()} - act_speed[0])) {pos} = 0u;")
         lines.append("        }")
     lines += ["    }", "}", ""]
     return lines

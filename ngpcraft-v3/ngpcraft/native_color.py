@@ -129,19 +129,31 @@ def palette_plan(root, background_id, backdrop=None):
     if width % 8 or height % 8:
         raise ValueError(f"{rel}: image {width}x{height} is not tile aligned")
     pixels, backdrop = native_pixels(width, height, rgba, backdrop)
-    plan = plan_native(width, height, pixels, backdrop)
-    errors = []
+    # Over 16 palettes the build recycles slots (palette_recycle.py): the plan says how,
+    # or where too many palettes are on screen together.
+    plan = plan_native(width, height, pixels, backdrop, palette_limit=255)
+    errors, recycle = [], None
     for x, y, colours, reason in plan["errors"]:
         entry = {"x": x, "y": y, "colors": [hex_color(c) for c in colours]}
         if reason:
             entry["reason"] = reason
         errors.append(entry)
+    if len(plan["palettes"]) > PALETTE_LIMIT and not errors:
+        from .compiler import CompileError
+        from .palette_recycle import assign
+        try:
+            slots, _ = assign(width // 8, height // 8, plan["tile_palettes"], len(plan["palettes"]),
+                              PALETTE_LIMIT, rel)
+            recycle = {"palettes": len(plan["palettes"]), "slots": max(slots) + 1}
+        except CompileError as exc:
+            x, y = exc.tile
+            errors.append({"x": x, "y": y, "colors": [], "reason": "on_screen", "message": str(exc)})
     return {"format": FORMAT, "background": background_id,
             "width_tiles": width // 8, "height_tiles": height // 8,
             "backdrop": hex_color(backdrop),
             "palettes": [[hex_color(c) for c in p] for p in plan["palettes"]],
             "tile_palettes": list(plan["tile_palettes"]),
-            "errors": errors, "palette_limit": PALETTE_LIMIT}
+            "errors": errors, "palette_limit": PALETTE_LIMIT, "recycle": recycle}
 
 
 GBS = "gbs"                     # ngpc_color "gbs": GB Studio palettes despite a native project default
@@ -172,7 +184,9 @@ def native_source(project, rel, width, height, rgba, attrs, where, backdrop=None
         raise CompileError(f"{where}: {rel}: GB priority tiles in tileColors with ngpc_color \"native\" "
                            "are not delivered (native colours ignore tileColors)")
     pixels, backdrop = native_pixels(width, height, rgba, backdrop)
-    plan = plan_native(width, height, pixels, backdrop)
+    # Over 16 palettes the build recycles slots (palette_recycle.py) or names the place where
+    # too many are on screen together: only the colour count of a tile is checked here.
+    plan = plan_native(width, height, pixels, backdrop, palette_limit=255)
     if plan["errors"]:
         x, y, colours, reason = plan["errors"][0]
         what = ("no palette left among the 16 of the plane" if reason == "palette_limit"

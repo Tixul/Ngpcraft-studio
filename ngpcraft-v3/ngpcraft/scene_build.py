@@ -17,6 +17,7 @@ from .compiler import CompileError
 from .scene_assets import background_source, decompress_tile_colors, sprite_palettes, sprite_sheets
 from .scene_init import _Builder
 from .project import load_model
+from .scene_sprites import sprite_tile_count
 from .sprites import NgpcSheet, ngpc_sheet
 from .parallax import compile_parallax
 
@@ -50,6 +51,9 @@ class EngineScene:
     # native_variants (PLAN_MEGAMAN L5): (plane, ((palette words, backdrop), ...)), variant 0 = as drawn;
     # None when no reachable script switches variants.
     color_variants: object = None
+    # sprite_recycle.py: (palettes, K2GE slot of each) when native sprite palettes
+    # share slots; None otherwise.
+    sprite_recycle: object = None
 
 
 def tile_to_subpx(x):
@@ -97,8 +101,10 @@ def engine_blocker(project, scene):
 
 def build_engine_scene(project, scene, default_mode=None, sprite_switches=(), emotes=(), projectiles=(), projectile_capacity=None,
                        replace_ops=(), palette_slots=frozenset(), sprite_palette_slots=frozenset(),
-                       color_variants=False):
+                       color_variants=False, moved_actors=None, moved_why="the scene's scripts were not analysed"):
     """projectile_capacity: None = the project's (ngpc.projectile_capacity, else GB Studio's 5).
+    moved_actors: indices of the actors a reachable script may move or pin
+    (sprite_recycle.moved_actors), None = every actor (moved_why says why).
     color_variants: a reachable script switches background colour variants
     (native_variants.py); the scene's are compiled, or only variant 0."""
     where = f"scene {scene['name']}"
@@ -120,6 +126,13 @@ def build_engine_scene(project, scene, default_mode=None, sprite_switches=(), em
     if height < 144 or width < 160:
         raise CompileError(f"{where}: background {width}x{height} px is smaller than the 160x144 GB screen "
                            "(GB Studio scenes are at least 20x18 tiles)")
+    # world.py: over 255 tiles the whole game uses 32-bit positions (pipeline.py);
+    # the parts not converted yet refuse with their own message.
+    from .world import NGPC_MAX_CELLS, NGPC_MAX_PX
+    if width > NGPC_MAX_PX or height > NGPC_MAX_PX or (width >> 3) * (height >> 3) > NGPC_MAX_CELLS:
+        raise CompileError(f"{where}: {width >> 3}x{height >> 3} tiles; an NGPC scene has at most "
+                           f"{NGPC_MAX_PX >> 3} tiles per axis and {NGPC_MAX_CELLS} tiles in all "
+                           "(e.g. 2048x32, 1024x64, 512x128, 255x255; docs/PLAN_GRANDES_CARTES.md)")
     if source.backdrop is not None:
         # docs/M7_NATIVE_COLOR.md: native colours have no GB palette slots.
         # Replaced tiles: replace_tiles.plan, native branch. GB palette events
@@ -133,8 +146,6 @@ def build_engine_scene(project, scene, default_mode=None, sprite_switches=(), em
     if replace_ops:
         from .replace_tiles import plan, tileset_options
         from .scene_assets import background_slots
-        if "second_background" in project.ngpc["resources"].get(scene["id"], {}):
-            raise CompileError(f"{where}: replaced tiles with a second background are not delivered")
         replace_plan = plan(project, scene, source, background_slots(project, scene, where), replace_ops,
                             tileset_options(project), where)
     palette_entries = ()
@@ -147,9 +158,8 @@ def build_engine_scene(project, scene, default_mode=None, sprite_switches=(), em
         from .scene_assets import background_slots
         if project.settings["colorMode"] == "mono":
             raise CompileError(f"{where}: palette changes in a mono project are not delivered")
-        if replace_plan or "second_background" in project.ngpc["resources"].get(scene["id"], {}):
-            raise CompileError(f"{where}: palette changes with replaced tiles or a second background "
-                               "are not delivered")
+        if replace_plan:
+            raise CompileError(f"{where}: palette changes with replaced tiles are not delivered")
         slots_rgb = background_slots(project, scene, where)
         symbolic = _replace(source, pixels=symbolic_pixels(source, slots_rgb, palette_slots))
         background = compile_scene_background(width, height, symbolic.pixels, where=where, symbols=True)
@@ -232,9 +242,26 @@ def build_engine_scene(project, scene, default_mode=None, sprite_switches=(), em
     # Native sheets (docs/M7_NATIVE_COLOR.md): their palettes take the K2GE
     # sprite slots GB Studio's palettes leave free (8..15 first). Emotes draw
     # with GB slot 7; scripts may rewrite GB sprite slots (VM_LOAD_PALETTE).
+    # Over 16, palettes of actors no script moves share slots (sprite_recycle.py):
+    # each sheet is drawn anywhere (None) or at its static actors' world boxes.
     from .sprites import place_native_palettes
-    sheets, native_palettes = place_native_palettes(
-        sheets, where, frozenset(sprite_palette_slots) | ({7} if emotes else frozenset()))
+    from .sprite_recycle import sheet_box
+    places = [[] for _ in sheet_ids]
+    everywhere = {0} | {sheet_ids.index(s) for _, s in sprite_switches}
+    if compiled_projectiles is not None:
+        everywhere |= {sheet_ids.index(s) for s in compiled_projectiles.sheet_ids if s in sheet_ids}
+    everywhere |= set(range(len(sheet_ids))) - {e["sheet"] for e in engine[1:]}
+    for index, (actor, entry) in enumerate(zip(actors, engine[1:]), 1):
+        box = sheet_box(sheets[entry["sheet"]])
+        if moved_actors is None or index in moved_actors or actor["isPinned"] or box is None:
+            everywhere.add(entry["sheet"])
+        else:
+            x, y = entry["x"] >> 5, entry["y"] >> 5
+            places[entry["sheet"]].append((x + box[0], x + box[1], y + box[2], y + box[3]))
+    sheets, native_palettes, sprite_recycle = place_native_palettes(
+        sheets, where, frozenset(sprite_palette_slots) | ({7} if emotes else frozenset()),
+        places=tuple(None if n in everywhere else tuple(p) for n, p in enumerate(places)),
+        why_moving=moved_why if moved_actors is None else None)
     emote_sheets, emote_frames, origins = (), (), ()
     if emotes:
         from .emotes import compile_emotes
@@ -250,9 +277,9 @@ def build_engine_scene(project, scene, default_mode=None, sprite_switches=(), em
     if behind_tiles(sheets):
         # GB sprite priority: background transparent on exactly the GB colour-0
         # pixels (docs/M6_SPRITE_PRIORITY.md), then the A3 mask over it.
-        if palette_slots or replace_plan or "second_background" in extension:
-            raise CompileError(f"{where}: sprite priority with palette changes, replaced tiles or a second "
-                               "background is not delivered (docs/M6_SPRITE_PRIORITY.md)")
+        if palette_slots or replace_plan:
+            raise CompileError(f"{where}: sprite priority with palette changes or replaced tiles "
+                               "is not delivered (docs/M6_SPRITE_PRIORITY.md)")
         background = compile_index_background(source, compile_scene_background(width, height, pixels, where=where,
                                                                                 backdrop=source.backdrop), where)
         if priority:
@@ -278,9 +305,10 @@ def build_engine_scene(project, scene, default_mode=None, sprite_switches=(), em
                 view_h + rate_offset(config["scroll_y"], source.height - view_h) if config.get("loop_y") else 0,
                 where + ".second_background")
         allocation = compile_second_background(source, front_source,
-                        sprite_tiles=sum(len(s.tiles) for s in sheets + emote_sheets), where=where + ".second_background")
+                        sprite_tiles=sprite_tile_count(sheets + emote_sheets), where=where + ".second_background",
+                        main=background)
         background = allocation.main
-        second = (allocation, config["scroll_x"], config["scroll_y"])
+        second = (allocation, config["scroll_x"], config["scroll_y"], bool(config.get("behind")))
     palettes = sprite_palettes(project, scene)
     if native_palettes:
         table = list(palettes) + [(0, 0, 0)] * 8
@@ -296,7 +324,8 @@ def build_engine_scene(project, scene, default_mode=None, sprite_switches=(), em
                        scene_collisions(scene, width >> 3, height >> 3), source, second,
                        tuple((index, sheet_ids.index(s), boxes[s]) for index, s in sprite_switches),
                        emote_frames, emote_sheets, origins, compiled_projectiles, projectile_capacity,
-                       replace_plan, logo, palette_entries, compile_parallax(scene), variants)
+                       replace_plan, logo, palette_entries, compile_parallax(scene), variants,
+                       sprite_recycle)
 
 
 def _color_variants(project, scene, source, background, second, where):
@@ -309,8 +338,6 @@ def _color_variants(project, scene, source, background, second, where):
     entries = project.ngpc["resources"].get(scene["backgroundId"], {}).get(KEY, ())
     if not entries:
         return background.planes[0], (original,)
-    if second is not None:
-        raise CompileError(f"{where}: background colour variants with a second background are not delivered")
     sets = [original]
     for entry in entries:
         at = f"{where}: colour variant {entry['name']!r} ({entry['image']})"

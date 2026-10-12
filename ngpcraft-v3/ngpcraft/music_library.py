@@ -13,6 +13,7 @@ from .audio_assets import MusicError, _fields, _unique_object, _finite_json
 from .audio_resolve import FIELDS
 from .music_streams import _compile_instruments, compile_music, generate_music, _array
 from .music_hold import compile_score, ABI
+from . import music_pan
 from .project import _atomic_write
 
 FACTORIES = ('env_curve_id', 'pitch_curve_id', 'macro_id')
@@ -35,7 +36,7 @@ def _stream_remap(stream, mapping):
                 raise MusicError('music stream: unresolved local instrument')
             stream[pos + 1] = mapping[stream[pos + 1]]
             count = 2
-        elif 1 <= cmd <= 51 or cmd in (240, 255):
+        elif 1 <= cmd <= 51 or cmd in (240, 245, 255):
             count = 2
         elif cmd == 246 and pos + 1 < len(stream) and stream[pos + 1] == 1:
             count = 3
@@ -47,6 +48,59 @@ def _stream_remap(stream, mapping):
             raise MusicError('music stream: truncated command or missing terminator')
         pos += count
     raise MusicError('music stream: missing terminator')
+
+
+def _command_size(stream, pos):
+    cmd = stream[pos]
+    if cmd == 246:
+        return 3
+    if cmd == 254:
+        return 4 if stream[pos + 1] == ABI['divider'] else 3
+    return 2
+
+
+def _stateless(definition):
+    """BgmVoice_SetNote restarts every phase of this instrument: nothing that
+    ApplyInstrument would reload drifts while a note plays (sweep_on is cleared
+    at the sweep end; the LFO hold counters and the second LFO are not reset)."""
+    def lfo(prefix):
+        return definition[prefix + '_on'] and definition[prefix + '_depth'] and definition[prefix + '_rate']
+    return not definition['sweep_on'] and not lfo('lfo') and not lfo('lfo2')
+
+
+def _elide_instruments(stream, loop_offset, definitions):
+    """Drop an F4 that reloads the instrument the voice already holds.
+
+    BgmVoice_ApplyInstrument copies ~60 fields (~2 400 cycles on the TLCS-900);
+    the converters emit it before every attack, and on a beat where all voices
+    attack it was the largest part of the audio service peak. Removed only when
+    the result is identical: same instrument as the last F4 run on this path,
+    an instrument whose state BgmVoice_SetNote fully restarts, and the voice
+    attenuation untouched since (or rewritten by the F0 that follows). The
+    start and the loop entry keep their F4: the voice arrives there from
+    elsewhere."""
+    out, moved = [], {}
+    applied, level_changed, pos = None, False, 0
+    while stream[pos] != 0:
+        size = _command_size(stream, pos)
+        if pos == loop_offset:
+            applied = None
+        moved[pos] = len(out)
+        cmd = stream[pos]
+        if cmd == 244:
+            inst = stream[pos + 1]
+            rewritten = stream[pos + 2] == 240
+            if applied == inst and _stateless(definitions[inst]) and (rewritten or not level_changed):
+                pos += size
+                continue
+            applied, level_changed = inst, False
+        elif cmd == 240 or (cmd == 254 and stream[pos + 1] == ABI['level']):
+            level_changed = True
+        out.extend(stream[pos:pos + size])
+        pos += size
+    moved[pos] = len(out)
+    out.append(0)
+    return out, moved[loop_offset]
 
 
 def merge_plans(named_plans):
@@ -78,7 +132,9 @@ def merge_plans(named_plans):
             mapping[local] = definitions[key]
         for channel in plan['channels']:
             if channel is not None:
-                channel['stream'] = _stream_remap(channel['stream'], mapping)
+                channel['stream'], channel['loop_offset'] = _elide_instruments(
+                    _stream_remap(channel['stream'], mapping), channel['loop_offset'],
+                    [item['def'] for item in instruments])
         features.update(plan['stream_extensions'] if 'stream_extensions' in plan else [])
         tracks.append({'id': name, 'index': len(tracks), 'plan': plan,
                        'instrument_remap': [{'local_id': local, 'library_id': global_id}
@@ -268,6 +324,15 @@ ZERO
         init = init.replace('    ngc_music_current =', '    ngc_audio_loading_flag = 0u;\n    ngc_music_current =')
     source = '/* Selected Over Rev audio units; MIT: MUSIC_NOTICE.txt. */\n#include "audio.h"\n'
     source += f'#define NGC_MUSIC_TRACK_COUNT {len(library["tracks"])}u\n' + driver + data + controller + init
+    # Bgm_Update calls it every frame; with nothing pending its loop pushes
+    # nothing (each push needs the voice's pending bit): ~850 cycles saved.
+    replay = '    static const u8 kOrder[4] = {3, 0, 1, 2};\n    u8 i;\n    for (i = 0; i < 4; i++) {'
+    if replay in source:
+        source = source.replace(replay, replay.replace('    for (i', '    if (!s_psg_pending_mask) {\n'
+                                                       '        return;\n    }\n    for (i'), 1)
+    report['stereo'] = music_pan.stereo(library)
+    if report['stereo']:
+        source = music_pan.attach(source)
     report['controller_sha256'] = hashlib.sha256(controller.encode()).hexdigest()
     report['selected_sha256'] = hashlib.sha256(source.encode()).hexdigest()
     files = {'audio.h': header, 'audio.c': source,

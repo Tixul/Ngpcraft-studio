@@ -111,7 +111,13 @@ def _export(project, root, dest):
                            + "\n  ".join(lines))
     inits = build_inits(project)
     variables = {v["id"]: v for _, res in project.by_type["variables"] for v in res["variables"]}
-    files = generate_project(project, inits, variables)
+    # world.py: one position width for the whole export, wide when a compiled
+    # scene is over GB Studio's 255 tiles (docs/PLAN_GRANDES_CARTES.md).
+    from .world import is_wide_size, wide_world
+    compiled = {s.scene_id for s in inits.scenes}
+    wide = any(is_wide_size(s["width"] * 8, s["height"] * 8) for s in project.scenes if s["id"] in compiled)
+    with wide_world(wide):
+        files = generate_project(project, inits, variables)
     if project.debug:
         from .debug_build import apply
         apply(files)

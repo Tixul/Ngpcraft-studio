@@ -21,7 +21,7 @@ class CapacityProjectTests(unittest.TestCase):
         write_json(self.project/'ngpcraft.json',{'schema':'ngpcraft-project/1','ngpc':{'actor_capacity':value}})
 
     def test_closed_integer_range_rejects_boolean_float_string_and_null(self):
-        for value in (True,False,None,'30',30.0,19,31,[],{}):
+        for value in (True,False,None,'30',30.0,19,65,[],{}):
             with self.subTest(value=value):
                 self.capacity(value)
                 with self.assertRaisesRegex(ProjectError,r'ngpcraft.json.ngpc.actor_capacity: expected integer'):

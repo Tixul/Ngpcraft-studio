@@ -24,3 +24,19 @@ export interface NgpcSceneBudget {
   // Warnings of the V3 for this scene, in English.
   warnings: string[];
 }
+
+// V3 `budget` (ngpcraft-v3/ngpcraft/scene_budget.py): an estimate of one
+// scene from the saved project, computed even when the build would refuse it.
+export interface NgpcBudgetEstimate {
+  sceneId: string;
+  usedTiles: number;
+  backgroundTiles: number;
+  secondBackgroundTiles: number;
+  spriteTiles: number;
+  textReserve: number;
+  backgroundPalettes: number;
+  over: boolean;
+  // Heaviest sprite sheets first.
+  sheets: { name: string; tiles: number }[];
+  errors: string[];
+}

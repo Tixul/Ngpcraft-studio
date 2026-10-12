@@ -183,10 +183,21 @@ def audit_link_map(text, features, objects):
             "scope": "objects, memory sections and public symbols; static function liveness is not proved by this map"}
 
 
-# The save journal's two 8 KiB blocks on the smallest cartridge (4 Mbit:
-# blocks 8 and 9, cartridge offsets 0x78000..0x7BFFF); larger chips put them
-# higher. The image must end below them (Over Rev ngpc_flash.c _DataROM_END).
+# The save journal's two 8 KiB blocks sit 32 KiB under the top of the chip
+# (FlashMem.txt, runtime/save_flash.c ngc_flash_top: 4 Mbit blocks 8 and 9 at
+# 0x78000, 8 Mbit 16 and 17 at 0xF8000, 16 Mbit 32 and 33 at 0x1F8000). The
+# image must end below them on the smallest chip that holds it (Over Rev
+# ngpc_flash.c _DataROM_END); a larger chip puts them higher still.
 SAVE_IMAGE_LIMIT = 0x078000
+CHIP_BYTES = (0x080000, 0x100000, 0x200000)
+
+
+def save_image_limit(size):
+    """(chip bytes, first byte of the save blocks) of the smallest chip holding `size` bytes."""
+    chip = next((c for c in CHIP_BYTES if size <= c), None)
+    if chip is None:
+        raise CompileError(f"ROM: {size} bytes exceed the 16 Mbit cartridge (0x200000 bytes)")
+    return chip, chip - 0x8000
 
 
 def build_rom(export_dir, toolchain_root=None):
@@ -231,12 +242,16 @@ def build_rom(export_dir, toolchain_root=None):
         # docs/M5_SAVE.md: the flash capacity gate on the sizes cc900 linked.
         from .save_emit import STATE_UNITS, check_rom
         state_units = STATE_UNITS + (('audio',) if 'audio_save_state' in manifest['features'] else ())
-        payload, pages = check_rom(data, link_audit["public_symbols"], state_units, "ROM")
-        save = {"payload_max_bytes": payload, "pages_per_slot": pages, "journal_pages": 3 * pages + 1}
-    if "save_journal" in manifest["features"] and len(data) > SAVE_IMAGE_LIMIT:
-        raise CompileError(f"ROM: {len(data)} bytes reach the save blocks of a 4 Mbit cartridge "
-                           f"(blocks 8 and 9 at 0x{SAVE_IMAGE_LIMIT:06X}, FlashMem.txt); the journal "
-                           "would erase the game's own code")
+        slots = manifest["save_slots"]      # emit.py: always written with save_state
+        payload, pages = check_rom(data, link_audit["public_symbols"], state_units, "ROM", slots)
+        save = {"payload_max_bytes": payload, "pages_per_slot": pages, "slots": slots,
+                "journal_pages": slots * pages + 1}
+    if "save_journal" in manifest["features"]:
+        chip, limit = save_image_limit(len(data))
+        if len(data) > limit:
+            raise CompileError(f"ROM: {len(data)} bytes reach the save blocks of a {chip >> 17} Mbit cartridge "
+                               f"(two 8 KiB blocks at 0x{limit:06X}, FlashMem.txt); the journal "
+                               "would erase the game's own code")
     result = {"stage": "linked-rom", "complete_rom": True, "rom": "rom/game.ngc",
               "header": header, "objects": compiled["objects"],
               "compiler_sha256": compiled["compiler_sha256"], "tool_output": logs,

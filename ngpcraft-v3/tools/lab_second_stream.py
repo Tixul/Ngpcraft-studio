@@ -33,7 +33,8 @@ def _source(width, height, front):
 
 def build_case(root, toolchain, *, main_size=(512, 512), front_size=(320, 272),
                scroll_x='1/2', scroll_y='1', witness=False, reserve_ui=False,
-               loop_x=False, loop_y=False, native=False):
+               loop_x=False, loop_y=False, native=False, behind=False, unsaturated=False):
+    """unsaturated: witness for a wide scene, the N% rate without its 32767 saturation."""
     root = Path(root)
     root.mkdir(parents=True, exist_ok=True)
     main, front = _source(*main_size, False), _source(*front_size, True)
@@ -53,11 +54,18 @@ def build_case(root, toolchain, *, main_size=(512, 512), front_size=(320, 272),
                              view_h + rate_offset(scroll_y, main.height - view_h) if loop_y else 0)
     allocation = compile_second_background(main, looped)
     path = default_path(*main_size, 2)
-    source = second_stream_source(allocation, scroll_x=scroll_x, scroll_y=scroll_y, reserve_ui=reserve_ui)
+    source = second_stream_source(allocation, scroll_x=scroll_x, scroll_y=scroll_y, reserve_ui=reserve_ui,
+                                  behind=behind)
     if witness:
         old = '    ngc_front_scroll_set((short)(ngc_scroll_next[0] >> 1),'
         assert source.count(old) == 1
         source = source.replace(old, '    ngc_front_scroll_set((short)(ngc_scroll_next[0] >> 0),')
+    if unsaturated:
+        import re
+        guard = re.compile(r"\(ngc_scroll_next\[[01]\] > \d+u \? \(short\)32767 : (\(short\)\(.*?100u\))\)")
+        if not guard.search(source):
+            raise ValueError('witness: no saturation guard in the generated source')
+        source = guard.sub(lambda m: m[1], source)
     game = ['#include "game.h"', 'void ngc_stream_load(short x, short y);',
             'void ngc_scroll_set(short x, short y);', 'void ngc_scroll_commit(void);', 'void ngc_stream_update(void);']
     c_array(game, 'ngc_path', [v for xy in path for v in xy], 'short')
@@ -77,7 +85,7 @@ def build_case(root, toolchain, *, main_size=(512, 512), front_size=(320, 272),
     write_new(root/'front.indices', front.indices)
     write_json(root/'source.json', {'main_size': list(main_size), 'front_size': list(front_size),
                'scroll_x': scroll_x, 'scroll_y': scroll_y, 'view': list(view_of(allocation.main)), 'path': path,
-               'loop': [loop_x, loop_y]})
+               'loop': [loop_x, loop_y], 'behind': behind, 'backdrop': allocation.main.backdrop})
     return manifest, build
 
 
@@ -93,6 +101,7 @@ def observe(root, emulator, bios_path):
     main, front, mask = words(root/'main.rgb444'), words(root/'front.rgb444'), (root/'front.indices').read_bytes()
     expected = [(min(max(x, 0), mw-160), min(max(y, 0), mh-view_h)) for x, y in spec['path']]
     loop_x, loop_y = spec.get('loop', [False, False])
+    behind, backdrop = spec.get('behind', False), spec.get('backdrop')
     def axis(pos, rate, maximum, loop):
         if rate == 'fixed':
             raw = 0
@@ -113,7 +122,12 @@ def observe(root, emulator, bios_path):
                     result.append(0)
                     continue
                 f = ((fy+yy-top) % fh)*fw + (fx+xx) % fw
-                result.append(front[f] if mask[f] else main[(y+yy-top)*mw+x+xx])
+                m = main[(y+yy-top)*mw+x+xx]
+                if behind:
+                    # SCR2 in front: SCR1 shows through the main backdrop pixels.
+                    result.append(front[f] if m == backdrop and mask[f] else m)
+                else:
+                    result.append(front[f] if mask[f] else m)
         return result
     rom = (root/'export/rom/game.ngc').read_bytes()
     build = json.loads((root/'export/rom/build-report.json').read_text(encoding='utf-8'))

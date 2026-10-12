@@ -32,7 +32,7 @@ export interface NgpcProjectSettings {
 export type NgpcProjectSettingKey = keyof NgpcProjectSettings;
 
 export const NGPC_ACTOR_CAPACITY_MIN = 20;
-export const NGPC_ACTOR_CAPACITY_MAX = 30;
+export const NGPC_ACTOR_CAPACITY_MAX = 64;
 // V3 projectile_runtime.py GBS_PROJECTILE_CAPACITY / NGPC_PROJECTILE_CAPACITY.
 export const NGPC_PROJECTILE_CAPACITY_MIN = 5;
 export const NGPC_PROJECTILE_CAPACITY_MAX = 64;
@@ -51,7 +51,10 @@ export const getNgpcProjectSettings = (
 // ngpcraft.json resources.<id> against: top-level resources, scene
 // actors/triggers.
 export const projectResourceIds = (project: {
-  scenes: readonly { actors: readonly unknown[]; triggers: readonly unknown[] }[];
+  scenes: readonly {
+    actors: readonly unknown[];
+    triggers: readonly unknown[];
+  }[];
 }): Set<string> => {
   const ids = new Set<string>();
   const add = (item: unknown) => {
@@ -118,7 +121,8 @@ export const ngpcColorValue = (
   extension: NgpcProjectExtension | null,
   native: boolean,
 ): "native" | "gbs" | undefined => {
-  const byDefault = getNgpcProjectSettings(extension).default_color === "native";
+  const byDefault =
+    getNgpcProjectSettings(extension).default_color === "native";
   if (native === byDefault) {
     return undefined;
   }
@@ -178,6 +182,18 @@ export interface NgpcNativeMusicHeldScore {
 }
 
 export type NgpcNativeMusic = NgpcNativeMusicNgps | NgpcNativeMusicHeldScore;
+
+// A sound effect file the build converted for the NGPC (autoConvertSounds).
+export interface AutoSfxBinding {
+  soundId: string;
+  timelines: NgpcNativeSfxStep[][];
+}
+
+// A song the build converted for the NGPC (lib/ngpcraft/autoConvertMusic).
+export interface AutoMusicBinding {
+  resourceId: string;
+  binding: NgpcNativeMusicHeldScore;
+}
 
 export const getNgpcResourceSetting = (
   extension: NgpcProjectExtension | null,

@@ -16,6 +16,7 @@ from pathlib import Path
 
 from .background_rom import c_array
 from .compiler import CompileError
+from .world import at_pos_width as boxes, wide
 
 RUNTIME = Path(__file__).with_name("runtime") / "platform_runtime.json"
 
@@ -216,6 +217,41 @@ def field_values(project, data):
     return out
 
 
+# Wide world (world.py, docs/PLAN_GRANDES_CARTES.md G4): platform.c keeps GB
+# Studio's 1/32 px; its positions are the actor arrays (32 bits) and these
+# UWORD locals; tiles are UBYTE, already 16-bit here (PRELUDE).
+WIDE_POSITIONS = ("new_x", "new_y", "y_bottom", "x_mid_coord", "slope_y_coord",
+                  "plat_attached_prev_x", "plat_attached_prev_y", "plat_temp_y")
+WIDE_MACROS = (("#define SUBPX_TO_TILE(a) ((UWORD)(unsigned char)((a) >> 8))",
+                "#define SUBPX_TO_TILE(a) ((UWORD)((a) >> 8))   /* wide world: 16-bit tiles */"),
+               ("#define PX_TO_SUBPX(a) ((a) << 5)",
+                "#define PX_TO_SUBPX(a) ((unsigned long)(a) << 5)   /* wide world */"),
+               ("#define TILE_TO_SUBPX(a) (((UWORD)(unsigned char)(a)) << 8)",
+                "#define TILE_TO_SUBPX(a) ((unsigned long)(UWORD)(a) << 8)   /* wide world */"))
+
+
+def widen(defined, where):
+    """platform.c at the wide position width (world.py)."""
+    for name in WIDE_POSITIONS:
+        defined, n = re.subn(r"\bUWORD(\s+" + name + r")\b(?=\s*[;=])", r"unsigned long\1", defined)
+        if n < 1:
+            raise CompileError(f"{where}: platform.c position {name} changed (wide world)")
+    for axis in ("x", "y"):
+        old = f"ngc_camera_{axis} = (unsigned short)(act_{axis}[0] + 256u);"
+        if defined.count(old) != 1:
+            raise CompileError(f"{where}: platform.c camera assignment changed (wide world)")
+        defined = defined.replace(old, f"ngc_camera_{axis} = (unsigned long)(act_{axis}[0] + 256u);")
+    # VEL_TO_SUBPX of a negative velocity is an UNSIGNED 16-bit value (| 0xFF00): added to a 16-bit
+    # position it wraps right, added to a 32-bit one (ladder state: act_y[0] += ...) it adds 65536
+    # minus the step. Signed here; every other use stores it in a WORD already (same value).
+    old = "#define VEL_TO_SUBPX(v) ((((v) & 0x8000) ? (((v) >> 8) | 0xFF00) : ((v) >> 8)) << 1)"
+    if defined.count(old) != 1:
+        raise CompileError(f"{where}: platform.c VEL_TO_SUBPX changed (wide world)")
+    defined = defined.replace(old, "#define VEL_TO_SUBPX(v) ((WORD)((((v) & 0x8000) ? (((v) >> 8) | 0xFF00) "
+                                   ": ((v) >> 8)) << 1))   /* wide world: signed */")
+    return defined
+
+
 def validate_platform(project, scene):
     """Fail closed on what the platformer slice does not deliver yet."""
     return None
@@ -288,7 +324,17 @@ def platform_source(project, scene, width_tiles, height_tiles, interactions=None
         defined = defined.replace("plat_callback_reset();", "")
         defined = re.sub(r"plat_callback_execute\([^)]*\)", "((void)0)", defined)
 
-    lines = PRELUDE.split("\n") + state_defines(project, data)
+    prelude = PRELUDE
+    if wide():
+        if translated:
+            raise CompileError(f"scene {scene['name']}: the {data['plugin']} plugin over 255 tiles is not "
+                               "delivered yet (docs/PLAN_GRANDES_CARTES.md G6)")
+        defined = widen(defined, f"scene {scene['name']}")
+        for old, new in WIDE_MACROS:
+            if prelude.count(old) != 1:
+                raise CompileError("platform prelude macro changed (wide world)")
+            prelude = prelude.replace(old, new)
+    lines = prelude.split("\n") + state_defines(project, data)
     lines += [f"#define NGC_COLL_W {width_tiles}u", f"#define NGC_COLL_H {height_tiles}u"]
     if translated:
         lines += data["prelude"].split("\n")
@@ -298,7 +344,7 @@ def platform_source(project, scene, width_tiles, height_tiles, interactions=None
     else:
         lines.append("/* actor_t.collision_group (toASMCollisionGroup): base group | extra flags. */")
         c_array(lines, "act_collision_group", collision_groups(project, scene), "unsigned char")
-        lines += OVERLAP + ["#define NGC_PLAYER_COLLISION(i) ((void)(i))"]
+        lines += boxes(OVERLAP) + ["#define NGC_PLAYER_COLLISION(i) ((void)(i))"]
     if triggers:
         lines += trigger_source(triggers, force=True)
         lines.append("#define NGC_PLATFORM_TRIGGERS(force) ((void)trigger_update((unsigned char)((force) != 0)))")
@@ -308,7 +354,7 @@ def platform_source(project, scene, width_tiles, height_tiles, interactions=None
         n = len(collision_groups(project, scene))
         c_array(lines, "act_interact_addr", [interactions[i] if i in interactions else 0 for i in range(n)],
                 "unsigned short")
-        lines += ["void ngc_vm_interact(unsigned short addr);"] + FRONT + [
+        lines += ["void ngc_vm_interact(unsigned short addr);"] + boxes(FRONT) + [
                   "#define NGC_ACTOR_IN_FRONT(grid) plat_front_script()",
                   "#define NGC_ACTOR_HAS_SCRIPT(i) (act_interact_addr[i] != 0u)",
                   "#define NGC_ACTOR_INTERACT(i) ngc_vm_interact(act_interact_addr[i])"]
@@ -330,10 +376,12 @@ def platform_source(project, scene, width_tiles, height_tiles, interactions=None
     # The Game Boy C runtime clears BSS at power on and platform.c relies on it
     # (jump buffer, timers, attached actor...): the NGPC RAM is random (startup.c
     # clears nothing), so every file-scope variable is cleared once at boot.
-    lines += ["static void plat_clear(UBYTE *p, UWORD n) { while (n--) *p++ = 0u; }",
+    # Bytes, not UBYTE: the PRELUDE's UBYTE is 16-bit, which cleared twice the
+    # size and spilled past the last variable (fixed 2026-10-12).
+    lines += ["static void plat_clear(unsigned char *p, UWORD n) { while (n--) *p++ = 0u; }",
               "/* crt0 BSS clear, then script_engine_init: engine field values, once at boot. */",
               "void ngc_platform_boot(void)", "{",
-              *[f"    plat_clear((UBYTE *)&{name}, sizeof({name}));"
+              *[f"    plat_clear((unsigned char *)&{name}, sizeof({name}));"
                 for name in (data["boot_clear"] if "boot_clear" in data else data["public_variables"]) if name != "plat_events"],
               *[f"    {key} = ({ctype}){value};" for ctype, key, value in values],
               *[f"    {key} = {value};               /* platform.c static initializer */"

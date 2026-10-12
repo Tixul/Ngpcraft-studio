@@ -61,7 +61,10 @@ class ResumeRomTests(unittest.TestCase):
     def test_build_selects_the_save_units_and_gate(self):
         self.assertTrue({"save_state", "save_journal", "save_load"} <= set(self.manifest["features"]))
         save = self.rom["save"]
-        self.assertEqual(3 * save["pages_per_slot"] + 1, save["journal_pages"])
+        # the journal holds the slots the scripts name (save_state.used_slots)
+        self.assertIn(save["slots"], (1, 2, 3))
+        self.assertEqual(self.manifest.get("save_slots"), save["slots"])
+        self.assertEqual(save["slots"] * save["pages_per_slot"] + 1, save["journal_pages"])
         self.assertLessEqual(save["journal_pages"], 32)
 
     def test_first_power_on_saves_switches_and_loads_without_init(self):

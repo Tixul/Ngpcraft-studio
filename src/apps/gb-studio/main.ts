@@ -28,6 +28,11 @@ import menu, {
 } from "./menu";
 import { checkForUpdate } from "lib/helpers/updateChecker";
 import { buildWithV3, cancelV3Build } from "lib/ngpcraft/v3Build";
+import { readBudgetEstimate } from "lib/ngpcraft/budgetEstimate";
+import {
+  autoConvertMusic,
+  autoConvertSounds,
+} from "lib/ngpcraft/autoConvertMusic";
 import { NGPC_TILE_SLOTS } from "shared/lib/ngpcraft/sceneBudget";
 import { ngpcDebuggerData } from "lib/ngpcraft/debuggerData";
 import {
@@ -1349,6 +1354,9 @@ ipcMain.handle(
   (_, backgroundId: string, backdrop?: string) =>
     readPalettePlan(projectPath, backgroundId, backdrop),
 );
+ipcMain.handle("ngpcraft:estimate-budget", (_, sceneId: string) =>
+  readBudgetEstimate(projectPath, sceneId),
+);
 ipcMain.handle("ngpcraft:sprite-palette-plan", (_, spriteId: string) =>
   readSpritePalettePlan(projectPath, spriteId),
 );
@@ -1688,12 +1696,38 @@ ipcMain.handle(
       // NgpCraft: the V3 compiler builds every ROM. The GB Studio/GBDK path
       // below is kept unchanged but no longer reached.
       if (USE_NGPCRAFT_V3) {
+        // GB Studio plays a .uge/.mod as is: convert the songs here, and
+        // keep the links in the project as "Convert for the NGPC" does.
+        const music = await autoConvertMusic(
+          projectRoot,
+          project.music,
+          options.ngpcraftExtension ?? null,
+          (message) =>
+            message.startsWith("warning:")
+              ? warnings(message)
+              : progress(message),
+        );
+        if (music.converted.length > 0) {
+          sendToProjectWindow("ngpcraft:auto-music", music.converted);
+        }
+        const sounds = await autoConvertSounds(
+          projectRoot,
+          project.sounds,
+          music.extension,
+          (message) =>
+            message.startsWith("warning:")
+              ? warnings(message)
+              : progress(message),
+        );
+        if (sounds.converted.length > 0) {
+          sendToProjectWindow("ngpcraft:auto-sfx", sounds.converted);
+        }
         const result = await buildWithV3(project, {
           projectRoot,
           outputRoot,
           progress,
           warnings,
-          ngpcraftExtension: options.ngpcraftExtension,
+          ngpcraftExtension: sounds.extension,
           debug:
             debuggerEnabled &&
             buildType === "web" &&

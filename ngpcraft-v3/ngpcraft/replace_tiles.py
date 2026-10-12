@@ -27,6 +27,10 @@ def replace_ops(texts):
         for x, y, bank, symbol in OP.findall(text):
             if bank != symbol:
                 raise CompileError(f"VM_REPLACE_TILE_XY: bank/data symbols differ ({bank}, {symbol})")
+            if int(x) > 255 or int(y) > 255:
+                # GBVM's operands are bytes (vm.i); a scene over 255 tiles
+                # (docs/PLAN_GRANDES_CARTES.md) cannot address its far tiles this way.
+                raise CompileError(f"Replace Tile at {x},{y}: GB Studio's instruction addresses tiles 0..255 only")
             ops.add((int(x), int(y), symbol))
     return tuple(sorted(ops))
 

@@ -12,18 +12,21 @@ actors_update, actors_render, game_time++.
 from .scene_actors import actors_source
 from .background_stream import stream_source, view_of
 from .compiler import CompileError
-from .scene_sprites import PRIORITY_BETWEEN, PRIORITY_FRONT, sprites_source
+from .scene_sprites import PRIORITY_BEHIND, PRIORITY_BETWEEN, PRIORITY_FRONT, sprite_tile_count, sprites_source
 from .scene_planes import BACK_PLANE, FRONT_PLANE, plane_report
 
 FEATURES = ["streamed_background", "sprites", "actors"]
 
-DECLARATIONS = [
+def declarations():
+    """game.c's view of the scene engine; the camera at the export's position width (world.py)."""
+    from .world import pos_t
+    return [
     "void ngc_stream_load(short x, short y);", "void ngc_stream_update(void);",
     "void ngc_scroll_commit(void);", "void ngc_sprites_load(void);", "void ngc_sprites_commit(void);",
     "void ngc_actors_load(void);", "void ngc_actors_repaint(short cx, short cy);",
     "void ngc_actors_scroll(short cx, short cy);", "void ngc_actors_update(unsigned char locked);", "unsigned char ngc_vm_locked(void);",
     "void ngc_actors_render(void);", "void ngc_camera_update(void);",
-    "extern unsigned short ngc_camera_x;", "extern unsigned short ngc_camera_y;",
+    f"extern {pos_t()} ngc_camera_x;", f"extern {pos_t()} ngc_camera_y;",
     "extern unsigned short ngc_game_time;",
 ]
 
@@ -49,41 +52,43 @@ AFTER_SCRIPTS = [
 
 def engine_files(scene, moves=None, updates=None, cancel=False, topdown=None, interactions=None, triggers=None, hits=None,
                  shadow=False, text=False, track_front=False, stop_update=False, start_update=False, actor_states=None, read_positions=False, camera_shake=False, read_directions=False, push=False, split_moves=True, sprite_states=None, projectile_groups=None, projectile_scripts=None, projectile_modal=False, resume=False, camera_control=False, set_bounds=False, camera_properties=False, scroll_bounds=False,
-                 parallax_export=False):
+                 parallax_export=False, patch=False):
     """scene: scene_build.EngineScene -> {path: C source}, report.
+    patch: recycled palettes go through the GBVM runtime's ngc_palette_patch
+    (fade shadow and fades; emit.palette_patch_source).
     moves: None, or the movement features the scripts use (scene_actors.MOVE_FEATURES)."""
     bg = scene.background
     render_sheets = scene.sheets + scene.emote_sheets
     view_h, top = view_of(bg)
     second = scene.second_background
     shared_text = bool(text and (second is not None or bg.complement_cells or bg.priority_cells))
-    if second is not None and camera_shake:
-        raise CompileError("camera shake with an independent second background is not delivered")
-    if second is not None and scroll_bounds:
-        raise CompileError("Camera Set Bounds with an independent second background is not delivered")
     from .sprite_behind import behind_tiles, check_behind_exact
     behind = behind_tiles(render_sheets)
-    if behind and second is not None:
-        raise CompileError(f"scene {scene.name}: sprite priority with an independent second background is not "
-                           "delivered (docs/M6_SPRITE_PRIORITY.md)")
     behind_report = check_behind_exact(scene.background_source, bg, f"scene {scene.name}") if behind else None
     if second is not None and scene.parallax:
-        raise CompileError(f"scene {scene.name}: parallax with an independent second background is not delivered "
-                           "(docs/M6_PARALLAX.md)")
+        raise CompileError(f"scene {scene.name}: GB Studio parallax and the NGPC second background both need the "
+                           "second plane: keep one (the second background already scrolls at its own speed; "
+                           "docs/M6_PARALLAX.md)")
     if second is not None:
         from .second_stream import second_stream_source
         streaming = second_stream_source(second[0], scroll_x=second[1], scroll_y=second[2],
-                                         shadow=shadow, reserve_ui=shared_text)
+                                         shadow=shadow, reserve_ui=shared_text,
+                                         camera_shake=camera_shake, scroll_bounds=scroll_bounds,
+                                         behind=second[3])
     else:
         streaming = stream_source(bg, shadow=shadow, front_plane=FRONT_PLANE,
                                   reserve_ui=shared_text, track_front=track_front, camera_shake=camera_shake,
                                   scroll_bounds=scroll_bounds, parallax=scene.parallax,
-                                  parallax_export=parallax_export, where=f"scene {scene.name}")
+                                  parallax_export=parallax_export, where=f"scene {scene.name}", patch=patch)
     files = {"src/scene_stream.c": streaming,
              "src/scene_sprites.c": sprites_source(render_sheets, bg.tile_base + len(bg.tiles), scene.palettes,
-                                                   top=top, shadow=shadow,
+                                                   where=f"scene {scene.name}", top=top, shadow=shadow,
                                                    priority=PRIORITY_BETWEEN if bg.priority_cells or (text and not shared_text) else PRIORITY_FRONT,
-                                                   shared_text=shared_text),
+                                                   shared_text=shared_text,
+                                                   # second background behind: a GB priority sprite goes
+                                                   # between the planes, behind the main one only.
+                                                   behind_level=PRIORITY_BETWEEN if second is not None and second[3]
+                                                   else PRIORITY_BEHIND, recycle=scene.sprite_recycle, patch=patch),
              "src/scene_actors.c": actors_source(list(scene.actors), scene.sheets, bg.height, view_h=view_h,
                                                  moves=moves, bounds=scene.bounds, collisions=scene.collisions,
                                                  width_px=bg.width, updates=updates, cancel=cancel,
@@ -95,10 +100,11 @@ def engine_files(scene, moves=None, updates=None, cancel=False, topdown=None, in
                                                  resume=resume)}
     if camera_control:
         import re
+        from .world import pos_t
         source = files["src/scene_actors.c"]
         for old, new, ctype in (("cam_settings", "ngc_camera_settings", "unsigned char"),
-                               ("cam_clamp_x", "ngc_camera_clamp_x", "unsigned short"),
-                               ("cam_clamp_y", "ngc_camera_clamp_y", "unsigned short")):
+                               ("cam_clamp_x", "ngc_camera_clamp_x", pos_t()),
+                               ("cam_clamp_y", "ngc_camera_clamp_y", pos_t())):
             declaration = f"static {ctype} {old};"
             if source.count(declaration) != 1:
                 raise CompileError(f"camera state declaration changed: {old}")
@@ -139,12 +145,15 @@ def engine_files(scene, moves=None, updates=None, cancel=False, topdown=None, in
     if (bg.complement_cells and scene.background_source is not None and
             scene.background_source.priority_report()["priority_opaque_pixels"]):
         from .sprite_priority import masked_sprites_source, frame_mask_cache_layout, priority_mask_plan
+        if scene.sprite_recycle:
+            raise CompileError(f"scene {scene.name}: recycled sprite palettes with the GB sprite priority mask "
+                               "are not delivered (docs/PALETTE_RECYCLE.md)")
         slots = min(64, sum(max(scene.sheets[s].max_sprites() for s in
                                {a["sheet"], *(entry[1] for entry in scene.sprite_switches)}) for a in scene.actors)
                     + (4 if scene.emotes else 0)
                     + (scene.projectile_capacity * max(scene.sheets[scene.sheet_ids.index(s)].max_sprites()
                         for s in scene.projectiles.sheet_ids) if scene.projectiles is not None and scene.projectiles.definitions else 0))
-        cache_base = bg.tile_base + len(bg.tiles) + sum(len(s.tiles) for s in render_sheets)
+        cache_base = bg.tile_base + len(bg.tiles) + sprite_tile_count(render_sheets)
         try:
             files["src/scene_sprites.c"] = masked_sprites_source(files["src/scene_sprites.c"], render_sheets,
                 scene.background_source, cache_base, slots, top=top)
@@ -164,7 +173,7 @@ def engine_files(scene, moves=None, updates=None, cancel=False, topdown=None, in
         files["src/scene_stream.c"] += "\n" + replace_source(bg, scene.replace_plan)
     report = {"scene": scene.name, "background": bg.report(), "planes": plane_report(bg, text=text, second=second is not None),
               "sheets": [s.name for s in scene.sheets],
-              "sprite_tiles": sum(len(s.tiles) for s in render_sheets),
+              "sprite_tiles": sprite_tile_count(render_sheets),
               "actors": list(scene.names), "view": {"height": view_h, "top_band": top},
               "warnings": ([f"scene {scene.name}: background {bg.width}x{bg.height} px shown with black "
                             f"bands of {top} px above and below; replace or adapt it to 152 px "
@@ -196,7 +205,8 @@ def engine_files(scene, moves=None, updates=None, cancel=False, topdown=None, in
                               "interrupts_per_frame": len(lines), "ram_bytes": 6 + 4 * len(slices)}
     if second is not None:
         report["second_background"] = {**second[0].report(), "status": "emitted", "runtime_supported": True,
-                                       "sidecar_supported": True, "scroll_x": second[1], "scroll_y": second[2]}
+                                       "sidecar_supported": True, "scroll_x": second[1], "scroll_y": second[2],
+                                       "behind": second[3]}
     if scene.projectiles is not None and scene.projectiles.definitions:
         from .projectile_runtime import projectile_ram_bytes
         report["projectiles"] = {"definition_indices": list(scene.projectiles.definition_indices),

@@ -338,6 +338,9 @@ class NgpcSheet:
     # HardwareSprite.palette indexes them until the scene places them
     # (place_native_palettes: the K2GE slots GB Studio's palettes leave free).
     palettes: tuple = ()
+    # sprite_recycle.py: the scene's recycled palettes (indices) a frame of this
+    # sheet loads into their shared slots when it is drawn.
+    recycled: tuple = ()
 
     def max_sprites(self):
         return max((len(f) for f in self.frames), default=0)
@@ -386,41 +389,178 @@ def ngpc_sheet(sheet, image, default_mode="8x16", where=None, *, mono=False, nat
 NATIVE_SPRITE_SLOT = 8          # first K2GE sprite palette given to native sheets
 
 
-def place_native_palettes(sheets, where, reserved=frozenset()):
+def _merge_scene_palettes(sheets, where):
+    """More distinct palettes than free slots: pack the colour sets of all the
+    scene's native sheets together (background.pack_palettes: a set inside
+    another, or two that fit in 3 colours, share one palette), then rewrite
+    each tile's indices for the palette it now uses. Same pixels; only used when
+    the identity sharing does not fit (docs/M6_SPRITE_TILES.md)."""
+    from dataclasses import replace
+    from .background import pack_palettes
+    packed = pack_palettes([tuple(sorted(p)) for sheet in sheets for p in sheet.palettes])
+    out = []
+    for sheet in sheets:
+        if not sheet.palettes:
+            out.append(sheet)
+            continue
+        target = [next(m for m in packed if set(p) <= set(m)) for p in sheet.palettes]
+        used_with = {}
+        for frame in sheet.frames:
+            for s in frame:
+                if used_with.setdefault(s.tile, s.palette) != s.palette:
+                    return sheets    # a tile under two palettes: no rewrite; the slot count decides
+
+        tiles = []
+        for n, tile in enumerate(sheet.tiles):
+            if n not in used_with:
+                tiles.append(tile)
+                continue
+            old, new = sheet.palettes[used_with[n]], target[used_with[n]]
+            tiles.append(tuple(0 if v == 0 else new.index(old[v - 1]) + 1 for v in tile))
+        palettes = tuple(dict.fromkeys(target))
+        frames = tuple(tuple(replace(s, palette=palettes.index(target[s.palette])) for s in frame)
+                       for frame in sheet.frames)
+        out.append(replace(sheet, tiles=tuple(tiles), frames=frames, palettes=palettes))
+    return tuple(out)
+
+
+def align_palettes(sheets):
+    """Same drawing, other colours (docs/M6_SPRITE_TILES.md): a native palette's
+    colours are sorted by value, so a recoloured sheet often draws the same
+    pattern with other indices, and scene_sprites.pool_tiles cannot share it.
+    The order of a palette's colours is free: each distinct palette, in order of
+    first use, takes the order (of the 3! = 6) under which most of the tiles drawn
+    with it match a pattern already kept (flips included); identity on a tie.
+    Every sheet using that palette is rewritten the same way, so identical
+    palettes stay identical. A palette drawing a tile also drawn with another is
+    left alone. Same pixels; only character indices and colour order change."""
+    from dataclasses import replace
+    from itertools import permutations
+    from .scene_sprites import _flipped
+
+    def flips(tile):
+        return {_flipped(tile, h, v) for h in (False, True) for v in (False, True)}
+
+    seen, users, fixed, order = set(), {}, set(), []
+    for k, sheet in enumerate(sheets):
+        if not sheet.palettes:
+            for tile in sheet.tiles:
+                seen |= flips(tuple(tile))
+            continue
+        used_with = {}
+        for frame in sheet.frames:
+            for s in frame:
+                if not 0 <= s.tile < len(sheet.tiles):
+                    continue            # no pattern to reorder
+                first = used_with.setdefault(s.tile, s.palette)
+                if first != s.palette:
+                    fixed |= {sheet.palettes[first], sheet.palettes[s.palette]}
+        for t, p in sorted(used_with.items()):
+            palette = sheet.palettes[p]
+            if palette not in users:
+                users[palette] = []
+                order.append(palette)
+            users[palette].append((k, t))
+    chosen = {}
+    for palette in order:
+        tiles = [tuple(sheets[k].tiles[t]) for k, t in users[palette]]
+        best, score = tuple(range(1, len(palette) + 1)), None
+        if palette not in fixed:
+            for perm in permutations(range(1, len(palette) + 1)):
+                remap = {old: new for new, old in enumerate(perm, 1)}
+                hits = sum(tuple(remap.get(v, 0) for v in tile) in seen for tile in tiles)
+                if score is None or hits > score:
+                    best, score = perm, hits
+        remap = {old: new for new, old in enumerate(best, 1)}
+        for tile in tiles:
+            seen |= flips(tuple(remap.get(v, 0) for v in tile))
+        chosen[palette] = (tuple(palette[i - 1] for i in best), remap)
+    if all(new == palette for palette, (new, _) in chosen.items()):
+        return tuple(sheets)
+    out = []
+    for k, sheet in enumerate(sheets):
+        if not sheet.palettes:
+            out.append(sheet)
+            continue
+        tiles = list(sheet.tiles)
+        for palette in sheet.palettes:
+            remap = chosen.get(palette, (palette, None))[1]
+            if remap:
+                for kk, t in users[palette]:
+                    if kk == k:
+                        tiles[t] = tuple(remap.get(v, 0) for v in sheet.tiles[t])
+        out.append(replace(sheet, tiles=tuple(tiles),
+                           palettes=tuple(chosen.get(p, (p,))[0] for p in sheet.palettes)))
+    return tuple(out)
+
+
+def place_native_palettes(sheets, where, reserved=frozenset(), places=None, why_moving=None):
     """A scene's native sheets -> (sheets with K2GE palettes, ((slot, palette), ...)).
 
     The 16 K2GE sprite palettes: GB Studio's 8 are slots 0..7. A slot stays
     GB Studio's when a GB sheet of the scene draws with it, or it is in
     `reserved` (emotes: 7; a script's sprite palette change). Native sheets
     take 8..15 first, then the GB slots left free. Identical palettes are
-    shared."""
+    shared.
+
+    places (sprite_recycle.py): per sheet, None (may be on screen anywhere) or
+    the world boxes where it can be drawn. Given, more palettes than slots are
+    recycled and a third value is returned: None, or (palettes, slot of each)."""
     from dataclasses import replace
     used = set(reserved)
     for sheet in sheets:
         if not sheet.palettes:
             used |= {s.palette for frame in sheet.frames for s in frame}
     free = list(range(NATIVE_SPRITE_SLOT, 16)) + [s for s in range(NATIVE_SPRITE_SLOT) if s not in used]
-    table, out = [], []
-    for sheet in sheets:
-        if not sheet.palettes:
-            out.append(sheet)
-            continue
-        mapping = []
-        for palette in sheet.palettes:
-            if palette not in table:
-                table.append(palette)
-            index = table.index(palette)
-            mapping.append(free[index] if index < len(free) else -1)
-        frames = tuple(tuple(replace(s, palette=mapping[s.palette]) for s in frame) for frame in sheet.frames)
-        out.append(replace(sheet, frames=frames, palettes=()))
-    if len(table) > len(free):
+    distinct = {p for sheet in sheets for p in sheet.palettes}
+    if len(distinct) > len(free):
+        sheets = _merge_scene_palettes(sheets, where)
+    sheets = align_palettes(sheets)
+    table = list(dict.fromkeys(p for sheet in sheets for p in sheet.palettes))
+    recycle = None
+    if len(table) <= len(free):
+        slot_of = free[:len(table)]
+    elif places is None:
         taken = sorted(used & set(range(NATIVE_SPRITE_SLOT)))
         raise CompileError(f"{where}: native sprite sheets need {len(table)} palettes, {len(free)} at most "
                            f"in this scene (16 K2GE sprite palettes; GB Studio sprite palettes "
                            f"{', '.join(map(str, taken)) or 'none'} in use)")
+    else:
+        from .sprite_recycle import assign
+        presence = []
+        for palette in table:
+            boxes = []
+            for sheet, place in zip(sheets, places):
+                if palette in sheet.palettes:
+                    if place is None:
+                        boxes = None
+                        break
+                    boxes += list(place)
+            presence.append(None if boxes is None else tuple(boxes))
+        slot_of = [free[i] for i in assign(presence, free, where, why_moving)]
+        recycle = (tuple(_padded(p) for p in table), tuple(slot_of))
+    shared = {s for s in slot_of if slot_of.count(s) > 1}
+    out = []
+    for sheet in sheets:
+        if not sheet.palettes:
+            out.append(sheet)
+            continue
+        ids = [table.index(p) for p in sheet.palettes]
+        frames = tuple(tuple(replace(s, palette=slot_of[ids[s.palette]]) for s in frame) for frame in sheet.frames)
+        out.append(replace(sheet, frames=frames, palettes=(),
+                           recycled=tuple(sorted({i for i in ids if slot_of[i] in shared}))))
     # A sheet of 1 or 2 colours packs a shorter palette: the slot is still 3 colours
-    # (unused entries black, as palette_words pads the background ones).
-    return tuple(out), tuple((slot, tuple(p) + (0,) * (3 - len(p))) for slot, p in zip(free, table))
+    # (unused entries black, as palette_words pads the background ones). A shared
+    # slot starts with its first palette; drawing loads the others.
+    seen = {}
+    for slot, palette in zip(slot_of, table):
+        seen.setdefault(slot, _padded(palette))
+    pairs = tuple(seen.items())
+    return (tuple(out), pairs) if places is None else (tuple(out), pairs, recycle)
+
+
+def _padded(palette):
+    return tuple(palette) + (0,) * (3 - len(palette))
 
 
 def editor_frame_origin(sheet, sx, sy):

@@ -218,5 +218,14 @@ export const NgpcSecondBackgroundPreview = ({
   if (!second || !background || !visible) {
     return null;
   }
-  return <Canvas ref={canvasRef} width={sceneW} height={sceneH} />;
+  // Behind the main background, the console shows it only through the main
+  // background's backdrop pixels: drawn half transparent here.
+  return (
+    <Canvas
+      ref={canvasRef}
+      width={sceneW}
+      height={sceneH}
+      style={second.behind ? { opacity: 0.5 } : undefined}
+    />
+  );
 };

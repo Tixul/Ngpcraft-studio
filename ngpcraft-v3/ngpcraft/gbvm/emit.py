@@ -42,7 +42,7 @@ from ..scene_collisions import build_collisions, collision_groups, collision_cap
 from ..scene_genres import needs_player_collisions
 from ..scene_updates import build_updates, context_capacity
 from ..scene_build import build_engine_scene, engine_blocker
-from ..scene_engine import AFTER_SCRIPTS, COMMIT, DECLARATIONS, FEATURES, engine_files, start_lines
+from ..scene_engine import AFTER_SCRIPTS, COMMIT, FEATURES, declarations, engine_files, start_lines
 from ..scene_graph import scene_graph
 from ..scene_link import link_scenes
 from ..project_music import music_options, select_music, attach_music
@@ -793,6 +793,15 @@ NGPC_FUNCTIONS = {
 }
 
 
+def scene_movers(texts, model):
+    """build_engine_scene arguments: the actors the scene's reachable scripts may
+    move or pin (sprite_recycle.moved_actors; only those that never move share
+    sprite palette slots)."""
+    from ..sprite_recycle import moved_actors
+    moved, why = moved_actors(texts, model["constants"])
+    return {"moved_actors": moved, "moved_why": why or "the scene's scripts were not analysed"}
+
+
 def move_features(text, model):
     """None if no script moves an actor, else the movement features the
     ACTOR_ATTR_* operands ask for (scene_actors.MOVE_FEATURES)."""
@@ -936,6 +945,27 @@ def fade_support():
     white, black = fade_tables()
     return FADE_SUPPORT_TEMPLATE.replace("%(tables)s", _c_table("ngc_fade_white", white) + "\n" +
                                           _c_table("ngc_fade_black", black))
+
+
+def palette_patch_source(fade, shadow):
+    """ngc_palette_patch: recycled palettes (palette_recycle.py, sprite_recycle.py)
+    written by the scene files. The shadow keeps them; at the scene colours they
+    reach the palette RAM at once; during or after a fade the fade shows them
+    (the staged step was computed from the old colours: recomputed)."""
+    return "\n".join([
+        "/* Recycled palettes: `count` words of `src` at palette RAM word `first`",
+        " * (sprites 0, SCR1 64, SCR2 128; palette_recycle.py, sprite_recycle.py). */",
+        "void ngc_palette_patch(unsigned char first, const unsigned short *src, unsigned char count)", "{",
+        "    volatile UWORD *d;", "    UBYTE i;",
+        *(["    for (i = 0u; i < count; ++i) ngc_palette_shadow[(UWORD)first + i] = src[i];"] if shadow else []),
+        *(["    if (fade_running || fade_timer != FADED_IN_FRAME) {",
+           "        ngc_staged_step = 0xFFu;     /* faded: the fade shows the new colours */",
+           "        return;", "    }"] if fade else []),
+        "    d = (volatile UWORD *)0x8200 + first;", "    for (i = 0u; i < count; ++i) d[i] = src[i];", "}", ""])
+
+
+def uses_palette_patch(engine_c):
+    return any("ngc_palette_patch(" in text for text in engine_c.values())
 
 
 GAME_H = ("/* Generated C89. */\n#ifndef NGC_GAME_H\n#define NGC_GAME_H\nvoid ngc_game_init(void);\n"
@@ -1293,6 +1323,14 @@ def gbvm_source(runtime, macros, rpn, natives, memory, model, fade_style=0, scen
     write their colours into ngc_palette_shadow, shown by ngc_palette_show.
     ui: (support, api) C of emit_ui.ui_support when the scripts print text."""
     functions = dict(runtime["functions"])
+    from ..world import pos_t, wide
+    if wide():
+        # world.py: a script's position words are pixels; the camera keeps 1/32 px.
+        for fn in ("vm_camera_move_to", "vm_camera_set_pos"):
+            for field in ("X", "Y"):
+                if f"params->{field}" not in functions[fn]:
+                    raise CompileError(f"{fn}: camera_position_t use changed (wide world)")
+                functions[fn] = functions[fn].replace(f"params->{field}", f"NGC_VM_POS(params->{field})")
     shake = "camera_shake_frames" in natives
     rpn = rpn_cases(runtime, rpn)
     # Real instructions only (composite macros expand into them); VM_STOP
@@ -1458,8 +1496,11 @@ def gbvm_source(runtime, macros, rpn, natives, memory, model, fade_style=0, scen
               "    ngc_sfx_play(text_sound_data, 4u);", "}"]
     camera_control = any(fn in handlers for fn in ("vm_camera_move_to", "vm_camera_set_pos"))
     if camera_control:
-        c.append("""typedef struct camera_position_t { INT16 X, Y; } camera_position_t;
-extern UWORD ngc_camera_x, ngc_camera_y, ngc_camera_clamp_x, ngc_camera_clamp_y;
+        c.append(("" if not wide() else
+                  "/* world.py: script position words are pixels, the camera 1/32 px on 32 bits. */\n"
+                  "#define NGC_VM_POS(v) ((unsigned long)(UWORD)(v) << 5)\n") +
+                 """typedef struct camera_position_t { INT16 X, Y; } camera_position_t;
+extern """ + ("UWORD" if not wide() else pos_t()) + """ ngc_camera_x, ngc_camera_y, ngc_camera_clamp_x, ngc_camera_clamp_y;
 extern UBYTE ngc_camera_settings;
 void ngc_actors_scroll(short cx, short cy);
 #define camera_x ngc_camera_x
@@ -2198,6 +2239,14 @@ def gbvm_referenced_variables(project, variables_lookup):
     return found
 
 
+
+def shared_plane_of(report):
+    """Text on SCR1 with the decor (case B): 1, or 2 when the second
+    background is behind the main one (the split brings SCR1 in front)."""
+    if report["planes"]["case"] != "B":
+        return 0
+    return 2 if report.get("second_background", {}).get("behind") else 1
+
 def generate_project(project, inits, variables_lookup):
     from ..project_sfx import sound_options
     tick_frames = 2 if frame_rate(project) == 30 else 1
@@ -2393,8 +2442,9 @@ def generate_project(project, inits, variables_lookup):
         engine_files(build_engine_scene(project, resources[start_id], sprite_switches=sprite_assets(texts, shared["sprites"]), emotes=emote_assets(texts, shared["emotes"]),
                                         replace_ops=replace_ops(texts), palette_slots=palette_slots, color_variants=variants_used,
                                         sprite_palette_slots=changed_sprite_slots(texts, f"scene {resources[start_id]['name']}"),
-                                        projectiles=projectiles[0] if projectiles else ()), moves, actor_updates, cancel, topdown,
-                     actor_interactions, trigger_data, hit_data, text=prints,
+                                        projectiles=projectiles[0] if projectiles else (),
+                                        **scene_movers(texts, model)), moves, actor_updates, cancel, topdown,
+                     actor_interactions, trigger_data, hit_data, text=prints, patch=True,
                      projectile_groups=projectiles[1] if projectiles else None,
                      projectile_scripts=projectiles[2] if projectiles and projectiles[2] else None,
                      projectile_modal=bool(projectiles) and prints,
@@ -2420,7 +2470,7 @@ def generate_project(project, inits, variables_lookup):
                             avatar_glyphs=scene_avatar_glyphs(project, shared, [text],
                                                               resources[start_id]),
                             logical_map=tall,
-                            shared_plane=engine_report["planes"]["case"] == "B",
+                            shared_plane=shared_plane_of(engine_report),
                             palette_slot=7 in palette_slots,
                             bkg_slot=engine_report["scr2_palettes"] if BKG_TEXT.search(text) else None,
                             frames=scene_frames(project, tileset_list, "\n".join(texts), shared["warnings"]))
@@ -2473,6 +2523,10 @@ def generate_project(project, inits, variables_lookup):
     fades = "vm_fade" in handlers
     if fades:
         features.append("fades")
+    patched = uses_palette_patch(engine_c)
+    if patched:
+        gbvm_c += palette_patch_source(fades, fades)
+        features.append("palette_recycle")
     if (inputs or prints) and topdown is None:
         engine_c["src/scene_input.c"] = input_source(option_long_press(project))
     if (inputs or prints or timers) and topdown is None and "src/scene_input.c" not in engine_c:
@@ -2576,7 +2630,7 @@ def generate_project(project, inits, variables_lookup):
         engine_report["actor_updates"] = actor_updates
     features += translated_features(project, features)
     units = select_units(features, "rom")
-    game = ['#include "game.h"', '#include "gbvm.h"', *([] if blocker else DECLARATIONS),
+    game = ['#include "game.h"', '#include "gbvm.h"', *([] if blocker else declarations()),
             *(["void ngc_vm_frame_end(void);"] if fades or prints or not blocker else []),
             *input_game_lines(state_of(topdown), inputs, prints, bool(timers), bool(routines))[0],
             *(UI_DECLARATIONS if prints else []),
@@ -2592,10 +2646,15 @@ def generate_project(project, inits, variables_lookup):
             *(["    ngc_ui_start(0u);                 /* initialize UI before actors render */"] if prints else []),
             *([f"    ngc_{state_of(topdown)}_boot();              /* script_engine_init: engine fields */"]
               if state_of(topdown) in BOOT_STATES else []),
-            *([] if blocker else start_lines(engine_report["view"]["height"], state_of(topdown))),
+            *([] if blocker else [line for line in start_lines(engine_report["view"]["height"], state_of(topdown))
+                                  if not (patched and fades and line == "    ngc_sprites_commit();")]),
             *input_game_lines(state_of(topdown), inputs, prints, bool(timers), bool(routines))[1],
             *(["    ngc_ui_scene_load(0u);            /* load_scene: UI tiles and palettes */"] if prints else []),
-            f"    ngc_vm_start(ngc_banks, 0u, {entry.address}u);  /* {symbol} */", "}",
+            f"    ngc_vm_start(ngc_banks, 0u, {entry.address}u);  /* {symbol} */",
+            # Recycled palettes go through the fade shadow, which ngc_vm_start
+            # initializes (fade_init: faded out): the first sprites after it.
+            *(["    ngc_sprites_commit();             /* recycled palettes: after the fade manager */"]
+              if patched and fades else []), "}",
             *(modal_frame(COMMIT, after_scripts(tick_frames), bool(projectiles)) if prints else []),
             "/* One frame of GBVM's core.c process_VM: run the scheduler until every",
             " * thread waits (RUNNER_BUSY loops without waiting for the frame). */",
@@ -2660,11 +2719,12 @@ def keep_source(hits):
     flags, animation frame; its sheet and animations are the new scene's),
     player_iframes (actor.c, reset by actors_init only). scroll_reset resets
     game_time on every load_scene, including a change to the same scene."""
+    from ..world import pos_t
     return "\n".join([
         "/* The current scene (index in the export's scene table). */",
         "unsigned char ngc_scene;",
         "/* load_scene keeps PLAYER: saved before the scene's actors are loaded. */",
-        "static unsigned short keep_x;", "static unsigned short keep_y;",
+        f"static {pos_t()} keep_x;", f"static {pos_t()} keep_y;",   # world.py position width
         "static unsigned char keep_dir;", "static unsigned char keep_flags;", "static unsigned char keep_tick;",
         "static unsigned char keep_speed;", "static unsigned char keep_frame;", "static unsigned char keep_fstart;",
         "static unsigned char keep_fend;", *(["static unsigned char keep_iframes;"] if hits else []),
@@ -2697,9 +2757,10 @@ def stack_source():
     as ngc_vm_exception reads it), PLAYER.pos and PLAYER.dir. GBVM does not
     check the bounds (corrupts memory): here a push on a full stack and a pop
     on an empty one do nothing (ECARTS)."""
+    from ..world import pos_t
     return "\n".join([
-        "static unsigned char stack_scene[8][3];", "static unsigned short stack_x[8];",
-        "static unsigned short stack_y[8];", "static unsigned char stack_dir[8];",
+        "static unsigned char stack_scene[8][3];", f"static {pos_t()} stack_x[8];",
+        f"static {pos_t()} stack_y[8];", "static unsigned char stack_dir[8];",
         "static unsigned char stack_n;",
         "void ngc_scene_stack_reset(void)", "{", "    stack_n = 0u;", "}",
         "void ngc_scene_push(void)", "{", "    if (stack_n == 8u) return;",
@@ -2768,6 +2829,14 @@ def generate_scenes(project, inits, graph, resources, variables, model, shared, 
     callback_detach = "b_plat_callback_detach" in text
     variants_used = "b_ngc_bg_variant" in text      # native_variants.py, VM_CALL_NATIVE
     text = any(m in macros for m in UI_DECODERS)
+    # docs/M2_TEXT.md D1, per scene: only a scene whose own
+    # scripts (and the scripts they call) use the UI keeps tiles 384..511.
+    ui_use = re.compile(r"^\s*(?:" + "|".join(sorted(UI_DECODERS)) + r")\b", re.M)
+    scene_texts_ui = [bool(ui_use.search("\n".join(with_called_scripts([t for _, t in groups[k]], shared))))
+                      for k in range(len(table))] if text else [False] * len(table)
+    if text and not any(scene_texts_ui):
+        scene_texts_ui = [True] * len(table)
+    ui_slots = []          # per scene index: its entry in scene_uis, or None
     scene_uis = []
     palette_maps = []      # docs/M4_PALETTES.md, per scene index
     variant_maps = []      # native_variants.py, per scene index
@@ -2784,6 +2853,7 @@ def generate_scenes(project, inits, graph, resources, variables, model, shared, 
         _, _, scene_macros, _ = assemble_bank(scene_texts, variables, model, scenes=symbols, sprites=bank_assets(shared),
                                               constants=global_constants(shared))
         scene_text = "\n".join(scene_texts)
+        scene_ui_on = scene_texts_ui[k]
         validate_logo_scripts(scene, scene_macros, scene_text)
         actor_updates = {u.actor_index + 1: addresses[upd[1][u.actor["id"]][0]] for u in a_upd}
         actor_interactions = {u.actor_index + 1: addresses[inter[1][u.actor["id"]][0]] for u in a_int}
@@ -2841,8 +2911,10 @@ def generate_scenes(project, inits, graph, resources, variables, model, shared, 
                                                         replace_ops=replace_ops(scene_texts), palette_slots=palette_slots,
                                                         color_variants=variants_used,
                                                         sprite_palette_slots=changed_sprite_slots(scene_texts, f"scene {scene['name']}"),
-                                                        projectiles=projectiles[0] if projectiles else ()), moves, actor_updates, cancel, topdown,
-                                     actor_interactions, trigger_data, hit_data, shadow=True, text=text, track_front=second,
+                                                        projectiles=projectiles[0] if projectiles else (),
+                                                        **scene_movers(scene_texts, model)), moves, actor_updates, cancel, topdown,
+                                     actor_interactions, trigger_data, hit_data, shadow=True, text=scene_ui_on, track_front=second,
+                                     patch=True,
                                      parallax_export=parallax_export,
                                      projectile_groups=projectiles[1] if projectiles else None,
                                      projectile_scripts=projectiles[2] if projectiles and projectiles[2] else None,
@@ -2857,19 +2929,20 @@ def generate_scenes(project, inits, graph, resources, variables, model, shared, 
                                      resume=loads, camera_control=bool(set(macros) & {"VM_CAMERA_MOVE_TO", "VM_CAMERA_SET_POS"}),
                                      camera_properties=any(n in memory for n in CAMERA_PROPERTIES),
                                      scroll_bounds=any(n in memory for n in SCROLL_BOUNDS))
-        if text:
+        ui_slots.append(len(scene_uis) if scene_ui_on else None)
+        if scene_ui_on:
             check_tiles(report, f"scene {scene['name']}")
             tall = check_window_commands(scene_text, f"scene {scene['name']}", shared=report["planes"]["case"] == "B")
             scene_uis.append(scene_ui(project, scene, report["view"]["top_band"], shared["warnings"],
-                                       palette_base=report["ui_palette_base"], shared_plane=report["planes"]["case"] == "B",
+                                       palette_base=report["ui_palette_base"], shared_plane=shared_plane_of(report),
                                        avatar_glyphs=scene_avatar_glyphs(project, shared, [scene_text], scene),
                                        logical_map=tall, palette_slot=7 in palette_slots,
                                        bkg_slot=report["scr2_palettes"] if BKG_TEXT.search(scene_text) else None,
                                        frames=scene_frames(project, shared["tilesets"], scene_text, shared["warnings"])))
-        if text and scene_uis[-1].palette_entries:
+        if scene_ui_on and scene_uis[-1].palette_entries:
             report["ui_palette_entries"] = [list(e) for e in scene_uis[-1].palette_entries]
         palette_maps.append([tuple(e) for e in report.get("palette_entries", ())] +
-                            [tuple(e) for e in (scene_uis[-1].palette_entries if text else ())])
+                            [tuple(e) for e in (scene_uis[-1].palette_entries if scene_ui_on else ())])
         variant_maps.append(report.get("color_variants"))
         if "src/scene_input.c" in files:
             input_c = files.pop("src/scene_input.c")
@@ -2924,7 +2997,8 @@ def generate_scenes(project, inits, graph, resources, variables, model, shared, 
                                    ui=ui_support(text_fonts(project, shared, texts), scene_uis, "ngc_palette_shadow + 64", front_scroll=second,
                                                         choice="VM_CHOICE" in macros,
                                                         frame_support="VM_REPLACE_TILE" in macros,
-                                                        cut=overlay_cut_live("\n".join(texts)))
+                                                        cut=overlay_cut_live("\n".join(texts)),
+                                                        slots=ui_slots)
                                    if text else None, heap_words=len(variables), platform_callbacks=all_callbacks, callback_contexts=capacity, callback_attach=callback_attach, callback_detach=callback_detach,
                                    adventure_callbacks=all_adv_callbacks, adventure_attach=adventure_attach,
                                    adventure_detach=adventure_detach,
@@ -2944,6 +3018,9 @@ def generate_scenes(project, inits, graph, resources, variables, model, shared, 
         engine_c["src/scene_input.c"] = input_c
     features = (["gbvm"] + (["frame_rate_30"] if tick_frames == 2 else []) + FEATURES +
                 ["gbvm_scene", "scene_changes"] + (["fades"] if fades else []) + (["scene_stack"] if stack else []))
+    if uses_palette_patch(engine_c):
+        gbvm_c += palette_patch_source(fades, True)
+        features.append("palette_recycle")
     if save:
         features += ["save_state", "save_journal"] + (["save_load"] if loads else [])
     if second:
@@ -3019,7 +3096,7 @@ def generate_scenes(project, inits, graph, resources, variables, model, shared, 
     features += translated_features(project, features)
     units = select_units(features, "rom")
     start = index[project.settings["startSceneId"]]
-    game = ['#include "game.h"', '#include "gbvm.h"', *DECLARATIONS,
+    game = ['#include "game.h"', '#include "gbvm.h"', *declarations(),
             *input_game_lines(scene_states(used), used["inputs"], text, used["timers"], used["routines"])[0],
             *(["void ngc_collision_update(void);"] if used["hits"] else []),
             *(UI_DECLARATIONS if text else []),
@@ -3117,6 +3194,16 @@ def generate_scenes(project, inits, graph, resources, variables, model, shared, 
              "src/gbvm.c": share_timer0(gbvm_c) if "parallax" in features and {"text_shared", "text_cut"} & set(features)
              else gbvm_c, "GBVM_LICENSE.txt": runtime["license"], **engine_c}
     files.update(emit_unit_files(units))
+    save_slots = None
+    if save:
+        # docs/M5_SAVE.md: the journal keeps the slots the scripts name (pages for 3 otherwise wasted)
+        from ..save_state import used_slots
+        save_slots = used_slots("\n".join(texts))
+        if save_slots != 3:
+            journal = files["src/save_journal.c"]
+            if journal.count("#define SJ_SLOTS 3u") != 1:
+                raise CompileError("save_journal.c: SJ_SLOTS definition not found")
+            files["src/save_journal.c"] = journal.replace("#define SJ_SLOTS 3u", f"#define SJ_SLOTS {save_slots}u")
     sources = sorted(x for x in files if x.endswith(".c"))
     manifest = {
         "format": "ngpcraft-export/0.1", "target": "ngpc-rom", "complete_rom": False,
@@ -3129,6 +3216,7 @@ def generate_scenes(project, inits, graph, resources, variables, model, shared, 
                          **({"context_budget": context_budget} if context_budget else {}),
                          "warnings": [w for r in reports for w in r["warnings"]]},
         "warnings": script_warnings(shared, reports),
+        **({"save_slots": save_slots} if save_slots is not None else {}),
         "platform": {"profile": "retail-ngpc", "viewport": [160, 152], "initialized_ram_supported": False},
         "project": {"root": str(project.root), "start_scene": table[start]},
         "scripts": {s.symbol: {"source": s.source, "bank": 0, "address": s.address,

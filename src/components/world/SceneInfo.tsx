@@ -28,6 +28,7 @@ import { SpriteSheetNormalized } from "shared/lib/entities/entitiesTypes";
 import clamp from "shared/lib/helpers/clamp";
 import { useDebounce } from "ui/hooks/use-debounce";
 import { ngpcMaxSpriteTiles } from "shared/lib/helpers/sprites";
+import { NGPC_MAX_SCENE_TILES } from "shared/lib/ngpcraft/worldLimits";
 import { getNgpcProjectSettings } from "shared/lib/ngpcraft/projectExtension";
 import { walkNormalizedSceneScripts } from "shared/lib/scripts/walk";
 
@@ -371,8 +372,8 @@ const SceneInfo = () => {
           if (!actor) {
             continue;
           }
-          const actorX = clamp(actor.x, 0, 255);
-          const actorY = clamp(actor.y, 0, 255);
+          const actorX = clamp(actor.x, 0, NGPC_MAX_SCENE_TILES);
+          const actorY = clamp(actor.y, 0, NGPC_MAX_SCENE_TILES);
           for (let x = actorX - SCREEN_WIDTH; x < actorX + SCREEN_WIDTH; x++) {
             for (
               let y = actorY - SCREEN_HEIGHT;

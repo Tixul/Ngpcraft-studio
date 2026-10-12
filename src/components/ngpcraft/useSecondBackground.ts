@@ -16,6 +16,8 @@ export interface SecondBackgroundSetting {
   scroll_y: string;
   loop_x?: boolean;
   loop_y?: boolean;
+  // V3 second_stream.py: behind the main background (SCR2 in front).
+  behind?: boolean;
 }
 
 export const isSecondBackgroundSetting = (

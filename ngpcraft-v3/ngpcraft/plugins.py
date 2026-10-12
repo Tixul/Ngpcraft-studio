@@ -230,6 +230,13 @@ class PluginBridge:
         method = getattr(self.builder, name)
         params = list(inspect.signature(method).parameters.values())
         values = [self._decode(a) for a in args]
+        from .gbvm.builder import RAW_POSITION_OPS
+        from .world import wide
+        if wide() and name == "_add_cmd" and values and values[0] in RAW_POSITION_OPS:
+            # world.py: the plugin computes GB Studio subpixels for this operand.
+            raise CompileError(f"event plugin: {values[0]} written directly carries GB Studio subpixel "
+                               "positions, which do not fit 16 bits in a game with a scene over 255 tiles "
+                               "(docs/PLAN_GRANDES_CARTES.md)")
         while values and values[-1] is _UNDEFINED and (len(values) > len(params) or
                                                        params[len(values) - 1].default is not inspect.Parameter.empty):
             values.pop()                       # omitted: the default applies

@@ -41,6 +41,49 @@ COUNT = 23
 TICKS = 400
 
 
+SECOND_ID = "lab-replace-second"
+SECOND_COLUMNS = (168, 192)  # px of the main image copied on the second background (waterfall x=22)
+
+
+def add_second(project):
+    """Second background (PLAN_MEGAMAN S4): a band of the main image on
+    SCR1, same scroll. Its tiles have the patterns of animated cells, the
+    case where a shared tile would animate the second background too."""
+    from ngpcraft.png import read_png
+    import struct, zlib
+    loaded = load_project(project)
+    scene = loaded.scenes[0]
+    rel, res = next((r, b) for r, b in loaded.by_type["background"] if b["id"] == scene["backgroundId"])
+    w, h, rgba = read_png(loaded.root / PurePosixPath(rel).with_suffix(""))
+    raw = bytearray()
+    for y in range(h):
+        raw.append(0)
+        for x in range(w):
+            raw.extend(rgba[y * w + x][:3] if SECOND_COLUMNS[0] <= x < SECOND_COLUMNS[1] else (255, 255, 255))
+    def chunk(kind, data):
+        return struct.pack(">I", len(data)) + kind + data + struct.pack(">I", zlib.crc32(kind + data) & 0xFFFFFFFF)
+    png = bytes((0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A)) + chunk(b"IHDR", struct.pack(">IIBBBBB", w, h, 8, 2, 0, 0, 0))
+    png += chunk(b"IDAT", zlib.compress(bytes(raw))) + chunk(b"IEND", b"")
+    # GB priority tiles stay refused with a second background (case C,
+    # second_background._validate): the lab's main image drops the bit.
+    from ngpcraft.scene_assets import decompress_tile_colors
+    attrs = [a & 0x7F for a in decompress_tile_colors(res.get("tileColors") or "", rel)]
+    write_json(loaded.root / PurePosixPath(rel),
+               {**res, "tileColors": "".join(f"{a:02x}!" for a in attrs)})
+    target = loaded.root / PurePosixPath(rel).parent / "lab_second.png"
+    target.write_bytes(png)
+    write_json(target.with_name("lab_second.png.gbsres"),
+               {**res, "id": SECOND_ID, "name": "lab second", "filename": "lab_second.png",
+                "symbol": "bg_lab_second", "tileColors": ""})
+    # Mono: four greys, colour 0 is the shared backdrop; gbs2's colour town
+    # has tiles of four opaque colours (two planes, case C with SCR1).
+    settings_path = loaded.root / "project/settings.gbsres"
+    settings = json.loads(settings_path.read_text(encoding="utf-8"))
+    write_json(settings_path, {**settings, "colorMode": "mono"})
+    write_json(loaded.root / "ngpcraft.json", {"schema": "ngpcraft-project/1", "resources": {
+        scene["id"]: {"second_background": {"background_id": SECOND_ID, "scroll_x": "1", "scroll_y": "1"}}}})
+
+
 def project_case(root, start=(20, 10)):
     root.mkdir(parents=True, exist_ok=True)
     project = root / "project"
@@ -129,12 +172,29 @@ def expected_scene(project, scene, applied):
     return pixels, w, h
 
 
-def run(out, toolchain, emulator, bios, witness=None, start=(20, 10)):
+def run(out, toolchain, emulator, bios, witness=None, start=(20, 10), second=False):
     out = Path(out)
     if out.exists():
         raise ValueError("output must be a new directory")
     project_path = project_case(out, start)
-    manifest = export_project(project_path, out / "export")
+    if second:
+        add_second(project_path)
+    if witness == "front-shares":
+        # Witness: SCR1 may reuse the rewritten tiles (their exclusion removed).
+        from dataclasses import replace as _replace
+        import ngpcraft.second_background as sb
+        original = sb.compile_second_background
+        def sharing(main_source, front_source, **kw):
+            main = kw.pop("main")
+            got = original(main_source, front_source, main=_replace(main, animated_tiles=()), **kw)
+            return _replace(got, main=_replace(got.main, animated_tiles=main.animated_tiles))
+        sb.compile_second_background = sharing
+        try:
+            manifest = export_project(project_path, out / "export")
+        finally:
+            sb.compile_second_background = original
+    else:
+        manifest = export_project(project_path, out / "export")
     if witness == "shared-tile":
         # Witness: only the first class of each operation is written.
         path = out / "export/src/scene_stream.c"
@@ -153,7 +213,7 @@ def run(out, toolchain, emulator, bios, witness=None, start=(20, 10)):
         tmp.replace(path)
         manifest["sha256"]["src/scene_stream.c"] = hashlib.sha256(path.read_bytes()).hexdigest()
         write_json(out / "export/export.json", manifest)
-    elif witness is not None:
+    elif witness not in (None, "front-shares"):
         raise ValueError("unknown witness")
     build = build_rom(out / "export", toolchain)
     symbols = build["link_audit"]["public_symbols"]
@@ -161,6 +221,9 @@ def run(out, toolchain, emulator, bios, witness=None, start=(20, 10)):
     scene = project.scenes[0]
     engine = build_engine_scene(project, scene)
     view_h, top = view_of(engine.background)
+    front = None
+    if second:
+        front = background_source(project, {**scene, "backgroundId": SECOND_ID, "name": "lab second"})
     sys.path.insert(0, str(Path(emulator).resolve()))
     from core import native
     rom = (out / "export/rom/game.ngc").read_bytes()
@@ -236,7 +299,10 @@ def run(out, toolchain, emulator, bios, witness=None, start=(20, 10)):
         bad = 0
         for yy in range(152):
             for xx in range(160):
-                want = pixels[(sy + yy - top) * w + sx + xx] if top <= yy < top + view_h else None
+                at = (sy + yy - top) * w + sx + xx
+                want = pixels[at] if top <= yy < top + view_h else None
+                if want is not None and front is not None and front.indices[at]:
+                    want = front.pixels[at]        # SCR1 in front, never animated
                 if want is not None and picture[yy * 160 + xx] != want:
                     bad += 1
         compared += 1
@@ -273,10 +339,11 @@ def main():
     p = argparse.ArgumentParser(description=__doc__)
     for n in ("out", "toolchain", "emulator", "bios"):
         p.add_argument("--" + n, required=True)
-    p.add_argument("--witness", choices=("shared-tile",))
+    p.add_argument("--witness", choices=("shared-tile", "front-shares"))
+    p.add_argument("--second", action="store_true", help="a second background sharing animated patterns")
     p.add_argument("--start", type=int, nargs=2, default=(20, 10), help="player start tile (camera)")
     a = p.parse_args()
-    r = run(a.out, a.toolchain, a.emulator, a.bios, a.witness, tuple(a.start))
+    r = run(a.out, a.toolchain, a.emulator, a.bios, a.witness, tuple(a.start), a.second)
     print(json.dumps(r, indent=2))
     return 0 if r["passed"] else 1
 

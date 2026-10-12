@@ -45,10 +45,72 @@ def scroll_bounds_clamp(view_h):
             "    else if (y > lim) y = lim;"]
 
 
+def recycle_source(asset, plane, w, h, shadow, patch=False):
+    """palette_recycle.py at run time: the palettes of the blocks the streamed window
+    enters go to their hardware slot (and the fade shadow). Only when the window's
+    block range changes (every CHUNK tiles of scrolling); the cells carry their slot.
+    patch: through the GBVM runtime's ngc_palette_patch, which knows the fades (a
+    faded screen keeps its level; the fade shows the new colours)."""
+    from .palette_recycle import CHUNK
+    logical, hardware, blocks = asset.recycle
+    if len(logical) > 255:
+        raise CompileError(f"palette recycling: {len(logical)} palettes, at most 255")
+    bw, bh = (w + CHUNK - 1) // CHUNK, (h + CHUNK - 1) // CHUNK
+    lists = dict(blocks)
+    start, flat = [], []
+    for by in range(bh):
+        for bx in range(bw):
+            start.append(len(flat))
+            flat += list(lists[(bx, by)] if (bx, by) in lists else ())
+    start.append(len(flat))
+    lines = [f"/* palette_recycle.py: {len(logical)} palettes (4 words each) in {max(hardware) + 1} slots of SCR{plane};",
+             f" * the palettes of each {CHUNK} x {CHUNK}-tile block, row-major {bw} x {bh}. */"]
+    c_array(lines, f"bg_pal{plane}", palette_words(logical))
+    c_array(lines, "ngc_pal_slot", list(hardware), "unsigned char")
+    c_array(lines, "ngc_pal_block_start", start)
+    c_array(lines, "ngc_pal_block_list", flat or [0], "unsigned char")
+    base = 0x8280 + (plane - 1) * 128
+    shift = CHUNK.bit_length() - 1
+    if patch:
+        lines.append("void ngc_palette_patch(unsigned char first, const unsigned short *src, unsigned char count);")
+    lines += ["static unsigned char ngc_pal_now[16]; /* logical palette in each slot, 0xFF none */",
+              "static short ngc_pal_window[4];       /* blocks of the last window: x0, x1, y0, y1 */",
+              "static void ngc_pal_recycle(short tx, short ty)", "{",
+              "    short bx0;", "    short bx1;", "    short by0;", "    short by1;", "    short bx;", "    short by;",
+              "    unsigned short k;", "    unsigned short e;", "    unsigned char l;", "    unsigned char s;",
+              *([] if patch else ["    unsigned char i;", "    volatile unsigned short *d;"]),
+              "    const unsigned short *src;",
+              # the streamed window: columns tx-1..tx+20, rows ty-1..ty+19 (ngc_stream_row / col)
+              f"    bx0 = tx > 0 ? (short)((tx - 1) >> {shift}) : 0;",
+              f"    bx1 = tx + 20 > 0 ? (short)((tx + 20) >> {shift}) : 0;",
+              f"    by0 = ty > 0 ? (short)((ty - 1) >> {shift}) : 0;",
+              f"    by1 = ty + 19 > 0 ? (short)((ty + 19) >> {shift}) : 0;",
+              f"    if (bx0 > {bw - 1}) bx0 = {bw - 1};", f"    if (bx1 > {bw - 1}) bx1 = {bw - 1};",
+              f"    if (by0 > {bh - 1}) by0 = {bh - 1};", f"    if (by1 > {bh - 1}) by1 = {bh - 1};",
+              "    if (bx0 == ngc_pal_window[0] && bx1 == ngc_pal_window[1] &&",
+              "        by0 == ngc_pal_window[2] && by1 == ngc_pal_window[3]) return;",
+              "    ngc_pal_window[0] = bx0; ngc_pal_window[1] = bx1; ngc_pal_window[2] = by0; ngc_pal_window[3] = by1;",
+              "    for (by = by0; by <= by1; ++by) {", "        for (bx = bx0; bx <= bx1; ++bx) {",
+              f"            k = ngc_pal_block_start[(unsigned short)by * {bw}u + (unsigned short)bx];",
+              f"            e = ngc_pal_block_start[(unsigned short)by * {bw}u + (unsigned short)bx + 1u];",
+              "            for (; k < e; ++k) {",
+              "                l = ngc_pal_block_list[k];", "                s = ngc_pal_slot[l];",
+              "                if (ngc_pal_now[s] == l) continue;", "                ngc_pal_now[s] = l;",
+              f"                src = bg_pal{plane} + ((unsigned short)l << 2);",
+              *([f"                ngc_palette_patch((unsigned char)({64 * plane}u + ((unsigned short)s << 2)), src, 4u);"]
+                if patch else
+                [f"                d = (volatile unsigned short *)0x{base:04X} + ((unsigned short)s << 2);",
+                 "                for (i = 0u; i < 4u; ++i) d[i] = src[i];",
+                 *([f"                d = (volatile unsigned short *)ngc_palette_shadow + {64 * plane}u + ((unsigned short)s << 2);",
+                    "                for (i = 0u; i < 4u; ++i) d[i] = src[i];"] if shadow else [])]),
+              "            }", "        }", "    }", "}", ""]
+    return lines
+
+
 def stream_source(asset, max_delta=DEFAULT_MAX_DELTA, shadow=False, *, front_plane=None,
                   reserve_ui=False, track_front=False, camera_shake=False, scroll_bounds=False,
-                  parallax=(), parallax_export=False, where="stream"):
-    return _stream_source(asset, max_delta, shadow, front_plane=front_plane,
+                  parallax=(), parallax_export=False, where="stream", patch=False):
+    return _stream_source(asset, max_delta, shadow, front_plane=front_plane, patch=patch,
                           reserve_ui=reserve_ui, track_front=track_front, camera_shake=camera_shake,
                           scroll_bounds=scroll_bounds, parallax=parallax, parallax_export=parallax_export,
                           where=where)
@@ -56,7 +118,7 @@ def stream_source(asset, max_delta=DEFAULT_MAX_DELTA, shadow=False, *, front_pla
 
 def _stream_source(asset, max_delta=DEFAULT_MAX_DELTA, shadow=False, *, front_plane=None,
                    reserve_ui=False, track_front=False, companion=False, view=None, owned_planes=None, camera_shake=False,
-                   scroll_bounds=False, parallax=(), parallax_export=False, where="stream"):
+                   scroll_bounds=False, parallax=(), parallax_export=False, where="stream", patch=False):
     """C for ngc_stream_load / ngc_stream_update over the whole compiled map.
     shadow: the scene's colours go to the fade manager's palette shadow
     (ngc_palette_shadow, same layout as the palette RAM from 0x8200) instead of
@@ -96,8 +158,17 @@ def _stream_source(asset, max_delta=DEFAULT_MAX_DELTA, shadow=False, *, front_pl
         raise CompileError("stream: max_delta must be 1..10 tiles")
     w, h = asset.width // 8, asset.height // 8
     count = len(asset.planes)
-    if w * h * count > 65535:
-        raise CompileError("stream: map index exceeds 16 bits")
+    from .world import NGPC_MAX_CELLS
+    if w * h > NGPC_MAX_CELLS:
+        raise CompileError(f"stream: {w}x{h} tiles, over {NGPC_MAX_CELLS} tiles (docs/PLAN_GRANDES_CARTES.md)")
+
+    def at(index):
+        """Cell pointer: the cell index fits 16 bits (NGPC_MAX_CELLS); two
+        interleaved planes over 65535 words double it at the pointer width
+        (a shift, cc900 links no 32-bit multiply)."""
+        if w * h * count <= 65535:
+            return f"bg_map + ({index}) * {count}u"
+        return f"bg_map + ((unsigned long)({index}) << 1)"
     # Shake can expose any border, including the 256px ring of a small map.
     small = w <= 32 and h <= 32 and not reserve_ui and not camera_shake
     lines = ["/* Original V3 streamed background; SNK K2GETechRef 4-3-5, 4-4, 4-12.",
@@ -106,7 +177,14 @@ def _stream_source(asset, max_delta=DEFAULT_MAX_DELTA, shadow=False, *, front_pl
         lines.append("extern unsigned short ngc_palette_shadow[193];")
     if not companion:
         c_array(lines, "bg_tiles", tile_words(asset))
-    for plane, palettes in zip(asset.planes, asset.palettes):
+    recycle = getattr(asset, "recycle", ())
+    if recycle and (small or parallax or companion):
+        raise CompileError(f"{where}: palette recycling needs a streamed map over the 32 x 32 plane, "
+                           "without parallax or a second background (docs/PALETTE_RECYCLE.md)")
+    for k, (plane, palettes) in enumerate(zip(asset.planes, asset.palettes)):
+        if k == 0 and recycle:
+            lines += recycle_source(asset, plane, w, h, shadow, patch)
+            continue
         c_array(lines, f"bg_pal{plane}", palette_words(palettes))
     # One source pointer walks every used plane: cell words are interleaved.
     lines.append(f"/* Map cells, row-major, {count} word(s) per cell: " +
@@ -157,7 +235,7 @@ def _stream_source(asset, max_delta=DEFAULT_MAX_DELTA, shadow=False, *, front_pl
                   f"    if (wy < 0 || wy >= {h}) return;",
                   "    wx = tx > 0 ? (unsigned short)(tx - 1) : 0u;",
                   f"    n = (unsigned char)((tx + 21 < {w} ? (unsigned short)(tx + 21) : {w}u) - wx);",
-                  f"    s = bg_map + ((unsigned short)wy * {w}u + wx) * {count}u;",
+                  f"    s = {at(f'(unsigned short)wy * {w}u + wx')};",
                   "    cell = (((unsigned short)wy & 31u) << 5) + (wx & 31u);", *setup("cell"),
                   "    run = (unsigned char)(32u - (wx & 31u));", "    if (run > n) run = n;",
                   *runs(1, 32, 0), "}", "",
@@ -168,7 +246,7 @@ def _stream_source(asset, max_delta=DEFAULT_MAX_DELTA, shadow=False, *, front_pl
                   f"    if (wx < 0 || wx >= {w}) return;",
                   "    wy = ty > 0 ? (unsigned short)(ty - 1) : 0u;",
                   f"    n = (unsigned char)((ty + 20 < {h} ? (unsigned short)(ty + 20) : {h}u) - wy);",
-                  f"    s = bg_map + (wy * {w}u + (unsigned short)wx) * {count}u;",
+                  f"    s = {at(f'wy * {w}u + (unsigned short)wx')};",
                   "    cell = ((wy & 31u) << 5) + ((unsigned short)wx & 31u);", *setup("cell"),
                   "    run = (unsigned char)(32u - (wy & 31u));", "    if (run > n) run = n;",
                   *runs(32, 1024, (w - 1) * count), "}", ""]
@@ -183,7 +261,7 @@ def _stream_source(asset, max_delta=DEFAULT_MAX_DELTA, shadow=False, *, front_pl
         for plane in asset.planes:
             lines.append(f"        ((volatile unsigned short *)0x{0x9000+(plane-1)*2048:04X})[cell] = {asset.tile_base}u;")
         lines += ["        return;", "    }",
-                  f"    s = bg_map + ((unsigned short)wy * {w}u + (unsigned short)wx) * {count}u;"]
+                  f"    s = {at(f'(unsigned short)wy * {w}u + (unsigned short)wx')};"]
         for plane in asset.planes:
             lines.append(f"    ((volatile unsigned short *)0x{0x9000+(plane-1)*2048:04X})[cell] = *s++;")
         lines += ["}", "static void ngc_stream_row(short wy, short tx)", "{",
@@ -200,7 +278,7 @@ def _stream_source(asset, max_delta=DEFAULT_MAX_DELTA, shadow=False, *, front_pl
         else:
             lines += ["    volatile unsigned short *d;", "    const unsigned short *s;",
                       f"    if (wx < 0 || wx >= {w}) return;",
-                      f"    s = bg_map + ((unsigned short)r0 * {w}u + (unsigned short)wx) * {count}u;",
+                      f"    s = {at(f'(unsigned short)r0 * {w}u + (unsigned short)wx')};",
                       f"    d = (volatile unsigned short *)0x{0x9000 + (asset.planes[0] - 1) * 2048:04X} + "
                       "(((unsigned short)r0 << 5) + ((unsigned short)wx & 31u));",
                       f"    for (; r0 < r1; ++r0) {{ *d = *s; d += 32; s += {w * count}; }}", "}", ""]
@@ -280,6 +358,8 @@ def _stream_source(asset, max_delta=DEFAULT_MAX_DELTA, shadow=False, *, front_pl
                      "    tx = tx < 0 ? -(short)(((unsigned short)(-tx) + 7u) >> 3) : (short)((unsigned short)tx >> 3);",
                      "    ty = ty < 0 ? -(short)(((unsigned short)(-ty) + 7u) >> 3) : (short)((unsigned short)ty >> 3);"]
                     if camera_shake else ["    tx = (short)(ngc_scroll[0] >> 3);", "    ty = (short)(ngc_scroll[1] >> 3);"]),
+                  *(["    ngc_pal_recycle(tx, ty);      /* palette_recycle.py: before the cells that use them */"]
+                    if recycle else []),
                   "    dx = (short)(tx - ngc_stream_tx);", "    dy = (short)(ty - ngc_stream_ty);",
                   "    /* Beyond the budget: re-blit the window top to bottom, ahead of the beam. */",
                   f"    if (dx > {m} || dx < -{m} || dy > {m} || dy < -{m}) {{",
@@ -298,7 +378,11 @@ def _stream_source(asset, max_delta=DEFAULT_MAX_DELTA, shadow=False, *, front_pl
     if not companion:
         lines += [f"    dst = (volatile unsigned short *)0x{0xA000 + asset.tile_base*16:04X};",
                   f"    for (i = 0u; i < {len(asset.tiles)*8}u; ++i) dst[i] = bg_tiles[i];"]
-    for plane, palettes in zip(asset.planes, asset.palettes):
+    for k, (plane, palettes) in enumerate(zip(asset.planes, asset.palettes)):
+        if k == 0 and recycle:
+            # the window's palettes come with the first ngc_stream_update below
+            lines += ["    for (i = 0u; i < 16u; ++i) ngc_pal_now[i] = 0xFFu;", "    ngc_pal_window[0] = 0x7FFF;"]
+            continue
         if shadow:
             lines += [f"    dst = (volatile unsigned short *)ngc_palette_shadow + {64 * plane};"]
         else:

@@ -306,6 +306,13 @@ Routine* : les appels `6xy` voyagent dans le flux natif (`FE 07 xy`), depuis
 une conversion UGE ou une partition native ; un `.ngps` du Sound Creator n'en
 porte pas ([M5_MUSIC_ROUTINE](M5_MUSIC_ROUTINE.md)).
 
+**2026-10-11 (nuit) :** l'éditeur convertit seul, au build, les `.uge`/`.mod`
+et les sons FX Hammer/VGM qui n'ont pas de version NGPC (ou dont le fichier a
+changé) : un tuto GB Studio n'a plus d'étape « convertir ». Les morceaux
+gardent leur **stéréo** (routage NR51 → décalage G/D par voie, `music_pan.py`) ;
+un bruitage ne coupe que la voie qu'il utilise, comme sur Game Boy. Seuls les
+sons **WAV** restent refusés (pas de lecteur d'échantillons).
+
 ## 8. La sauvegarde utilise la flash de la cartouche — ✅ émulateur (2026-10-07), console ⏳
 
 - **Dans GB Studio** : *Save Data* enregistre l'état complet du jeu (jusqu'à
@@ -501,7 +508,9 @@ reste à établir après une preuve de composition décor/sprites.
 ## En plus sur NGPC (extensions)
 
 Disponibles en plus de GB Studio, sans rien changer à ce qui précède :
-- second plan de défilement ;
+- second plan de défilement, devant ou derrière le décor principal
+  (`second_background.behind`), avec bornes de caméra, tremblement, HUD,
+  tuiles animées, palettes et sprites prioritaires ;
 - 16 palettes par plan et une palette par sprite ;
 - priorité des sprites par rapport aux plans ;
 - effets raster ;
@@ -748,3 +757,32 @@ vide : rien n'est tiré.
 emplacement jamais chargé dans la scène (comportement non défini dans GB
 Studio).
 
+## 27. Scènes plus grandes que 255 tuiles — en cours (2026-10-12)
+
+**Ce que fait GB Studio** : une scène fait au plus 255 × 255 tuiles. Les
+positions sont en 1/32 de pixel sur 16 bits (2 048 px = 256 tuiles), les
+tuiles sur un octet.
+
+**Ce que fait NgpCraft** : une scène peut faire jusqu'à **4 095 tuiles par
+axe** et **65 535 tuiles en tout** (2 048 × 32, 1 024 × 64, 512 × 128,
+255 × 255…). Rien à cocher : dès qu'une scène dépasse 255 tuiles, tout le jeu
+passe aux positions sur 32 bits (même unité, mêmes vitesses ; coût mesuré
++1 % de calcul par image). Un jeu dont toutes les scènes font 255 tuiles ou
+moins compile exactement comme avant. Dans un tel jeu « large » :
+- les variables de position des scripts sont en **pixels** (jusqu'à 32 760) ;
+  *Store Actor Position* et les conditions de position donnent les mêmes
+  valeurs en tuiles et en pixels que GB Studio ;
+- une valeur de script « position en sous-pixels » est refusée (elle ne tient
+  plus sur 16 bits) ; un script GBVM écrit à la main ou un plugin qui écrit
+  directement une instruction de position est refusé ;
+- *Actor Effects* (split in/out) avance par pixels entiers : mêmes positions
+  de départ et d'arrivée, étapes intermédiaires arrondies au pixel ;
+- deux scripts qui déplacent le **même** acteur en même temps partagent sa
+  cible (une par acteur, au lieu d'une par script) ;
+- *Replace Tile* reste limité aux tuiles 0..255 (son instruction GBVM porte
+  X et Y sur un octet) ;
+- encore refusé dans un jeu large : le plugin Platformer+, et les tuiles
+  prioritaires sur un décor de plus de 2 048 px (`PLAN_GRANDES_CARTES.md` G6).
+
+**Adapter le tuto** : rien pour une scène de 255 tuiles ou moins. Pour une
+scène plus grande, préférer les tuiles ou les pixels aux sous-pixels.

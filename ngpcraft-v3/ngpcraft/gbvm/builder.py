@@ -244,6 +244,29 @@ def subpx_shift_for_units(units):
     return NUM_SUBPIXEL_BITS + 3 if units == "tiles" else NUM_SUBPIXEL_BITS
 
 
+def vm_position_shift(units):
+    """Shift from `units` to a script's position words: GB Studio's subpixels,
+    or pixels in a wide world (world.py: positions over 2048 px do not fit a
+    16-bit word in 1/32 px; the engine converts at the native boundary).
+    Collision boxes and speeds stay in subpixels (subpx_shift_for_units)."""
+    from ..world import wide
+    return subpx_shift_for_units(units) - (NUM_SUBPIXEL_BITS if wide() else 0)
+
+
+# Instructions whose operands hold positions (GBVM vm_actor.c, vm_camera.c,
+# vm_projectiles.c): refused in hand-written GBVM of a wide world.
+RAW_POSITION_OPS = frozenset(("VM_ACTOR_SET_POS", "VM_ACTOR_GET_POS", "VM_ACTOR_MOVE_TO", "VM_ACTOR_MOVE_TO_INIT",
+                              "VM_ACTOR_MOVE_TO_X", "VM_ACTOR_MOVE_TO_Y", "VM_ACTOR_MOVE_TO_XY",
+                              "VM_ACTOR_MOVE_TO_SET_DIR_X", "VM_ACTOR_MOVE_TO_SET_DIR_Y",
+                              "VM_CAMERA_SET_POS", "VM_CAMERA_MOVE_TO", "VM_PROJECTILE_LAUNCH"))
+
+
+def vm_position_px(subpixels):
+    """A constant offset in subpixels (GB Studio) as a script position word."""
+    from ..world import wide
+    return subpixels >> NUM_SUBPIXEL_BITS if wide() else subpixels
+
+
 def precompile_script_value(value, locals_label="", rpn_operations=None, fetch_operations=None):
     """shared/lib/scriptValue/helpers.ts precompileScriptValue."""
     return precompile_optimised_script_value(
@@ -259,10 +282,15 @@ def precompile_optimised_script_value(value, locals_label="", rpn_operations=Non
     pos_x, pos_y = ("xpos", "pxpos", "spxpos"), ("ypos", "pypos", "spypos")
 
     def shift(prop):
+        from ..world import wide
         if prop in ("xpos", "ypos"):
-            rpn.extend([{"type": "number", "value": subpx_shift_for_units("tiles")}, {"type": "shr"}])
+            rpn.extend([{"type": "number", "value": vm_position_shift("tiles")}, {"type": "shr"}])
         elif prop in ("pxpos", "pypos"):
-            rpn.extend([{"type": "number", "value": subpx_shift_for_units("pixels")}, {"type": "shr"}])
+            if not wide():       # world.py: the word is already pixels
+                rpn.extend([{"type": "number", "value": subpx_shift_for_units("pixels")}, {"type": "shr"}])
+        elif wide():
+            raise CompileError(f"script value {prop}: an actor position in subpixels does not fit a "
+                               "16-bit value in a scene over 255 tiles (docs/PLAN_GRANDES_CARTES.md)")
 
     if kind == "property":
         prop = value.get("property")
@@ -788,6 +816,13 @@ class ScriptBuilder:
             return                     # comment, label, .R_ / .dw data: the assembler checks them
         if word[0] not in model["macros"] and word[0] not in model["composite_macros"]:
             raise CompileError(f"GBVM script line {number}: unknown instruction {word[0]}")
+        from ..world import wide
+        if wide() and word[0] in RAW_POSITION_OPS:
+            # world.py: script position words are pixels in a game with a scene
+            # over 255 tiles; hand-written GBVM computes GB Studio's subpixels.
+            raise CompileError(f"GBVM script line {number}: {word[0]} reads or writes positions in GB Studio "
+                               "subpixels, which do not fit 16 bits in a game with a scene over 255 tiles "
+                               "(docs/PLAN_GRANDES_CARTES.md)")
 
         def missing(macro, seen=()):
             if macro in model["macros"]:
@@ -1785,7 +1820,7 @@ class ScriptBuilder:
         actor_ref = self._declare_local("actor", 4)
         stack_ptr = self.stack_ptr
         self._add_comment("Actor Set Position To Variables")
-        shift = subpx_shift_for_units(units)
+        shift = vm_position_shift(units)
         (self._rpn().ref_variable(variable_x).int16(shift).operator(".SHL")
          .ref_set(self._offset_stack_addr(actor_ref, 1))
          .ref_variable(variable_y).int16(shift).operator(".SHL")
@@ -1801,7 +1836,7 @@ class ScriptBuilder:
         actor_ref = self._declare_local("actor", 4)
         stack_ptr = self.stack_ptr
         self._add_comment("Actor Move To Variables")
-        shift = subpx_shift_for_units(units)
+        shift = vm_position_shift(units)
         (self._rpn().ref_variable(variable_x).int16(shift).operator(".SHL")
          .ref_set(self._offset_stack_addr(actor_ref, 1))
          .ref_variable(variable_y).int16(shift).operator(".SHL")
@@ -2246,7 +2281,8 @@ class ScriptBuilder:
             raise CompileError(f"Actor Effects: {pixel_distance} px at speed {speed}: no step "
                                "(GB Studio would divide by zero and emit Infinity)")
         steps = math.floor(pixel_distance / speed)
-        return steps, math.floor(pixel_distance * 32 / steps)
+        # Wide world: whole pixels per step (ECARTS_GBSTUDIO.md; same end position).
+        return steps, vm_position_px(math.floor(pixel_distance * 32 / steps))
 
     def actor_fx_split_in(self, actor_id, distance, speed, units="pixels"):
         steps, delta = self._fx_steps(distance, speed, units)
@@ -2409,10 +2445,10 @@ class ScriptBuilder:
         self._add_cmd("VM_ACTOR_GET_POS", actor_ref)
         rpn = self._rpn().ref(self._offset_stack_addr(actor_ref, 1))
         if x:
-            rpn.int16(math.floor(x * 32)).operator(".ADD")
+            rpn.int16(vm_position_px(math.floor(x * 32))).operator(".ADD")
         rpn.ref(self._offset_stack_addr(actor_ref, 2))
         if y:
-            rpn.int16(math.floor(-y * 32)).operator(".ADD")
+            rpn.int16(vm_position_px(math.floor(-y * 32))).operator(".ADD")
         return rpn
 
     def _projectile_finish(self, index):
@@ -2475,7 +2511,7 @@ class ScriptBuilder:
         # Aim uses source positions, before the launch offsets, as GB Studio.
         for offset in (2, 1):
             rpn.ref(self._offset_stack_addr(other_ref, offset)).ref(self._offset_stack_addr(actor_ref, offset))
-            rpn.operator(".SUB").int16(256).operator(".DIV")
+            rpn.operator(".SUB").int16(vm_position_px(256)).operator(".DIV")
         rpn.operator(".ATAN2").stop()
         self._projectile_finish(index)
     def actor_emote(self, emote_id):
@@ -2585,7 +2621,7 @@ class ScriptBuilder:
         self._add_cmd("VM_ACTOR_GET_POS", actor_ref)
         rpn = self._rpn()
         for offset, variable in ((1, variable_x), (2, variable_y)):
-            rpn.ref(self._offset_stack_addr(actor_ref, offset)).int8(subpx_shift_for_units(units))
+            rpn.ref(self._offset_stack_addr(actor_ref, offset)).int8(vm_position_shift(units))
             rpn.operator(".SHR").ref_set_variable(variable)
         rpn.stop()
         self._add_nl()
@@ -2645,7 +2681,7 @@ class ScriptBuilder:
             if label is not None:
                 self._label(label)
             dest = self._offset_stack_addr(actor_ref, axis)
-            rpn = self._rpn().ref(dest).int16(offset).operator(op)
+            rpn = self._rpn().ref(dest).int16(vm_position_px(offset)).operator(op)
             if op == ".SUB":
                 rpn.int16(0).operator(".MAX")
             rpn.ref_set(dest).stop()
@@ -2706,7 +2742,7 @@ class ScriptBuilder:
         actor_ref = self._declare_local("actor", 4)
         stack_ptr = self.stack_ptr
         self._add_comment("Actor Set Position")
-        shift = subpx_shift_for_units(units)
+        shift = vm_position_shift(units)
         for value in (value_x, value_y):
             if not isinstance(value, dict):
                 raise CompileError(f"{value!r} is not a script value")
@@ -2735,6 +2771,14 @@ class ScriptBuilder:
             raise CompileError(f"{value!r} is not a script value")
         return {"type": "shl", "valueA": value, "valueB": {"type": "number", "value": subpx_shift_for_units(units)}}
 
+    @staticmethod
+    def _to_position(value, units):
+        """_to_subpixels for a position word (vm_position_shift): identical in a
+        GB Studio world, pixels in a wide one."""
+        if not isinstance(value, dict):
+            raise CompileError(f"{value!r} is not a script value")
+        return {"type": "shl", "valueA": value, "valueB": {"type": "number", "value": vm_position_shift(units)}}
+
     def actor_move_to_script_values(self, actor_id, value_x, value_y, collide_with, move_type=_UNDEFINED,
                                     units=_UNDEFINED, lock_direction=_UNDEFINED):
         """scriptBuilder.ts actorMoveToScriptValues."""
@@ -2745,8 +2789,8 @@ class ScriptBuilder:
         actor_ref = self._declare_local("actor", 4)
         stack_ptr = self.stack_ptr
         self._add_comment("Actor Move To")
-        optimised_x = optimise_script_value(self._to_subpixels(value_x, units))
-        optimised_y = optimise_script_value(self._to_subpixels(value_y, units))
+        optimised_x = optimise_script_value(self._to_position(value_x, units))
+        optimised_y = optimise_script_value(self._to_position(value_y, units))
         attr = to_asm_move_flags(move_type, collide_with)
         rpn_x, fetch_x = precompile_script_value(optimised_x, "x")
         rpn_y, fetch_y = precompile_script_value(optimised_y, "y")
@@ -2783,8 +2827,8 @@ class ScriptBuilder:
         if not move_x and not move_y:
             return
         attr = to_asm_move_flags(move_type, collide_with, True, units)
-        rpn_x, fetch_x = precompile_script_value(optimise_script_value(self._to_subpixels(value_x, units)), "x")
-        rpn_y, fetch_y = precompile_script_value(optimise_script_value(self._to_subpixels(value_y, units)), "y")
+        rpn_x, fetch_x = precompile_script_value(optimise_script_value(self._to_position(value_x, units)), "x")
+        rpn_y, fetch_y = precompile_script_value(optimise_script_value(self._to_position(value_y, units)), "y")
         locals_lookup = self._perform_fetch_operations(fetch_x + fetch_y)
         rpn = self._rpn()
         self._add_comment("-- Calculate coordinate values")
@@ -3534,8 +3578,8 @@ class ScriptBuilder:
         for value in (x, y):
             if not isinstance(value, dict):
                 raise CompileError(f"{value!r} is not a script value")
-        rpn_x, fetch_x = precompile_script_value(optimise_script_value(self._to_subpixels(x, "tiles")), "x")
-        rpn_y, fetch_y = precompile_script_value(optimise_script_value(self._to_subpixels(y, "tiles")), "y")
+        rpn_x, fetch_x = precompile_script_value(optimise_script_value(self._to_position(x, "tiles")), "x")
+        rpn_y, fetch_y = precompile_script_value(optimise_script_value(self._to_position(y, "tiles")), "y")
         locals_lookup = self._perform_fetch_operations(fetch_x + fetch_y)
         rpn = self._rpn()
         self._add_comment("-- Calculate coordinate values")
@@ -3568,8 +3612,8 @@ class ScriptBuilder:
         stack_ptr = self.stack_ptr
         self._add_comment("Camera Move To")
         pairs = [precompile_script_value(optimise_script_value({"type": "add",
-                    "valueA": self._to_subpixels(value, units),
-                    "valueB": {"type": "number", "value": offset}}), label)
+                    "valueA": self._to_position(value, units),
+                    "valueB": {"type": "number", "value": vm_position_px(offset)}}), label)
                  for value, offset, label in ((value_x, 2560, "x"), (value_y, 2304, "y"))]
         lookup = self._perform_fetch_operations(pairs[0][1] + pairs[1][1])
         rpn = self._rpn()
@@ -3605,9 +3649,12 @@ class ScriptBuilder:
         def num(v):
             return {"type": "number", "value": v}
 
+        from ..world import NGPC_MAX_PX, wide
+        top = NGPC_MAX_PX if wide() else 2040   # GB Studio's 255 tiles, or the wide world's
+
         def extent(size, origin, screen):  # sub(add(clamp(size, screen, 2040), origin), screen)
             clamped = {"type": "max", "valueA": num(screen),
-                       "valueB": {"type": "min", "valueA": num(2040), "valueB": px(size)}}
+                       "valueB": {"type": "min", "valueA": num(top), "valueB": px(size)}}
             return {"type": "sub", "valueA": {"type": "add", "valueA": clamped, "valueB": px(origin)},
                     "valueB": num(screen)}
         self._add_comment("Camera Set Bounds")
@@ -3642,8 +3689,8 @@ class ScriptBuilder:
         self._add_comment("Camera Lock")
         self._set_const(actor, 0)
         self._add_cmd("VM_ACTOR_GET_POS", actor)
-        self._rpn().ref(self._offset_stack_addr(actor, 1)).int16(256).operator(".ADD").ref(
-            self._offset_stack_addr(actor, 2)).int16(256).operator(".ADD").stop()
+        self._rpn().ref(self._offset_stack_addr(actor, 1)).int16(vm_position_px(256)).operator(".ADD").ref(
+            self._offset_stack_addr(actor, 2)).int16(vm_position_px(256)).operator(".ADD").stop()
         if speed == 0:
             self._add_cmd("VM_CAMERA_SET_POS", ".ARG1")
         flags = ([".CAMERA_LOCK_X"] if "x" in axis else []) + ([".CAMERA_LOCK_Y"] if "y" in axis else [])
@@ -3724,10 +3771,10 @@ class ScriptBuilder:
         self._add_cmd("VM_ACTOR_GET_POS", actor_ref)
         rpn = self._rpn()
         self._add_comment("-- Calculate coordinate values")
-        rpn.ref(self._offset_stack_addr(actor_ref, 1)).int8(subpx_shift_for_units(units)).operator(".SHR")
+        rpn.ref(self._offset_stack_addr(actor_ref, 1)).int8(vm_position_shift(units)).operator(".SHR")
         self._perform_value_rpn(rpn, rpn_x, locals_lookup)
         rpn.operator(".EQ")
-        rpn.ref(self._offset_stack_addr(actor_ref, 2)).int8(subpx_shift_for_units(units)).operator(".SHR")
+        rpn.ref(self._offset_stack_addr(actor_ref, 2)).int8(vm_position_shift(units)).operator(".SHR")
         self._perform_value_rpn(rpn, rpn_y, locals_lookup)
         rpn.operator(".EQ").operator(".AND").stop()
         self._if_const(".EQ", ".ARG0", 0, false_label, 1)
@@ -3760,7 +3807,7 @@ class ScriptBuilder:
         self.set_actor_id(other_ref, other_id)
         self._add_cmd("VM_ACTOR_GET_POS", other_ref)
         rpn = self._rpn()
-        shift = subpx_shift_for_units("tiles")
+        shift = vm_position_shift("tiles")
         for offset in (1, 2):
             for _ in range(2):
                 rpn.ref(self._offset_stack_addr(other_ref, offset)).int16(shift).operator(".SHR")

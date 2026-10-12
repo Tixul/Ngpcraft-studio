@@ -32,9 +32,9 @@ def encode_events(events,channel,note_map,instrument_map,unit_frames):
         if not isinstance(event,dict) or 'kind' not in event:
             raise MusicError(f'{loc}: expected typed timed event')
         kind=event['kind']
-        allowed={'attack':({'kind','duration_frames','note','instrument','attenuation'},{'routine'}),
+        allowed={'attack':({'kind','duration_frames','note','instrument','attenuation'},{'routine','pan'}),
                  'off':({'kind','duration_frames'},{'routine'}),
-                 'hold':({'kind','duration_frames'},{'attenuation','divider','noise_note','routine'})}
+                 'hold':({'kind','duration_frames'},{'attenuation','divider','noise_note','routine','pan'})}
         if not isinstance(kind,str) or kind not in allowed:raise MusicError(f'{loc}.kind: unknown event {kind}')
         _fields(event,*allowed[kind],loc)
         frames=_integer(event['duration_frames'],1,0xffffffff,loc+'.duration_frames')
@@ -47,6 +47,12 @@ def encode_events(events,channel,note_map,instrument_map,unit_frames):
         if 'routine' in event:
             value=_integer(event['routine'],0,255,loc+'.routine')
             stream.extend([254,ABI['routine'],value]);features.add('routine')
+        if 'pan' in event:
+            # F5: attenuation added on each side from here on (music_pan.py).
+            _fields(event['pan'],{'left','right'},set(),loc+'.pan')
+            left=_integer(event['pan']['left'],0,15,loc+'.pan.left')
+            right=_integer(event['pan']['right'],0,15,loc+'.pan.right')
+            stream.extend([245,left<<4|right])
         if kind=='hold':
             if 'attenuation' in event:
                 value=_integer(event['attenuation'],0,15,loc+'.attenuation')

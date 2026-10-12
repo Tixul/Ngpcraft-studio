@@ -856,7 +856,7 @@ def narrow_windows(script):
 
 
 def ui_support(font, scenes, palettes_target, *, front_scroll=False, choice=False, narrow=False, frame_support=False,
-               cut=False):
+               cut=False, slots=None):
     """C before the vendored functions, and the API after them.
     narrow: a window may be narrower than the screen (narrow_windows): the
     border rows keep their requested width.
@@ -899,12 +899,19 @@ def ui_support(font, scenes, palettes_target, *, front_scroll=False, choice=Fals
         # Only exports containing a case B scene allocate this buffer/IRQ.
         split = (Path(__file__).resolve().parents[1] / "runtime/text_split.c").read_text(encoding="utf-8")
         split = split.replace("void ngc_split_", "static void ngc_split_")
+        behind = any(s.shared_plane == 2 for s in scenes)
+        if behind:
+            split = _behind_split(split)
         table = []
         c_array(table, "ngc_ui_shared_scenes", [int(s.shared_plane) for s in scenes], "unsigned char")
         support = support.replace("static UBYTE ngc_ui_scene;",
-                                  "\n".join(table) + "\nstatic UBYTE ngc_ui_shared;\nstatic UBYTE ngc_ui_scene;")
+                                  "\n".join(table) + "\nstatic UBYTE ngc_ui_shared;\n" +
+                                  ("static volatile unsigned char split_order;  /* _behind_split */\n"
+                                   if behind else "") + "static UBYTE ngc_ui_scene;")
         support = support.replace("    ngc_ui_scene = scene;",
-                                  "    ngc_ui_shared = ngc_ui_shared_scenes[scene];\n    ngc_ui_scene = scene;")
+                                  "    ngc_ui_shared = ngc_ui_shared_scenes[scene];\n" +
+                                  ("    split_order = ngc_ui_shared == 2u ? 128u : 0u;\n" if behind else "") +
+                                  "    ngc_ui_scene = scene;")
         support = support.replace("#define NGC_WIN_MAP ((volatile UWORD *)0x9000)",
                                   shared_map_support(11) + split +
                                   "\n#define NGC_WIN_MAP (ngc_ui_shared ? ngc_ui_map : (volatile UWORD *)0x9000)")
@@ -959,6 +966,8 @@ unsigned char ngc_ui_sprite_cut(void)
         support, api = _cut_support(support, api, scenes)
     if choice:
         support += "\n" + CHOICE_SUPPORT
+    if slots is not None and None in slots:
+        support, api = _slot_support(support, api, slots, any(s.shared_plane for s in scenes))
     if front_scroll and any(s.shared_plane for s in scenes):
         support = support.replace("ngc_scroll", "ngc_front_scroll")
         api = api.replace("    *(volatile unsigned char *)0x8032 = *(volatile unsigned char *)0x8034;\n"
@@ -966,6 +975,59 @@ unsigned char ngc_ui_sprite_cut(void)
                           "    *(volatile unsigned char *)0x8032 = (unsigned char)ngc_front_scroll[0];\n"
                           "    *(volatile unsigned char *)0x8033 = (unsigned char)(ngc_front_scroll[1] - "
                           "(ngc_ui_offset == 4u ? 4u : 0u));")
+    return support, api
+
+
+
+def _behind_split(split):
+    """Second background behind the main one (0x8030 = 128, SCR2 in front):
+    the rows of the text box need SCR1 in front again. The split brings it
+    there at the box line; every arm (each VBlank) puts SCR2 back in front."""
+    # split_order itself is declared with the scene table, before ngc_ui_select.
+    edits = [("        *(volatile unsigned char *)0x8033 = split_y;\n        split_active = 0u;",
+              "        *(volatile unsigned char *)0x8033 = split_y;\n"
+              "        if (split_order) *(volatile unsigned char *)0x8030 = 0u;\n        split_active = 0u;"),
+             ("    split_active = 0u;\n    split_line = 152u;",
+              "    split_active = 0u;\n    split_order = 0u;\n    split_line = 152u;"),
+             ("    split_active = 0u;\n    split_line = line;",
+              "    split_active = 0u;\n    if (split_order) *(volatile unsigned char *)0x8030 = split_order;\n"
+              "    split_line = line;"),
+             ("    if (line == 0u) {\n        *(volatile unsigned char *)0x8032 = x;",
+              "    if (line == 0u) {\n        if (split_order) *(volatile unsigned char *)0x8030 = 0u;\n"
+              "        *(volatile unsigned char *)0x8032 = x;")]
+    for old, new in edits:
+        if split.count(old) != 1:
+            raise CompileError(f"text split: anchor changed ({old[:40]!r})")
+        split = split.replace(old, new)
+    return split
+
+def _slot_support(support, api, slots, shared):
+    """Per-scene text reserve (M2_TEXT.md D1). slots: per
+    scene index, its UI entry or None. A scene without text keeps its tiles
+    384..511, its SCR1 palettes and scroll: the UI stays off (no tiles loaded,
+    no window update or commit) until a scene with text is loaded."""
+    lines = []
+    c_array(lines, "ngc_ui_slot", [0xFF if s is None else s for s in slots], "unsigned char")
+    marker = "static UBYTE ngc_ui_scene;"
+    if marker not in support:
+        raise CompileError("text: per-scene UI marker missing")
+    support = support.replace(marker, "\n".join(lines) + "\nstatic UBYTE ngc_ui_live;\n" + marker, 1)
+    head, tail = api.split("void ngc_ui_scene_load(", 1)
+    select = "    ngc_ui_select(scene);"
+    if select not in head or "    ngc_ui_flush();\n" + select not in tail:
+        raise CompileError("text: per-scene UI anchors missing")
+    head = head.replace(select, "    scene = ngc_ui_slot[scene] == 0xFFu ? 0u : ngc_ui_slot[scene];\n" + select, 1)
+    off = ("    if (ngc_ui_slot[scene] == 0xFFu) {\n        ngc_ui_live = 0u;\n"
+           + ("        ngc_ui_shared = 0u;\n        ngc_split_arm(152u, 0u, 0u);\n" if shared else "")
+           + "        return;\n    }\n    ngc_ui_live = 1u;\n    scene = ngc_ui_slot[scene];\n")
+    tail = tail.replace("    ngc_ui_flush();\n" + select, "    ngc_ui_flush();\n" + off + select, 1)
+    api = head + "void ngc_ui_scene_load(" + tail
+    update = "void ngc_ui_update(void)\n{\n"
+    commit = "void ngc_ui_commit(void)\n{\n" + ("    UBYTE line;\n" if shared else "")
+    if update not in api or commit not in api:
+        raise CompileError("text: per-scene UI anchors missing")
+    api = api.replace(update, update + "    if (!ngc_ui_live) return;\n", 1)
+    api = api.replace(commit, commit + "    if (!ngc_ui_live) return;\n", 1)
     return support, api
 
 

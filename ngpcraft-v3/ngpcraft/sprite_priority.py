@@ -187,8 +187,11 @@ static NgcMaskedFrame ngc_mask_frame[{count}];
 def masked_sprites_source(renderer,sheets,source,cache_base,slots, *, top=0):
     if not 1<=slots<=64 or cache_base<0 or cache_base+slots>512:
         raise CompileError("sprite priority: dynamic tile reservation exceeds VRAM")
-    if source.width<=0 or source.height<=0 or source.width%8 or source.height%8 or source.width>2048 or source.width*source.height//8>65535:
+    if source.width<=0 or source.height<=0 or source.width%8 or source.height%8:
         raise CompileError("sprite priority: tile-aligned background required")
+    from .world import NGPC_MAX_PX
+    if source.width>NGPC_MAX_PX or source.height>NGPC_MAX_PX:
+        raise CompileError(f"sprite priority: a {source.width}x{source.height} px background is over the NGPC scene limit")
     if len(source.indices)!=source.width*source.height or len(source.attributes)!=(source.width//8)*(source.height//8):
         raise CompileError("sprite priority: inconsistent GB source dimensions")
     stride=source.width//8
@@ -431,6 +434,38 @@ static void ngc_mask_copy(void)
     renderer = renderer.replace(anchor, replacement)
     if "ngc_ui_sprite_cut" in renderer:
         renderer = _reuse_masked_frames(renderer, frame_mask_cache_layout(sheets, slots, True), top)
+    if plan["strategy"] == "byte_rows" and (source.width > 2048 or len(mask) > 65535):
+        renderer = _long_mask_source(renderer, stride, source.height)
     if plan["strategy"] == "preexpanded_rows":
         renderer = _preexpanded_source(renderer, mask, source.width, source.height, plan)
+    return renderer
+
+
+def _long_mask_source(renderer, stride, height):
+    """A mask over 2048 px wide or 64 KiB (docs/PLAN_GRANDES_CARTES.md G6): the
+    column takes 16 bits and the row offset 32 (y * stride overflows 16 bits).
+    cc900 has no 32-bit multiply linked: one offset per 8 rows from a table,
+    plus (y & 7) * stride, which fits 16 bits. Smaller masks keep their C."""
+    def sub(old, new):
+        nonlocal renderer
+        if renderer.count(old) != 1:
+            raise CompileError("sprite priority: long mask hook missing (internal)")
+        renderer = renderer.replace(old, new)
+    lines = [f"static const unsigned long ngc_mask_row8[{(height + 7) // 8}] = {{",
+             *("    " + ", ".join(f"{8 * r * stride}UL" for r in range(k, min(k + 8, (height + 7) // 8))) + ","
+               for k in range(0, (height + 7) // 8, 8)),
+             "};",
+             f"#define NGC_MASK_ROW(y) (ngc_mask_row8[(unsigned short)(y) >> 3] + "
+             f"(unsigned long)(unsigned short)(((unsigned short)(y) & 7u) * {stride}u))"]
+    sub("static unsigned char ngc_mask_byte(short x, short y)",
+        "\n".join(lines) + "\nstatic unsigned char ngc_mask_byte(short x, short y)")
+    sub("    unsigned short offset, pair;\n    unsigned char bit, column;",
+        "    unsigned long offset;\n    unsigned short pair, column;\n    unsigned char bit;")
+    sub(f"        offset = (unsigned short)y * {stride}u;", "        offset = NGC_MASK_ROW(y);")
+    sub(f"    column = (unsigned char)((unsigned short)x >> 3);\n    offset = (unsigned short)y * {stride}u + column;",
+        "    column = (unsigned short)x >> 3;\n    offset = NGC_MASK_ROW(y) + column;")
+    sub("    unsigned short key, row_start;", "    unsigned short key, row_start;\n    unsigned short column16;")
+    sub("            column = (unsigned char)((unsigned short)sx >> 3);", "            column16 = (unsigned short)sx >> 3;")
+    sub(f"            mp = ngc_mask + (unsigned short)sy * {stride}u + column;",
+        "            mp = ngc_mask + NGC_MASK_ROW(sy) + column16;")
     return renderer

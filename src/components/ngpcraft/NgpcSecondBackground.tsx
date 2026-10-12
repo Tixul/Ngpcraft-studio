@@ -64,7 +64,13 @@ interface RateFieldProps {
   onChange: (rate: string) => void;
 }
 
-const RateField = ({ name, label, value, options, onChange }: RateFieldProps) => {
+const RateField = ({
+  name,
+  label,
+  value,
+  options,
+  onChange,
+}: RateFieldProps) => {
   const percent = percentOf(value);
   const choice: RateChoice = percent !== undefined ? CUSTOM : value;
   return (
@@ -162,6 +168,9 @@ export const NgpcSecondBackground = ({
       if (!next.loop_y) {
         delete next.loop_y;
       }
+      if (!next.behind) {
+        delete next.behind;
+      }
       write(next);
     },
     [second, write],
@@ -247,6 +256,15 @@ export const NgpcSecondBackground = ({
               label={l10n("FIELD_NGPC_SECOND_BG_LOOP_Y")}
               checked={!!second.loop_y}
               onChange={(e) => update({ loop_y: e.currentTarget.checked })}
+            />
+          </FormRow>
+          <FormRow>
+            <CheckboxField
+              name="ngpcSecondBehind"
+              label={l10n("FIELD_NGPC_SECOND_BG_BEHIND")}
+              title={l10n("FIELD_NGPC_SECOND_BG_BEHIND_INFO")}
+              checked={!!second.behind}
+              onChange={(e) => update({ behind: e.currentTarget.checked })}
             />
           </FormRow>
           <FormRow>

@@ -103,7 +103,9 @@ export const NgpcMusicBinding = ({ songId }: NgpcMusicBindingProps) => {
     const result = await API.ngpcraft
       .convertUge(
         assetPath("music", song),
-        song.type === "mod" ? !song.settings?.disableSpeedConversion : undefined,
+        song.type === "mod"
+          ? !song.settings?.disableSpeedConversion
+          : undefined,
       )
       .catch((e) => ({ error: String(e) }));
     setConverting(false);
@@ -174,7 +176,11 @@ export const NgpcMusicBinding = ({ songId }: NgpcMusicBindingProps) => {
     setError((await API.ngpcraft.openSoundCreator(native.song)) ?? "");
   }, [native]);
 
-  let status = l10n("FIELD_NGPC_MUSIC_UNLINKED");
+  // A .uge/.mod is converted by the build (lib/ngpcraft/autoConvertMusic).
+  const automatic = !native && (song?.type === "uge" || song?.type === "mod");
+  let status = l10n(
+    automatic ? "FIELD_NGPC_MUSIC_AUTO" : "FIELD_NGPC_MUSIC_UNLINKED",
+  );
   if (native?.format === "ngps") {
     status = l10n("FIELD_NGPC_MUSIC_LINKED_NGPS", {
       song: native.song,
@@ -189,7 +195,10 @@ export const NgpcMusicBinding = ({ songId }: NgpcMusicBindingProps) => {
   return (
     <Bar>
       <Label>{l10n("FIELD_NGPC_MUSIC")}</Label>
-      <Status $warning={!native || Boolean(error)} title={error || status}>
+      <Status
+        $warning={(!native && !automatic) || Boolean(error)}
+        title={error || status}
+      >
         {error || status}
       </Status>
       {(song?.type === "uge" || song?.type === "mod") && (

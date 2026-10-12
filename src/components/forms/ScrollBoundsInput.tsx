@@ -5,6 +5,7 @@ import styled from "styled-components";
 import clamp from "shared/lib/helpers/clamp";
 import { ensureNumber } from "shared/types";
 import { SCREEN_HEIGHT, SCREEN_WIDTH } from "consts";
+import { NGPC_MAX_SCENE_TILES } from "shared/lib/ngpcraft/worldLimits";
 
 const ScrollBoundsInputWrapper = styled.div`
   display: grid;
@@ -110,7 +111,7 @@ const ScrollBoundsInput = ({
         value={value.x}
         placeholder="0"
         min={0}
-        max={255 - SCREEN_WIDTH}
+        max={NGPC_MAX_SCENE_TILES - SCREEN_WIDTH}
         onChange={onChangeBoundsX}
       />
       <CoordinateInput
@@ -119,7 +120,7 @@ const ScrollBoundsInput = ({
         value={value.y}
         placeholder="0"
         min={0}
-        max={255 - SCREEN_HEIGHT}
+        max={NGPC_MAX_SCENE_TILES - SCREEN_HEIGHT}
         onChange={onChangeBoundsY}
       />
       <CoordinateInput
@@ -128,7 +129,7 @@ const ScrollBoundsInput = ({
         value={value.width}
         placeholder={String(sceneWidth)}
         min={SCREEN_WIDTH}
-        max={255}
+        max={NGPC_MAX_SCENE_TILES}
         onChange={onChangeBoundsWidth}
       />
       <CoordinateInput
@@ -137,7 +138,7 @@ const ScrollBoundsInput = ({
         value={value.height}
         placeholder={String(sceneHeight)}
         min={SCREEN_HEIGHT}
-        max={255}
+        max={NGPC_MAX_SCENE_TILES}
         onChange={onChangeBoundsHeight}
       />
     </ScrollBoundsInputWrapper>

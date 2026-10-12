@@ -166,10 +166,15 @@ export const NgpcNativePalettes = ({
         )}
       </Row>
       <Row>
-        {l10n("FIELD_NGPC_PALETTES_COUNT", {
-          count: plan.palettes.length,
-          limit: plan.paletteLimit,
-        })}
+        {plan.recycle
+          ? l10n("FIELD_NGPC_PALETTES_RECYCLED", {
+              count: plan.recycle.palettes,
+              slots: plan.recycle.slots,
+            })
+          : l10n("FIELD_NGPC_PALETTES_COUNT", {
+              count: plan.palettes.length,
+              limit: plan.paletteLimit,
+            })}
       </Row>
       <Row>
         {plan.palettes.map((palette, index) => (

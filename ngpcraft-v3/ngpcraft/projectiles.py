@@ -238,7 +238,8 @@ def build_projectile_assets(project, selections, resident=(), *, mode=None, wher
                                      mono=project.settings["colorMode"] == "mono",
                                      native=is_native(project, sid))))
         ids.add(sid)
-    tiles = sum(len(sheet.tiles) for _, sheet in pairs)
+    from .scene_sprites import sprite_tile_count
+    tiles = sprite_tile_count([sheet for _, sheet in pairs])
     if tiles > 512:
         raise CompileError(f"{where}: resident sprite sheets need {tiles} tiles, renderer limit is 512")
     compiled = compile_projectiles(selections, pairs, {sid: raw for sid, (_, raw) in resources.items()}, where=where)

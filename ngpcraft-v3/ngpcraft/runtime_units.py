@@ -404,6 +404,12 @@ UNITS += (
          provenance=("GBVM fade_manager.c; NGPC palettes in ngpcraft/gbvm/emit.py FADE_SUPPORT_TEMPLATE",),
          license="MIT; GBVM_LICENSE.txt; Copyright (c) 2020 Toxa",
          tests=("tests/test_gbvm_backend.py",), backend="gbvm"),
+    Unit("palette_patch", ("_ngc_palette_patch",), feature="palette_recycle", dependencies=("gbvm_scene",),
+         object="gbvm.rel",
+         provenance=("Original V3: recycled background and sprite palettes written through the fade shadow "
+                     "(ngpcraft/gbvm/emit.py palette_patch_source, ngpcraft/palette_recycle.py, "
+                     "ngpcraft/sprite_recycle.py); GBVM fade_manager.c fade_timer/fade_running semantics",),
+         tests=("tests/test_palette_recycle.py", "tests/test_sprite_recycle.py"), backend="gbvm"),
     Unit("scene_changes", ("_ngc_scene", "_ngc_scene_keep"), feature="scene_changes",
          dependencies=("scene_actors", "gbvm_scene_changes", "camera_settings"), object="scene_actors.rel",
          provenance=("GBVM src/core/core.c EXCEPTION_CHANGE_SCENE and src/core/data_manager.c load_scene at "

@@ -35,7 +35,37 @@ RIGHT, LEFT, A = 8, 4, 16
 SCHEDULE = [(10, 200, RIGHT), (60, 64, A), (120, 124, A), (220, 330, LEFT), (250, 254, A), (350, 440, RIGHT)]
 
 
-def project_case(root, variant):
+SECOND_ID = "lab-priority-second"
+SECOND_COLUMNS = (96, 160)    # px of the main image copied on the second background
+
+
+def add_second(root):
+    """PLAN_MEGAMAN S3: the scene without its parallax (refused with a second
+    background), a band of its image on SCR1, same scroll. A priority sprite
+    is behind both planes: SCR1's opaque pixels cover it as well."""
+    from pathlib import PurePosixPath
+    from ngpcraft.png import read_png
+    from tools.lab_native_color import write_png
+    loaded = load_project(root / "project")
+    scene = loaded.scenes[0]
+    path = next((root / "project/project/scenes").rglob("scene.gbsres"))
+    data = json.loads(path.read_text(encoding="utf-8"))
+    data["parallax"] = []
+    write_json(path, data)
+    rel, res = next((r, b) for r, b in loaded.by_type["background"] if b["id"] == scene["backgroundId"])
+    w, h, rgba = read_png(loaded.root / PurePosixPath(rel).with_suffix(""))
+    white = (255, 255, 255)
+    band = loaded.root / PurePosixPath(rel).parent / "lab_second.png"
+    write_png(band, [[rgba[y * w + x][:3] if SECOND_COLUMNS[0] <= x < SECOND_COLUMNS[1] else white
+                      for x in range(w)] for y in range(h)])
+    write_json(band.with_name("lab_second.png.gbsres"),
+               {**res, "id": SECOND_ID, "name": "lab second", "filename": "lab_second.png",
+                "symbol": "bg_lab_second", "tileColors": ""})
+    write_json(loaded.root / "ngpcraft.json", {"schema": "ngpcraft-project/1", "resources": {
+        scene["id"]: {"second_background": {"background_id": SECOND_ID, "scroll_x": "1", "scroll_y": "1"}}}})
+
+
+def project_case(root, variant, second=False):
     """variant: "normal", "hidden" or "priority"."""
     derive(GBS2, root / "project", "parallax_example", (4, 10), fade=False)
     project = root / "project/project"
@@ -57,6 +87,8 @@ def project_case(root, variant):
                             for tile in frame["tiles"]:
                                 tile["priority"] = True
                 write_json(f, data)
+    if second:
+        add_second(root)
     return root / "project"
 
 
@@ -75,10 +107,10 @@ def front_witness(export):
     write_json(export / "export.json", manifest)
 
 
-def frames(out, variant, toolchain, emulator, bios, count, witness=False):
+def frames(out, variant, toolchain, emulator, bios, count, witness=False, second=False):
     root = out / variant
     root.mkdir(parents=True)
-    manifest = export_project(project_case(root, variant), root / "export")
+    manifest = export_project(project_case(root, variant, second), root / "export")
     if witness:
         front_witness(root / "export")
     build = build_rom(root / "export", Path(toolchain))
@@ -112,21 +144,28 @@ def frames(out, variant, toolchain, emulator, bios, count, witness=False):
     return pictures, scrolls, manifest, hashlib.sha256(rom).hexdigest()
 
 
-def run(out, toolchain, emulator, bios, count=460, witness=False):
+def run(out, toolchain, emulator, bios, count=460, witness=False, second=False):
     out = Path(out)
     if out.exists():
         raise ValueError("output must be new")
     out.mkdir(parents=True)
-    normal, s_normal, _, _ = frames(out, "normal", toolchain, emulator, bios, count)
-    hidden, s_hidden, _, _ = frames(out, "hidden", toolchain, emulator, bios, count)
-    behind, s_behind, manifest, rom = frames(out, "priority", toolchain, emulator, bios, count, witness)
+    normal, s_normal, _, _ = frames(out, "normal", toolchain, emulator, bios, count, second=second)
+    hidden, s_hidden, _, _ = frames(out, "hidden", toolchain, emulator, bios, count, second=second)
+    behind, s_behind, manifest, rom = frames(out, "priority", toolchain, emulator, bios, count, witness, second)
     if not s_normal == s_hidden == s_behind:
         raise ValueError("the three ROMs did not follow the same camera path")
     project = load_project(out / "priority/project")
     source = background_source(project, project.scenes[0])
     view_h, top = view_of(source)
-    slices, lines = bands(compile_parallax(project.scenes[0]), source.height // 8, view_h, top, "lab")
-    shown = type("Indices", (), {"pixels": source.indices, "width": source.width, "height": source.height})
+    rows = compile_parallax(project.scenes[0])
+    # No parallax: one slice that scrolls with the camera.
+    slices, lines = bands(rows, source.height // 8, view_h, top, "lab") if rows else ([(0, None, None)], [])
+    indices = source.indices
+    if second:
+        # A pixel of SCR1 (opaque) hides the priority sprite like a colour 1-3.
+        front = background_source(project, {**project.scenes[0], "backgroundId": SECOND_ID, "name": "lab second"})
+        indices = bytes(a or b for a, b in zip(indices, front.indices))
+    shown = type("Indices", (), {"pixels": indices, "width": source.width, "height": source.height})
     mismatches, covered, over_zero = [], 0, 0
     for k in range(3, count + 1):
         index = expected_picture(shown, slices, [top] + lines, top, view_h, s_normal[k], 0)
@@ -153,8 +192,9 @@ def main():
         p.add_argument("--" + name, type=Path, required=True)
     p.add_argument("--frames", type=int, default=460)
     p.add_argument("--witness", action="store_true")
+    p.add_argument("--second", action="store_true", help="a band of second background over the scene")
     a = p.parse_args()
-    r = run(a.out, a.toolchain, a.emulator, a.bios, a.frames, a.witness)
+    r = run(a.out, a.toolchain, a.emulator, a.bios, a.frames, a.witness, a.second)
     print(json.dumps(r, indent=2))
     return int(bool(r["mismatch_frames"]) != a.witness)
 

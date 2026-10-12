@@ -6,6 +6,7 @@ from .project import load_model
 from .scene_init import _Builder, _commented
 from .background_rom import c_array
 from .gbvm.builder import precompile_script_value, js_round
+from .world import at_pos_width
 
 GROUPS = {'':0, 'player':1, '1':2, '2':4, '3':8}
 # generateGBVMData.ts toASMCollisionGroup extra flags (gbs_types.h).
@@ -226,7 +227,8 @@ def collision_source(config):
     c_array(lines,'act_collision_group',groups,'unsigned char')
     if addresses:
         c_array(lines,'act_hit_addr',[addresses[i] if i in addresses else 0 for i in range(len(groups))],'unsigned short')
-    lines += ['static unsigned char player_overlap(void)', '{',
+    # world.py: the box sums at the export's position width.
+    lines += at_pos_width(['static unsigned char player_overlap(void)', '{',
               '    unsigned char i = act_prev[0];', '    const short *box;',
               '    unsigned short l = (unsigned short)(act_x[0] + (unsigned short)act_bounds[0]);',
               '    unsigned short r = (unsigned short)(act_x[0] + (unsigned short)act_bounds[1]);',
@@ -239,7 +241,7 @@ def collision_source(config):
               '            (unsigned short)(act_x[i] + (unsigned short)box[1]) >= l &&',
               '            (unsigned short)(act_y[i] + (unsigned short)box[2]) <= b &&',
               '            (unsigned short)(act_y[i] + (unsigned short)box[3]) >= t) return i;',
-              '        i = act_prev[i];', '    }', '    return 255u;', '}',
+              '        i = act_prev[i];', '    }', '    return 255u;', '}']) + [
               'void ngc_collision_update(void)', '{',
               '    if (collision_iframes == 0u && collision_pending != 255u) {',
               '        if (act_collision_group[collision_pending] & 0x0Fu) {']

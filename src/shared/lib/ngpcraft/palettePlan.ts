@@ -31,6 +31,9 @@ export interface NgpcPalettePlan {
   tilePalettes: number[];
   errors: NgpcPalettePlanError[];
   paletteLimit: number;
+  // Over the limit: slots shared between palettes never on screen together
+  // (V3 palette_recycle.py).
+  recycle?: { palettes: number; slots: number };
 }
 
 const isHex = (value: unknown): value is string =>
@@ -56,10 +59,10 @@ export const parsePalettePlan = (
   if (typeof d.background !== "string" || !isHex(d.backdrop)) {
     return undefined;
   }
+  // Over the limit is not an error: palette_recycle.py shares slots (recycle).
   const palettes = d.palettes;
   if (
     !Array.isArray(palettes) ||
-    palettes.length > limit ||
     !palettes.every(
       (p) =>
         Array.isArray(p) && p.length >= 1 && p.length <= 3 && p.every(isHex),
@@ -82,6 +85,20 @@ export const parsePalettePlan = (
     return undefined;
   }
   const errors = d.errors;
+  // Over the limit only with the recycling, or the place where it fails.
+  if (
+    Array.isArray(errors) &&
+    palettes.length > limit &&
+    !isRecycle(d.recycle) &&
+    !errors.some(
+      (e) =>
+        typeof e === "object" &&
+        e !== null &&
+        (e as Record<string, unknown>).reason === "on_screen",
+    )
+  ) {
+    return undefined;
+  }
   if (
     !Array.isArray(errors) ||
     !errors.every(
@@ -110,8 +127,17 @@ export const parsePalettePlan = (
       ...(typeof e.reason === "string" && { reason: e.reason }),
     })),
     paletteLimit: limit,
+    ...(isRecycle(d.recycle) && { recycle: d.recycle }),
   };
 };
+
+const isRecycle = (
+  value: unknown,
+): value is { palettes: number; slots: number } =>
+  typeof value === "object" &&
+  value !== null &&
+  isCount((value as Record<string, unknown>).palettes) &&
+  isCount((value as Record<string, unknown>).slots);
 
 // Phase 2: a sprite sheet (`palette-plan --sprite`, V3 docs/M7_NATIVE_COLOR.md).
 export interface NgpcSpritePalettePlan {

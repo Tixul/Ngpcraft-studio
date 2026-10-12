@@ -47,9 +47,30 @@ test("anything outside the contract is rejected", () => {
     parsePalettePlan({ ...valid, palettes: [["a", "b", "c", "d"]] }),
   ).toBeUndefined();
   expect(parsePalettePlan({ ...valid, backdrop: "E0F0E0" })).toBeUndefined();
-  // More palettes than the limit.
+  // More palettes than the limit, without recycling or its failure.
   expect(parsePalettePlan({ ...valid, palette_limit: 1 })).toBeUndefined();
   expect(parsePalettePlan(null)).toBeUndefined();
+});
+
+test("over the limit: recycled slots, or where recycling fails", () => {
+  // V3 palette_recycle.py: slots shared by palettes never on screen together.
+  const recycled = parsePalettePlan({
+    ...valid,
+    palette_limit: 1,
+    recycle: { palettes: 2, slots: 1 },
+  });
+  expect(recycled?.recycle).toEqual({ palettes: 2, slots: 1 });
+  const failed = parsePalettePlan({
+    ...valid,
+    palette_limit: 1,
+    errors: [{ x: 8, y: 0, colors: [], reason: "on_screen" }],
+  });
+  expect(failed?.errors[0]).toEqual({
+    x: 8,
+    y: 0,
+    colors: [],
+    reason: "on_screen",
+  });
 });
 
 test("the output of the real V3 palette-plan is read", () => {

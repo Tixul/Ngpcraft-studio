@@ -14,6 +14,7 @@ const APIMock = {
     checkTools: () => Promise.resolve({ ok: true, lines: [] }),
     nativeColorSupport: () => Promise.resolve(false),
     palettePlan: () => Promise.resolve({ error: "mock" }),
+    estimateBudget: () => Promise.resolve({ error: "mock" }),
     toolDefaults: () =>
       Promise.resolve({
         isWindows: true,

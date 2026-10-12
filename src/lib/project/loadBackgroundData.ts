@@ -6,6 +6,7 @@ import { stat } from "fs";
 import parseAssetPath from "shared/lib/assets/parseAssetPath";
 import { toValidSymbol } from "shared/lib/helpers/symbols";
 import { TILE_SIZE } from "consts";
+import { NGPC_MAX_SCENE_TILES } from "shared/lib/ngpcraft/worldLimits";
 import {
   CompressedBackgroundResource,
   CompressedBackgroundResourceAsset,
@@ -39,8 +40,15 @@ const loadBackgroundData =
       const name = file.replace(/.png/i, "");
       const imageWidth = size?.width ?? 160;
       const imageHeight = size?.height ?? 144;
-      const tileWidth = Math.min(Math.floor(imageWidth / TILE_SIZE), 255);
-      const tileHeight = Math.min(Math.floor(imageHeight / TILE_SIZE), 255);
+      // NgpCraft: the NGPC's limit, not GB Studio's 255 (worldLimits.ts).
+      const tileWidth = Math.min(
+        Math.floor(imageWidth / TILE_SIZE),
+        NGPC_MAX_SCENE_TILES,
+      );
+      const tileHeight = Math.min(
+        Math.floor(imageHeight / TILE_SIZE),
+        NGPC_MAX_SCENE_TILES,
+      );
       return {
         _resourceType: "background",
         id: uuid(),

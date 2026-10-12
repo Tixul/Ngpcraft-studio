@@ -16,6 +16,7 @@ line-by-line oracle used by the probes.
 """
 from .background_rom import c_array
 from .compiler import CompileError
+from .world import pos_mask, pos_max, pos_t, spos_t, tile_t, wide
 
 FLAGS = {"pinned": 1, "hidden": 2, "anim_noloop": 4, "collision": 8, "persistent": 0x10}
 NIL = 0xFF
@@ -28,7 +29,8 @@ MOVE_FEATURES = ("walls", "actors", "relative")
 
 
 def _collision_source(bounds, collisions, width_tiles, height_tiles, walls, actors):
-    lines = ["static unsigned char tile_hit_x;", "static unsigned char tile_hit_y;"] if walls else []
+    T = tile_t()
+    lines = [f"static {T} tile_hit_x;", f"static {T} tile_hit_y;"] if walls else []
     if walls or actors:
         lines.append("/* compileBounds per actor: left, right, top, bottom (1/32 px). */")
         c_array(lines, "act_bounds", [v for box in bounds for v in box], "short")
@@ -41,13 +43,15 @@ def _collision_source(bounds, collisions, width_tiles, height_tiles, walls, acto
             limit = W if axis == "x" else H
             lines += [
                 f"/* collision.c tile_col_test_range_{axis} */",
-                f"static unsigned char col_range_{axis}(unsigned char mask, unsigned char {fixed}, "
-                f"unsigned char {moving}_start, unsigned char {moving}_end)", "{",
+                f"static unsigned char col_range_{axis}(unsigned char mask, {T} {fixed}, "
+                f"{T} {moving}_start, {T} {moving}_end)", "{",
                 "    const unsigned char *p;", "    unsigned char tile;", "    unsigned char inc;",
                 f"    tile_hit_{'x' if axis == 'x' else 'y'} = {moving}_start;",
                 f"    tile_hit_{'y' if axis == 'x' else 'x'} = {fixed};",
                 f"    if (tile_hit_x >= {W}u || tile_hit_y >= {H}u) return (unsigned char)((0x0Fu & mask) ? 0x0Fu : 0u);",
-                f"    inc = (unsigned char)((unsigned char)({moving}_start - {moving}_end) & 0x80u);  /* UBYTE_LESS_THAN */",
+                (f"    inc = (unsigned char)(((unsigned short)({moving}_start - {moving}_end) & 0x8000u) != 0u);  /* UBYTE_LESS_THAN, 16-bit tiles */"
+                 if wide() else
+                 f"    inc = (unsigned char)((unsigned char)({moving}_start - {moving}_end) & 0x80u);  /* UBYTE_LESS_THAN */"),
                 (f"    p = coll_map + (unsigned short)ty * {W}u + tx_start;" if axis == "x" else
                  f"    p = coll_map + (unsigned short)ty_start * {W}u + tx;"),
                 "    for (;;) {", "        tile = *p;", "        if (tile & mask) return tile;",
@@ -69,52 +73,59 @@ def _moves_source(n, moves, bounds, collisions, width_tiles, height_tiles, cance
     Arithmetic in 16-bit unsigned words as SDCC does (int = 16 bits)."""
     walls, actors, relative = ("walls" in moves, "actors" in moves, "relative" in moves)
     W, H = width_tiles, height_tiles
+    P, T = pos_t(), tile_t()
+    # Move target: the VM words p[] (GB Studio), or per actor at the wide width (world.py).
+    X, Y = ("act_mx[i]", "act_my[i]") if wide() else ("p[0]", "p[1]")
+    tgt = (X, Y)
     state_walls = topdown if state_walls is None else state_walls
     lines = _collision_source(bounds, collisions, width_tiles, height_tiles, walls or state_walls, actors or topdown)
+    if wide():
+        lines += ["/* Move targets, 1/32 px (world.py: the VM words are pixels). */",
+                  f"static {P} act_mx[{n}];", f"static {P} act_my[{n}];"]
     if walls:
         # check_collision_horizontal / vertical: (start_x, start_y, bounds, end_pos)
         lines += [
             "/* vm_actor.c check_collision_horizontal: bounds b = left, right, top, bottom. */",
-            "static unsigned short coll_h(unsigned short sx, unsigned short sy, const short *b, unsigned short end)",
-            "{", "    unsigned char tx1;", "    unsigned char ty1;", "    unsigned char tx2;", "    unsigned char ty2;",
+            f"static {P} coll_h({P} sx, {P} sy, const short *b, {P} end)",
+            "{", f"    {T} tx1;", f"    {T} ty1;", f"    {T} tx2;", f"    {T} ty2;",
             "    unsigned char mask;",
-            "    ty1 = (unsigned char)((unsigned short)(sy + (unsigned short)b[2]) >> 8);",
-            "    ty2 = (unsigned char)((unsigned char)((unsigned short)(sy + (unsigned short)b[3]) >> 8) + 1u);",
+            f"    ty1 = ({T})(({P})(sy + ({P})b[2]) >> 8);",
+            f"    ty2 = ({T})(({T})(({P})(sy + ({P})b[3]) >> 8) + 1u);",
             "    if (sx > end) {",
             "        mask = 0x08u;                                     /* COLLISION_RIGHT */",
-            "        tx1 = (unsigned char)((unsigned short)(sx + (unsigned short)b[0]) >> 8);",
-            "        tx2 = (unsigned char)((unsigned short)(end + (unsigned short)b[0]) >> 8);",
+            f"        tx1 = ({T})(({P})(sx + ({P})b[0]) >> 8);",
+            f"        tx2 = ({T})(({P})(end + ({P})b[0]) >> 8);",
             "        if (tx2 > tx1) tx2 = 0u;", "    } else {",
             "        mask = 0x04u;                                     /* COLLISION_LEFT */",
-            "        tx1 = (unsigned char)((unsigned short)(sx + (unsigned short)b[1]) >> 8);",
-            "        tx2 = (unsigned char)((unsigned short)(end + (unsigned short)b[1]) >> 8);",
+            f"        tx1 = ({T})(({P})(sx + ({P})b[1]) >> 8);",
+            f"        tx2 = ({T})(({P})(end + ({P})b[1]) >> 8);",
             f"        if (tx2 < tx1) tx2 = {W}u;", "    }",
             "    while (ty1 != ty2) {",
             "        if (col_range_x(mask, ty1, tx1, tx2)) {",
             "            return (sx > end)",
-            "                ? (unsigned short)(((unsigned short)tile_hit_x << 8) - (unsigned short)b[0] + 256u)",
-            "                : (unsigned short)(((unsigned short)tile_hit_x << 8) - (unsigned short)(b[1] + 1));",
+            f"                ? ({P})((({P})tile_hit_x << 8) - ({P})b[0] + 256u)",
+            f"                : ({P})((({P})tile_hit_x << 8) - ({P})(b[1] + 1));",
             "        }", "        ++ty1;", "    }", "    return end;", "}", "",
             "/* vm_actor.c check_collision_vertical */",
-            "static unsigned short coll_v(unsigned short sx, unsigned short sy, const short *b, unsigned short end)",
-            "{", "    unsigned char tx1;", "    unsigned char ty1;", "    unsigned char tx2;", "    unsigned char ty2;",
+            f"static {P} coll_v({P} sx, {P} sy, const short *b, {P} end)",
+            "{", f"    {T} tx1;", f"    {T} ty1;", f"    {T} tx2;", f"    {T} ty2;",
             "    unsigned char mask;",
-            "    tx1 = (unsigned char)((unsigned short)(sx + (unsigned short)b[0]) >> 8);",
-            "    tx2 = (unsigned char)((unsigned char)((unsigned short)(sx + (unsigned short)b[1]) >> 8) + 1u);",
+            f"    tx1 = ({T})(({P})(sx + ({P})b[0]) >> 8);",
+            f"    tx2 = ({T})(({T})(({P})(sx + ({P})b[1]) >> 8) + 1u);",
             "    if (sy > end) {",
             "        mask = 0x02u;                                     /* COLLISION_BOTTOM */",
-            "        ty1 = (unsigned char)((unsigned short)(sy + (unsigned short)b[2]) >> 8);",
-            "        ty2 = (unsigned char)((unsigned short)(end + (unsigned short)b[2]) >> 8);",
+            f"        ty1 = ({T})(({P})(sy + ({P})b[2]) >> 8);",
+            f"        ty2 = ({T})(({P})(end + ({P})b[2]) >> 8);",
             "        if (ty2 > ty1) ty2 = 0u;", "    } else {",
             "        mask = 0x01u;                                     /* COLLISION_TOP */",
-            "        ty1 = (unsigned char)((unsigned short)(sy + (unsigned short)b[3]) >> 8);",
-            "        ty2 = (unsigned char)((unsigned short)(end + (unsigned short)b[3]) >> 8);",
+            f"        ty1 = ({T})(({P})(sy + ({P})b[3]) >> 8);",
+            f"        ty2 = ({T})(({P})(end + ({P})b[3]) >> 8);",
             f"        if (ty2 < ty1) ty2 = {H}u;", "    }",
             "    while (tx1 != tx2) {",
             "        if (col_range_y(mask, tx1, ty1, ty2)) {",
             "            return (sy > end)",
-            "                ? (unsigned short)(((unsigned short)tile_hit_y << 8) - (unsigned short)b[2] + 256u)",
-            "                : (unsigned short)(((unsigned short)tile_hit_y << 8) - (unsigned short)(b[3] + 1));",
+            f"                ? ({P})((({P})tile_hit_y << 8) - ({P})b[2] + 256u)",
+            f"                : ({P})((({P})tile_hit_y << 8) - ({P})(b[3] + 1));",
             "        }", "        ++tx1;", "    }", "    return end;", "}", ""]
     if actors:
         lines += [
@@ -122,48 +133,58 @@ def _moves_source(n, moves, bounds, collisions, width_tiles, height_tiles, cance
             " * player along prev, actors with COLLISION other than i; unsigned words. */",
             "static unsigned char overlapping(unsigned char i)", "{",
             "    const short *b = act_bounds + ((unsigned short)i << 2);", "    const short *o;",
-            "    unsigned short l = (unsigned short)(act_x[i] + (unsigned short)b[0]);",
-            "    unsigned short r = (unsigned short)(act_x[i] + (unsigned short)b[1]);",
-            "    unsigned short t = (unsigned short)(act_y[i] + (unsigned short)b[2]);",
-            "    unsigned short d = (unsigned short)(act_y[i] + (unsigned short)b[3]);",
+            f"    {P} l = ({P})(act_x[i] + ({P})b[0]);",
+            f"    {P} r = ({P})(act_x[i] + ({P})b[1]);",
+            f"    {P} t = ({P})(act_y[i] + ({P})b[2]);",
+            f"    {P} d = ({P})(act_y[i] + ({P})b[3]);",
             "    unsigned char j = 0u;",
             f"    while (j != {NIL}u) {{",
             "        o = act_bounds + ((unsigned short)j << 2);",
             "        if (j == i || !(act_flags[j] & 0x08u) ||",
-            "            (unsigned short)(act_x[j] + (unsigned short)o[0]) > r ||",
-            "            (unsigned short)(act_x[j] + (unsigned short)o[1]) < l ||",
-            "            (unsigned short)(act_y[j] + (unsigned short)o[2]) > d ||",
-            "            (unsigned short)(act_y[j] + (unsigned short)o[3]) < t) { j = act_prev[j]; continue; }",
+            f"            ({P})(act_x[j] + ({P})o[0]) > r ||",
+            f"            ({P})(act_x[j] + ({P})o[1]) < l ||",
+            f"            ({P})(act_y[j] + ({P})o[2]) > d ||",
+            f"            ({P})(act_y[j] + ({P})o[3]) < t) {{ j = act_prev[j]; continue; }}",
             ("        return (unsigned char)((unsigned short)j + 1u);" if push else "        return 1u;"),
             "    }", "    return 0u;", "}", ""]
     if relative:
         lines += [
-            "/* math.h saturating_add_u16 */",
-            "static unsigned short sat_add(unsigned short base, unsigned short delta)", "{",
-            "    unsigned short m;",
-            "    if (!(delta & 0x8000u)) return (base > (unsigned short)(0xFFFFu - delta)) ? 0xFFFFu : (unsigned short)(base + delta);",
-            "    m = (unsigned short)(0u - delta);",
-            "    return (m > base) ? 0u : (unsigned short)(base - m);", "}", ""]
+            "/* math.h saturating_add_u16 */" if not wide() else "/* math.h saturating_add_u16, at the wide position width (world.py) */",
+            f"static {P} sat_add({P} base, {P} delta)", "{",
+            f"    {P} m;",
+            f"    if (!(delta & {'0x80000000u' if wide() else '0x8000u'})) return (base > ({P})({pos_max()} - delta)) ? {pos_max()} : ({P})(base + delta);",
+            f"    m = ({P})(0u - delta);",
+            f"    return (m > base) ? 0u : ({P})(base - m);", "}", ""]
     lines += [
         "void ngc_actor_move_init(unsigned char i, unsigned short *p, unsigned char attr)", "{",
         *(["    const short *b = act_bounds + ((unsigned short)i << 2);"] if walls else []),
         "    (void)attr;",
         *(["    act_flags[i] &= 0x7Fu;  /* clear INTERRUPT on new movement */"] if cancel else []),
-        "    act_x[i] &= 0xFFE0u;                                   /* SUBPX_SNAP_PX */",
-        "    act_y[i] &= 0xFFE0u;"]
+        f"    act_x[i] &= {pos_mask(0xFFE0)};                                   /* SUBPX_SNAP_PX */",
+        f"    act_y[i] &= {pos_mask(0xFFE0)};"]
+    if wide():
+        # world.py: the VM words are pixels; the target lives in act_mx/act_my (1/32 px).
+        pad = "    " if relative else ""
+        if relative:
+            lines += ["    if (attr & 0x18u) {                                    /* ACTOR_ATTR_RELATIVE */",
+                      f"        {X} = sat_add(act_x[i], ({P})(long)(short)p[0] << 5);",
+                      f"        {Y} = sat_add(act_y[i], ({P})(long)(short)p[1] << 5);", "    } else {"]
+        lines += [f"    {pad}{X} = ({P})p[0] << 5;", f"    {pad}{Y} = ({P})p[1] << 5;",
+                  *(["    }"] if relative else [])]
     if relative:
-        lines += ["    if (attr & 0x18u) {                                    /* ACTOR_ATTR_RELATIVE */",
-                  "        p[0] = sat_add(act_x[i], p[0]);", "        p[1] = sat_add(act_y[i], p[1]);", "    }",
-                  "    if (attr & 0x08u) { p[0] &= 0xFFE0u; p[1] &= 0xFFE0u; }",
-                  "    else if (attr & 0x10u) { p[0] &= 0xFF00u; p[1] &= 0xFF00u; }"]
+        lines += ([] if wide() else
+                  ["    if (attr & 0x18u) {                                    /* ACTOR_ATTR_RELATIVE */",
+                   "        p[0] = sat_add(act_x[i], p[0]);", "        p[1] = sat_add(act_y[i], p[1]);", "    }"]) + [
+                  f"    if (attr & 0x08u) {{ {X} &= {pos_mask(0xFFE0)}; {Y} &= {pos_mask(0xFFE0)}; }}",
+                  f"    else if (attr & 0x10u) {{ {X} &= {pos_mask(0xFF00)}; {Y} &= {pos_mask(0xFF00)}; }}"]
     if walls:
         lines += ["    if (attr & 0x02u) {                                    /* CHECK_COLL_WALLS */",
                   "        if (attr & 0x01u) {                                /* H_FIRST */",
-                  "            if (act_x[i] != p[0]) p[0] = coll_h(act_x[i], act_y[i], b, p[0]);",
-                  "            if (act_y[i] != p[1]) p[1] = coll_v(p[0], act_y[i], b, p[1]);",
+                  f"            if (act_x[i] != {X}) {X} = coll_h(act_x[i], act_y[i], b, {X});",
+                  f"            if (act_y[i] != {Y}) {Y} = coll_v({X}, act_y[i], b, {Y});",
                   "        } else {",
-                  "            if (act_y[i] != p[1]) p[1] = coll_v(act_x[i], act_y[i], b, p[1]);",
-                  "            if (act_x[i] != p[0]) p[0] = coll_h(act_x[i], p[1], b, p[0]);",
+                  f"            if (act_y[i] != {Y}) {Y} = coll_v(act_x[i], act_y[i], b, {Y});",
+                  f"            if (act_x[i] != {X}) {X} = coll_h(act_x[i], {Y}, b, {X});",
                   "        }", "    }"]
     lines += ["}", ""]
     if not split_moves:
@@ -178,42 +199,44 @@ def _moves_source(n, moves, bounds, collisions, width_tiles, height_tiles, cance
                 return []
             back = "+" if sign == "-" else "-"
             return [f"        if ((attr & 0x20u) && overlapping(i)) {{",
-                    f"            {pos} = (unsigned short)({pos} {back} act_speed[i]);",
-                    f"            p[{ko}] = {oth};", f"            {done}", "        }"]
+                    f"            {pos} = ({P})({pos} {back} act_speed[i]);",
+                    f"            {tgt[ko]} = {oth};", f"            {done}", "        }"]
         lines += [
             f"unsigned char ngc_actor_move_{axis}(unsigned char i, unsigned short *p, unsigned char attr)", "{",
-            "    (void)attr;",
+            "    (void)attr;", *(["    (void)p;"] if wide() else []),
             *(["    if (act_flags[i] & 0x80u) return 0u;"] if cancel else []),
-            f"    if (p[{k}] == {pos}) {{ set_anim(i, act_dir[i]); return 0u; }}",
-            f"    if (p[{k}] < {pos}) {{",
-            f"        {pos} = (unsigned short)({pos} - act_speed[i]);",
+            f"    if ({tgt[k]} == {pos}) {{ set_anim(i, act_dir[i]); return 0u; }}",
+            f"    if ({tgt[k]} < {pos}) {{",
+            f"        {pos} = ({P})({pos} - act_speed[i]);",
             *hit("-", done="set_anim(i, act_dir[i]); return 0u;"),
-            f"        if ({pos} <= p[{k}]) {{ {pos} = p[{k}]; set_anim(i, act_dir[i]); return 0u; }}",
+            f"        if ({pos} <= {tgt[k]}) {{ {pos} = {tgt[k]}; set_anim(i, act_dir[i]); return 0u; }}",
             "    } else {",
-            f"        {pos} = (unsigned short)({pos} + act_speed[i]);",
+            f"        {pos} = ({P})({pos} + act_speed[i]);",
             *hit("+", done="set_anim(i, act_dir[i]); return 0u;"),
-            f"        if ({pos} >= p[{k}]) {{ {pos} = p[{k}]; set_anim(i, act_dir[i]); return 0u; }}",
+            f"        if ({pos} >= {tgt[k]}) {{ {pos} = {tgt[k]}; set_anim(i, act_dir[i]); return 0u; }}",
             "    }", "    return 1u;", "}", "",
             f"void ngc_actor_move_dir_{axis}(unsigned char i, const unsigned short *p)", "{",
+            *(["    (void)p;"] if wide() else []),
             *(["    if (act_flags[i] & 0x80u) return;"] if cancel else []),
-            f"    if (p[{k}] != {pos}) ngc_actor_set_dir(i, (unsigned char)(p[{k}] < {pos} ? {lo}u : {hi}u), 1u);",
+            f"    if ({tgt[k]} != {pos}) ngc_actor_set_dir(i, (unsigned char)({tgt[k]} < {pos} ? {lo}u : {hi}u), 1u);",
             "}", ""]
     xy = ["unsigned char ngc_actor_move_xy(unsigned char i, unsigned short *p, unsigned char attr)", "{",
-          "    unsigned char rx = (unsigned char)(p[0] == act_x[i]);",
-          "    unsigned char ry = (unsigned char)(p[1] == act_y[i]);", "    (void)attr;"]
+          f"    unsigned char rx = (unsigned char)({X} == act_x[i]);",
+          f"    unsigned char ry = (unsigned char)({Y} == act_y[i]);", "    (void)attr;",
+          *(["    (void)p;"] if wide() else [])]
     if cancel:
         xy.append("    if (act_flags[i] & 0x80u) return 0u;")
     for axis, other, k, ko, flag in (("x", "y", 0, 1, "rx"), ("y", "x", 1, 0, "ry")):
         pos, oth = f"act_{axis}[i]", f"act_{other}[i]"
         for cmp_, sign, back, arrive in (("<", "-", "+", "<="), (None, "+", "-", ">=")):
-            body = [f"        {pos} = (unsigned short)({pos} {sign} act_speed[i]);"]
+            body = [f"        {pos} = ({P})({pos} {sign} act_speed[i]);"]
             if actors:
                 body += [f"        if ((attr & 0x20u) && overlapping(i)) {{",
-                         f"            {pos} = (unsigned short)({pos} {back} act_speed[i]);",
-                         f"            p[{ko}] = {oth};", f"            {flag} = 1u;", "        }"]
-            body += [f"        if ({pos} {arrive} p[{k}]) {{ {pos} = p[{k}]; {flag} = 1u; }}"]
+                         f"            {pos} = ({P})({pos} {back} act_speed[i]);",
+                         f"            {tgt[ko]} = {oth};", f"            {flag} = 1u;", "        }"]
+            body += [f"        if ({pos} {arrive} {tgt[k]}) {{ {pos} = {tgt[k]}; {flag} = 1u; }}"]
             if cmp_:
-                xy += [f"    if (!{flag}) {{", f"      if (p[{k}] < {pos}) {{", *["  " + b for b in body], "      } else {"]
+                xy += [f"    if (!{flag}) {{", f"      if ({tgt[k]} < {pos}) {{", *["  " + b for b in body], "      } else {"]
             else:
                 xy += [*["  " + b for b in body], "      }", "    }"]
     xy += ["    if (rx && ry) { set_anim(i, act_dir[i]); return 0u; }", "    return 1u;", "}", "",
@@ -228,7 +251,10 @@ def _push_source(cancel=False):
     """vm_actor.c vm_actor_move_to on actor arrays. actorPush uses CHECK_COLL,
     absolute X/Y, vertical first. State bits and chronology are GBVM's;
     collision places the actor at the hit bounds (unlike the split opcodes).
-    Returns 1 to rewind the VM PC, 0 to finish this instruction."""
+    Returns 1 to rewind the VM PC, 0 to finish this instruction.
+    Wide world (world.py): the target is ngc_actor_move_init's act_mx/act_my."""
+    P = pos_t()
+    tgt = ("act_mx[i]", "act_my[i]") if wide() else ("p[0]", "p[1]")
     lines = [
         "/* GBVM vm_actor_move_to: push state (ALLOW 1/2, DIR 4/8, ACTIVE 16/32, NEEDED 64/128). */",
         "unsigned char ngc_actor_push_step(unsigned char i, unsigned short *p, unsigned char *flags)", "{",
@@ -237,10 +263,10 @@ def _push_source(cancel=False):
         "        set_anim(i, (unsigned char)(act_dir[i] + 4u));",
         "        ngc_actor_move_init(i, p, 0x22u);",
         "        *flags = 2u;  /* MOVE_ALLOW_V; no H_FIRST or DIAGONAL */",
-        "        if (act_x[i] != p[0]) *flags |= 64u; else *flags |= 2u;",
-        "        if (act_y[i] != p[1]) *flags |= 128u; else *flags |= 1u;",
-        "        if (act_x[i] > p[0]) *flags |= 4u;",
-        "        if (act_y[i] > p[1]) *flags |= 8u;",
+        f"        if (act_x[i] != {tgt[0]}) *flags |= 64u; else *flags |= 2u;",
+        f"        if (act_y[i] != {tgt[1]}) *flags |= 128u; else *flags |= 1u;",
+        f"        if (act_x[i] > {tgt[0]}) *flags |= 4u;",
+        f"        if (act_y[i] > {tgt[1]}) *flags |= 8u;",
         "        return 1u;", "    }",
         *(["    if (act_flags[i] & 0x80u) return 0u;"] if cancel else []),
         "    b = act_bounds + ((unsigned short)i << 2);"]
@@ -251,16 +277,16 @@ def _push_source(cancel=False):
         lines += [
             f"    if ((*flags & {allow | needed}u) == {allow | needed}u) {{",
             f"        dir = (unsigned char)((*flags & {direction}u) ? {lo_dir}u : {hi_dir}u);",
-            f"        {pos} = (unsigned short)((*flags & {direction}u) ? {pos} - act_speed[i] : {pos} + act_speed[i]);",
+            f"        {pos} = ({P})((*flags & {direction}u) ? {pos} - act_speed[i] : {pos} + act_speed[i]);",
             "        hit = overlapping(i);  /* index+1; 0 means no hit */",
             "        if (hit) {", "            --hit;",
             "            o = act_bounds + ((unsigned short)hit << 2);",
-            f"            {pos} = (unsigned short)(act_{axis}[hit] + ((*flags & {direction}u)",
+            f"            {pos} = ({P})(act_{axis}[hit] + ((*flags & {direction}u)",
             f"                ? o[{hi_bound}] - b[{lo_bound}] + 1 : o[{lo_bound}] - b[{hi_bound}] - 1));",
             "            *flags = 0u;", "            set_anim(i, act_dir[i]);", "            return 0u;", "        }",
             f"        if (!(*flags & {active}u)) {{ *flags |= {active}u; ngc_actor_set_dir(i, dir, 1u); }}",
-            f"        if ((*flags & {direction}u) ? {pos} <= p[{k}] : {pos} >= p[{k}]) {{",
-            f"            {pos} = p[{k}];", f"            *flags |= {other_allow}u;",
+            f"        if ((*flags & {direction}u) ? {pos} <= {tgt[k]} : {pos} >= {tgt[k]}) {{",
+            f"            {pos} = {tgt[k]};", f"            *flags |= {other_allow}u;",
             f"            *flags &= {255 ^ (allow | needed)}u;", "        }", "    }"]
     lines += ["    if (!(*flags & 192u)) { *flags = 0u; set_anim(i, act_dir[i]); return 0u; }",
               "    return 1u;", "}", ""]
@@ -269,20 +295,22 @@ def _push_source(cancel=False):
 
 def _cancel_source():
     """vm_actor_move_cancel: waitable, nearest tile, both axes, no collision or
-    animation change. Destination is recomputed at every invocation, in UWORD."""
+    animation change. Destination is recomputed at every invocation, in UWORD
+    (the wide position width, world.py)."""
+    P = pos_t()
     lines = ["/* GBVM vm_actor.c vm_actor_move_cancel */",
              "unsigned char ngc_actor_move_cancel(unsigned char i)", "{",
-             "    unsigned short dx;", "    unsigned short dy;",
+             f"    {P} dx;", f"    {P} dy;",
              "    act_flags[i] |= 0x80u;  /* INTERRUPT until next move init */"]
     for axis in ("x", "y"):
         pos, dest = f"act_{axis}[i]", f"d{axis}"
-        lines += [f"    {dest} = {pos} & 0xFF00u;",
-                  f"    if ({pos} & 0x0080u) {dest} = (unsigned short)({dest} + 256u);",
+        lines += [f"    {dest} = {pos} & {pos_mask(0xFF00)};",
+                  f"    if ({pos} & 0x0080u) {dest} = ({P})({dest} + 256u);",
                   f"    if ({pos} > {dest}) {{",
-                  f"        {pos} = (unsigned short)({pos} - act_speed[i]);",
+                  f"        {pos} = ({P})({pos} - act_speed[i]);",
                   f"        if ({pos} < {dest}) {pos} = {dest};",
                   f"    }} else if ({pos} < {dest}) {{",
-                  f"        {pos} = (unsigned short)({pos} + act_speed[i]);",
+                  f"        {pos} = ({P})({pos} + act_speed[i]);",
                   f"        if ({pos} > {dest}) {pos} = {dest};", "    }"]
     lines += ["    return (unsigned char)(act_x[i] != dx || act_y[i] != dy);", "}", ""]
     return lines
@@ -294,6 +322,7 @@ def actors_source(actors, sheets, height_px, where="scene actors", view_h=152, m
     """view_h: SCREENHEIGHT of the scene (152, or 144 for a GB Studio scene shown
     between black bands, ECARTS 1): camera half height, SCREEN_TILE_REFRES_H."""
     refres_h = (view_h >> 3) + 3        # SCREEN_TILES_H + PAD_TOP + PAD_BOTTOM
+    P, S, T = pos_t(), spos_t(), tile_t()   # world.py: GB Studio widths, or the wide world's
     """actors: [{sheet, x, y (1/32 px), dir (0..3), flags, anim_tick}], actors[0] = player.
     sheets: NgpcSheet list (same order as the sprite unit)."""
     n = len(actors)
@@ -318,7 +347,7 @@ def actors_source(actors, sheets, height_px, where="scene actors", view_h=152, m
             raise CompileError(f"{where}: actor {i} uses an unknown sheet {s}")
         if actor["dir"] not in (0, 1, 2, 3) or not 0 <= actor["anim_tick"] <= 255 or not 0 <= actor["move_speed"] <= 255:
             raise CompileError(f"{where}: actor {i} direction or animation tick out of range")
-        if not 0 <= actor["x"] <= 0xFFFF or not 0 <= actor["y"] <= 0xFFFF:
+        if not 0 <= actor["x"] <= (0xFFFFFFFF if wide() else 0xFFFF) or not 0 <= actor["y"] <= (0xFFFFFFFF if wide() else 0xFFFF):
             raise CompileError(f"{where}: actor {i} position out of range")
         order_base.append(sheet_order_base[s])
         for start, end in sheets[s].animation_offsets[:8]:   # ANIM_SET_DEFAULT: first state
@@ -407,15 +436,15 @@ def actors_source(actors, sheets, height_px, where="scene actors", view_h=152, m
         c_array(lines, "act_emote_origin", list(emote_origins) if sprite_switches else
                 [emote_origins[a["sheet"]] for a in actors], "short")
         c_array(lines, "act_emote_offsets", [2,1,0,-1,-2,-3,-4,-5,-6,-5,-4,-3,-2,-1,0], "signed char")
-    c_array(lines, "act_init_x", [a["x"] for a in actors])
-    c_array(lines, "act_init_y", [a["y"] for a in actors])
+    c_array(lines, "act_init_x", [a["x"] for a in actors], P)
+    c_array(lines, "act_init_y", [a["y"] for a in actors], P)
     c_array(lines, "act_init_dir", [a["dir"] for a in actors], "unsigned char")
     c_array(lines, "act_init_flags", [a["flags"] for a in actors], "unsigned char")
     c_array(lines, "act_init_tick", [a["anim_tick"] for a in actors], "unsigned char")
     c_array(lines, "act_init_speed", [a["move_speed"] for a in actors], "unsigned char")
     decl = lambda t, name: f"static {t} {name}[{n}];"
     # Positions are public: probes read the player at its link address.
-    lines += [f"unsigned short act_x[{n}];", f"unsigned short act_y[{n}];",
+    lines += [f"{P} act_x[{n}];", f"{P} act_y[{n}];",
               decl("unsigned char", "act_speed"),
               *[decl("unsigned char", f) for f in ("act_dir", "act_flags", "act_frame", "act_fstart",
                                                   "act_fend", "act_tick", "act_anim", "act_next", "act_prev")],
@@ -456,20 +485,24 @@ def actors_source(actors, sheets, height_px, where="scene actors", view_h=152, m
                 if public_states else []),
               *(["/* vm_actor_get_pos: preserve ID, copy the two position words. */",
                  "void ngc_actor_get_pos(unsigned char i, unsigned short *p)", "{",
-                 "    p[1] = act_x[i];", "    p[2] = act_y[i];", "}", ""]
+                 *(["    /* world.py: the VM words are pixels */",
+                    "    p[1] = (unsigned short)(act_x[i] >> 5);", "    p[2] = (unsigned short)(act_y[i] >> 5);"]
+                   if wide() else ["    p[1] = act_x[i];", "    p[2] = act_y[i];"]), "}", ""]
                 if read_positions else []),
               "void ngc_actor_set_dir(unsigned char i, unsigned char dir, unsigned char moving)", "{",
               "    act_dir[i] = dir;", "    set_anim(i, moving ? (unsigned char)(dir + 4u) : dir);", "}", "",
               "void ngc_actor_set_pos(unsigned char i, unsigned short x, unsigned short y)", "{",
-              "    act_x[i] = x;", "    act_y[i] = y;", "}", "",
+              *(["    /* world.py: the VM words are pixels */",
+                 f"    act_x[i] = ({P})x << 5;", f"    act_y[i] = ({P})y << 5;"]
+                if wide() else ["    act_x[i] = x;", "    act_y[i] = y;"]), "}", "",
               "/* Tile16 test of actor.c (offset 64, 3 tile16 of bounds, screen 10x9). */",
               "static unsigned char offscreen(unsigned char i)", "{",
-              "    unsigned char ax = (unsigned char)((unsigned char)(act_x[i] >> 9) + 67u);",
-              "    unsigned char ay = (unsigned char)((unsigned char)(act_y[i] >> 9) + 67u);",
-              "    unsigned char sx = (unsigned char)((unsigned char)(draw_x >> 4) + 64u);",
-              "    unsigned char sy = (unsigned char)((unsigned char)(draw_y >> 4) + 64u);",
-              "    return (unsigned char)(ax < sx || ax > (unsigned char)(sx + 16u) ||",
-              "                           ay < sy || ay > (unsigned char)(sy + 15u));", "}", "",
+              f"    {T} ax = ({T})(({T})(act_x[i] >> 9) + 67u);",
+              f"    {T} ay = ({T})(({T})(act_y[i] >> 9) + 67u);",
+              f"    {T} sx = ({T})(({T})(draw_x >> 4) + 64u);",
+              f"    {T} sy = ({T})(({T})(draw_y >> 4) + 64u);",
+              f"    return (unsigned char)(ax < sx || ax > ({T})(sx + 16u) ||",
+              f"                           ay < sy || ay > ({T})(sy + 15u));", "}", "",
               "static void activate(unsigned char i)", "{",
               "    if (act_flags[i] & 0x60u) return;                 /* ACTIVE | DISABLED */",
               "    if (!(act_flags[i] & 0x01u) && offscreen(i)) {",
@@ -511,27 +544,27 @@ def actors_source(actors, sheets, height_px, where="scene actors", view_h=152, m
               "    act_tick[i] = tick;", "}", "",
               "void ngc_actor_set_move_speed(unsigned char i, unsigned char speed)", "{",
               "    act_speed[i] = speed;", "}", "",
-              "static void activate_in_row(unsigned char x, unsigned char y)", "{",
-              "    unsigned char i = inact_head;", "    unsigned char nx;", "    unsigned char tx;",
-              "    unsigned char x_end = (unsigned char)(x + 23u);",
+              f"static void activate_in_row({T} x, {T} y)", "{",
+              "    unsigned char i = inact_head;", "    unsigned char nx;", f"    {T} tx;",
+              f"    {T} x_end = ({T})(x + 23u);",
               f"    while (i != {NIL}u) {{", "        nx = act_next[i];",
-              "        if ((unsigned char)(act_y[i] >> 8) == y) {",
-              "            tx = (unsigned char)(act_x[i] >> 8);",
+              f"        if (({T})(act_y[i] >> 8) == y) {{",
+              f"            tx = ({T})(act_x[i] >> 8);",
               "            if (tx >= x && tx < x_end) activate(i);", "        }", "        i = nx;", "    }", "}", "",
-              "static void activate_in_col(unsigned char x, unsigned char y)", "{",
-              "    unsigned char i = inact_head;", "    unsigned char nx;", "    unsigned char ty;",
-              f"    unsigned char y_end = (unsigned char)(y + {refres_h}u);",
+              f"static void activate_in_col({T} x, {T} y)", "{",
+              "    unsigned char i = inact_head;", "    unsigned char nx;", f"    {T} ty;",
+              f"    {T} y_end = ({T})(y + {refres_h}u);",
               f"    while (i != {NIL}u) {{", "        nx = act_next[i];",
-              "        if ((unsigned char)(act_x[i] >> 8) == x) {",
-              "            ty = (unsigned char)(act_y[i] >> 8);",
+              f"        if (({T})(act_x[i] >> 8) == x) {{",
+              f"            ty = ({T})(act_y[i] >> 8);",
               "            if (ty >= y && ty < y_end) activate(i);", "        }", "        i = nx;", "    }", "}", "",
               "static void render_rows(unsigned short x, unsigned short y)", "{",
-              "    short tx = (short)((unsigned char)(x >> 3)) - 1;",
-              "    short ty = (short)((unsigned char)(y >> 3)) - 1;", "    unsigned char n;",
-              "    unsigned char row;", "    if (tx < 0) tx = 0;", "    if (ty < 0) ty = 0;",
-              "    row = (unsigned char)ty;",
+              f"    short tx = (short)(({T})(x >> 3)) - 1;",
+              f"    short ty = (short)(({T})(y >> 3)) - 1;", "    unsigned char n;",
+              f"    {T} row;", "    if (tx < 0) tx = 0;", "    if (ty < 0) ty = 0;",
+              f"    row = ({T})ty;",
               f"    for (n = 0u; n != {refres_h}u && row != {height_px >> 3}u; ++n, ++row)",
-              "        activate_in_row((unsigned char)tx, row);", "}", "",
+              f"        activate_in_row(({T})tx, row);", "}", "",
               "/* GBVM scroll_update: clamp camera - half screen, registers, activation. */",
               "void ngc_actors_scroll(short cx, short cy)", "{",
               "    short x = (short)(cx - 80);", f"    short y = (short)(cy - {view_h >> 1});",
@@ -540,21 +573,21 @@ def actors_source(actors, sheets, height_px, where="scene actors", view_h=152, m
               "    ngc_scroll_set(x, y);                     /* same clamp; committed next blank */",
               ("    x = (short)ngc_scroll_base_next[0];" if camera_shake else "    x = (short)ngc_scroll_next[0];"),
               ("    y = (short)ngc_scroll_base_next[1];" if camera_shake else "    y = (short)ngc_scroll_next[1];"),
-              "    cur_col = (unsigned char)(gb_scroll_x >> 3);", "    cur_row = (unsigned char)(gb_scroll_y >> 3);",
-              "    new_col = (unsigned char)((unsigned short)x >> 3);",
-              "    new_row = (unsigned char)((unsigned short)y >> 3);",
+              f"    cur_col = ({T})(gb_scroll_x >> 3);", f"    cur_row = ({T})(gb_scroll_y >> 3);",
+              f"    new_col = ({T})((unsigned short)x >> 3);",
+              f"    new_row = ({T})((unsigned short)y >> 3);",
               "    gb_scroll_x = (unsigned short)x;", "    gb_scroll_y = (unsigned short)y;",
               ("    draw_x = ngc_scroll_next[0];" if camera_shake else "    draw_x = (unsigned short)x;"),
               ("    draw_y = ngc_scroll_next[1];" if camera_shake else "    draw_y = (unsigned short)y;"),
               "    full_y = new_row > 0 ? (short)(new_row - 1) : 0;",
-              "    if (cur_col == new_col - 1) activate_in_col((unsigned char)(new_col + 21), (unsigned char)full_y);",
+              f"    if (cur_col == new_col - 1) activate_in_col(({T})(new_col + 21), ({T})full_y);",
               "    else if (cur_col == new_col + 1) {",
               "        c = new_col > 0 ? (short)(new_col - 1) : 0;",
-              "        activate_in_col((unsigned char)c, (unsigned char)full_y);",
+              f"        activate_in_col(({T})c, ({T})full_y);",
               "    } else if (cur_col != new_col) { render_rows(draw_x, draw_y); return; }",
               "    c = new_col > 0 ? (short)(new_col - 1) : 0;",
-              f"    if (cur_row == new_row - 1) activate_in_row((unsigned char)c, (unsigned char)(new_row + {refres_h - 2}));",
-              "    else if (cur_row == new_row + 1) activate_in_row((unsigned char)c, (unsigned char)full_y);",
+              f"    if (cur_row == new_row - 1) activate_in_row(({T})c, ({T})(new_row + {refres_h - 2}));",
+              f"    else if (cur_row == new_row + 1) activate_in_row(({T})c, ({T})full_y);",
               "    else if (cur_row != new_row) render_rows(draw_x, draw_y);", "}", "",
               "/* locked: VM_ISLOCKED() (a script holds VM_LOCK, e.g. a scene init thread",
               " * until it ends): an offscreen actor is then only DISABLED, not deactivated. */",
@@ -593,27 +626,27 @@ def actors_source(actors, sheets, height_px, where="scene actors", view_h=152, m
               "        }", "        i = act_prev[i];", "    }", "    ngc_sprites_end();", "}", "",
               "/* GBVM camera.c: camera_init state (LOCK X|Y, offsets and clamps 0,",
               " * camera_reset: deadzone 0); camera_update follows the player. 1/32 px. */",
-              "unsigned short ngc_camera_x;", "unsigned short ngc_camera_y;",
-              "static unsigned short cam_clamp_x;", "static unsigned short cam_clamp_y;",
+              f"{P} ngc_camera_x;", f"{P} ngc_camera_y;",
+              f"static {P} cam_clamp_x;", f"static {P} cam_clamp_y;",
               "static signed char cam_offset_x;", "static signed char cam_offset_y;",
               "static signed char cam_deadzone_x;", "static signed char cam_deadzone_y;",
               "static unsigned char cam_settings;", "",
               "void ngc_camera_update(void)", "{",
-              "    unsigned short target;", "    short tolerance;", "    unsigned short lo;",
-              "    unsigned short hi;", "    unsigned short cam;",
+              f"    {P} target;", "    short tolerance;", f"    {P} lo;",
+              f"    {P} hi;", f"    {P} cam;",
               "    if (cam_settings & 0x01u) {",
-              "        target = (unsigned short)(act_x[0] + 256u - ((unsigned short)(short)cam_offset_x << 5));",
+              f"        target = ({P})(act_x[0] + 256u - (({P})({S})cam_offset_x << 5));",
               "        tolerance = (short)((short)cam_deadzone_x << 5);",
-              "        lo = ((unsigned short)tolerance > target) ? 0u : (unsigned short)(target - tolerance);",
-              "        hi = (unsigned short)(target + tolerance);", "        cam = ngc_camera_x;",
+              f"        lo = (({P})tolerance > target) ? 0u : ({P})(target - tolerance);",
+              f"        hi = ({P})(target + tolerance);", "        cam = ngc_camera_x;",
               "        if (cam < lo) { cam = lo; if ((cam_settings & 0x08u) && cam > cam_clamp_x) cam = cam_clamp_x; }",
               "        else if (cam > hi) { cam = hi; if ((cam_settings & 0x04u) && cam < cam_clamp_x) cam = cam_clamp_x; }",
               "        ngc_camera_x = cam;", "        cam_clamp_x = cam;", "    }",
               "    if (cam_settings & 0x02u) {",
-              "        target = (unsigned short)(act_y[0] + 256u - ((unsigned short)(short)cam_offset_y << 5));",
+              f"        target = ({P})(act_y[0] + 256u - (({P})({S})cam_offset_y << 5));",
               "        tolerance = (short)((short)cam_deadzone_y << 5);",
-              "        lo = ((unsigned short)tolerance > target) ? 0u : (unsigned short)(target - tolerance);",
-              "        hi = (unsigned short)(target + tolerance);", "        cam = ngc_camera_y;",
+              f"        lo = (({P})tolerance > target) ? 0u : ({P})(target - tolerance);",
+              f"        hi = ({P})(target + tolerance);", "        cam = ngc_camera_y;",
               "        if (cam < lo) { cam = lo; if ((cam_settings & 0x20u) && cam > cam_clamp_y) cam = cam_clamp_y; }",
               "        else if (cam > hi) { cam = hi; if ((cam_settings & 0x10u) && cam < cam_clamp_y) cam = cam_clamp_y; }",
               "        ngc_camera_y = cam;", "        cam_clamp_y = cam;", "    }", "}", "",

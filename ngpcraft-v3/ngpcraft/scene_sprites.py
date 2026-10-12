@@ -33,20 +33,99 @@ def frame_box(frame):
             min(s.y for s in frame), max(s.y for s in frame) + 7)
 
 
-def sprites_source(sheets, tile_base, palettes, where="scene sprites", top=0, shadow=False, priority=PRIORITY_FRONT, *, shared_text=False):
+def _flipped(tile, hflip, vflip):
+    rows = [tile[8 * y:8 * y + 8] for y in range(8)]
+    if vflip:
+        rows.reverse()
+    return tuple(v for r in rows for v in (reversed(r) if hflip else r))
+
+
+def pool_tiles(sheets):
+    """One copy of each 8x8 pattern for all the sheets of a scene (docs/M6_SPRITE_TILES.md).
+    A NGPC sprite carries its own palette (CP.C) and flips, so a pattern repeated
+    in another sheet, or flipped, or drawn with other colours (same indices),
+    is the same character. Returns (patterns, per sheet: [(pool index, hflip,
+    vflip)] for each of its tiles); GB Studio's in-sheet sharing is kept."""
+    pool, index, maps = [], {}, []
+    for sheet in sheets:
+        found = []
+        for tile in sheet.tiles:
+            hit = next(((index[key], h, v) for h, v in ((False, False), (True, False), (False, True), (True, True))
+                        for key in (_flipped(tile, h, v),) if key in index), None)
+            if hit is None:
+                hit = (len(pool), False, False)
+                index[tuple(tile)] = len(pool)
+                pool.append(tuple(tile))
+            found.append(hit)
+        maps.append(found)
+    return pool, maps
+
+
+def _recycle_tables(sheets, recycle, where, patch):
+    """sprite_recycle.py tables: the palettes (4 words each), their slot, and per
+    frame the range of its sheet's recycled palettes in spr_rp_list."""
+    logical, slots = recycle
+    if len(logical) > 255:
+        raise CompileError(f"{where}: {len(logical)} recycled sprite palettes, at most 255")
+    start, flat = [], []
+    for sheet in sheets:
+        for _ in sheet.frames:
+            start.append(len(flat))
+            flat += list(sheet.recycled)
+    start.append(len(flat))
+    lines = [f"/* sprite_recycle.py: {len(logical)} sprite palettes in {len(set(slots))} slots. A frame drawn",
+             " * on screen asks for its sheet's shared palettes (spr_rp_list from spr_rp_start[frame]);",
+             " * ngc_sprites_commit publishes the slots that changed with the sprites. */"]
+    if patch:
+        lines.append("void ngc_palette_patch(unsigned char first, const unsigned short *src, unsigned char count);")
+    c_array(lines, "spr_rp", [v for p in logical for v in (0,) + tuple(p)])
+    c_array(lines, "spr_rp_slot", list(slots), "unsigned char")
+    c_array(lines, "spr_rp_start", start)
+    c_array(lines, "spr_rp_list", flat or [0], "unsigned char")
+    lines += ["static unsigned char ngc_spal_now[16];   /* palette in each slot, 0xFF none */",
+              "static unsigned short ngc_spal_dirty;    /* slots to publish at the next commit */"]
+    return lines
+
+
+def _recycle_publish(shadow, patch):
+    """Vertical blank, with the sprites drawn that asked for them."""
+    if patch:
+        body = ["        ngc_palette_patch((unsigned char)(s << 2), src, 4u);"]
+    else:
+        body = ["        d = (volatile unsigned short *)0x8200 + ((unsigned short)s << 2);",
+                "        for (i = 0u; i < 4u; ++i) d[i] = src[i];",
+                *(["        d = (volatile unsigned short *)ngc_palette_shadow + ((unsigned short)s << 2);",
+                   "        for (i = 0u; i < 4u; ++i) d[i] = src[i];"] if shadow else [])]
+    return ["static void ngc_spal_publish(void)", "{", "    unsigned char s;", "    const unsigned short *src;",
+            *([] if patch else ["    volatile unsigned short *d;", "    unsigned char i;"]),
+            "    for (s = 0u; s < 16u; ++s) {",
+            "        if (!(ngc_spal_dirty & (unsigned short)(1u << s))) continue;",
+            "        src = spr_rp + ((unsigned short)ngc_spal_now[s] << 2);", *body, "    }",
+            "    ngc_spal_dirty = 0u;", "}", ""]
+
+
+def sprite_tile_count(sheets):
+    """Characters the sheets take once pooled (pool_tiles)."""
+    return len(pool_tiles(sheets)[0])
+
+
+def sprites_source(sheets, tile_base, palettes, where="scene sprites", top=0, shadow=False, priority=PRIORITY_FRONT, *, shared_text=False,
+                   behind_level=PRIORITY_BEHIND, recycle=None, patch=False):
     """sheets: NgpcSheet list; palettes: 8 slots of (c0, c1, c3) RGB444 (GB Studio
     getSpritePalette keeps colors 0, 1 and 3; color index 0 is transparent).
     shadow: the scene's colours go to the fade manager's palette shadow
     (ngc_palette_shadow, same layout as the palette RAM from 0x8200) instead of
-    the hardware; the scene change shows them at the current fade step."""
+    the hardware; the scene change shows them at the current fade step.
+    recycle (sprite_recycle.py): (palettes, slot of each); a drawn frame loads its
+    sheet's recycled palettes (NgpcSheet.recycled), published at the next commit.
+    patch: the GBVM runtime's ngc_palette_patch writes them (fade shadow, fades)."""
     if len(palettes) not in (8, 16) or any(len(p) != 3 for p in palettes):
         raise CompileError(f"{where}: 8 sprite palettes of 3 colors expected (16 with native sheets)")
-    tiles = [t for sheet in sheets for t in sheet.tiles]
+    tiles, maps = pool_tiles(sheets)
     if tile_base + len(tiles) > 512:
         raise CompileError(f"{where}: {len(tiles)} sprite tiles from {tile_base} exceed the 512 shared tiles")
     words, pals, starts, counts, ox, oy, boxes = [], [], [], [], [], [], []
-    first_tile = tile_base
-    for sheet in sheets:
+    for sheet, found in zip(sheets, maps):
         for n, frame in enumerate(sheet.frames):
             starts.append(len(words))
             counts.append(len(frame))
@@ -60,10 +139,11 @@ def sprites_source(sheets, tile_base, palettes, where="scene sprites", top=0, sh
             boxes.extend((x0, x1, y0, y1))
             ox.append(frame[0].x); oy.append(frame[0].y)
             for i, spr in enumerate(frame):
-                tile = first_tile + spr.tile
+                pooled, hflip, vflip = found[spr.tile]
+                tile = tile_base + pooled
                 chain = 0 if i == 0 else 0x06
-                level = PRIORITY_BEHIND if spr.behind else priority
-                attr = (0x80 if spr.hflip else 0) | (0x40 if spr.vflip else 0) | level | chain | (tile >> 8)
+                level = behind_level if spr.behind else priority
+                attr = (0x80 if spr.hflip != hflip else 0) | (0x40 if spr.vflip != vflip else 0) | level | chain | (tile >> 8)
                 words.append((tile & 255) | attr << 8)
                 if i == 0:
                     words.append(0)
@@ -71,7 +151,6 @@ def sprites_source(sheets, tile_base, palettes, where="scene sprites", top=0, sh
                     prev = frame[i - 1]
                     words.append(((spr.x - prev.x) & 255) | ((spr.y - prev.y) & 255) << 8)
                 pals.append(spr.palette)
-        first_tile += len(sheet.tiles)
     frames = len(counts)
     lines = ["/* Original V3 actor renderer; SNK K2GETechRef 4-3 (sprite VRAM, chain, CP.C).",
              " * Semantics: GBVM actors_render; metasprites: GB Studio compileSprite. */"]
@@ -89,6 +168,8 @@ def sprites_source(sheets, tile_base, palettes, where="scene sprites", top=0, sh
     lines.append("/* Frame records: count, ox, oy, x0, x1, y0, y1, 0. */")
     c_array(lines, "spr_rec", [v for f in range(frames) for v in
                                (counts[f], ox[f], oy[f], *boxes[4*f:4*f+4], 0)], "signed char")
+    if recycle:
+        lines += _recycle_tables(sheets, recycle, where, patch)
     lines += ["/* Shadow OAM (GBVM draws into a shadow OAM too): 4 bytes per sprite, then",
               " * CP.C bytes. Filled by the frame's logic, copied to 0x8800/0x8C00 by",
               " * ngc_sprites_commit at the next vertical blank. Public for the copy code. */",
@@ -136,18 +217,27 @@ def sprites_source(sheets, tile_base, palettes, where="scene sprites", top=0, sh
               "        ngc_soam[i * 4u + 1u] = 0u;",
               "        ngc_slot_frame[i] = 0xFFFFu;", "    }",
               f"    *(volatile unsigned short *)0x8020 = {top << 8}u;  /* PO.H 0, PO.V = top band (4-3-4) */",
-              "    ngc_oam_used = 0u;", "    ngc_oam_prev = 0u;", "    ngc_soam_count = 0u;", "}", "",
+              "    ngc_oam_used = 0u;", "    ngc_oam_prev = 0u;", "    ngc_soam_count = 0u;",
+              *(["    for (i = 0u; i < 16u; ++i) ngc_spal_now[i] = 0xFFu;", "    ngc_spal_dirty = 0u;"]
+                if recycle else []), "}", "",
               "void ngc_sprites_begin(void)", "{", "    ngc_oam_used = 0u;", "}", "",
               "/* Draw a frame for an actor at screen position (x, y) = pos - scroll. */",
               "void ngc_sprite_draw(unsigned short frame, short x, short y)", "{",
               "    unsigned short *d;", "    unsigned short *q;", "    unsigned char *p;",
               "    const signed char *r;", "    unsigned short *key;", "    unsigned short start;",
               "    unsigned char n;", "    unsigned char k;",
+              *(["    unsigned short pk;", "    unsigned short pe;", "    unsigned char pl;", "    unsigned char ps;"]
+                if recycle else []),
               f"    if (frame >= {frames}u) return;",
               "    r = spr_rec + (frame << 3);",
               "    n = (unsigned char)r[0];",
               "    if (n == 0u || (unsigned short)ngc_oam_used + n > 64u) return;",
               "    if (x + r[4] < 0 || x + r[3] > 159 || y + r[6] < 0 || y + r[5] > 151) return;",
+              *(["    /* sprite_recycle.py: on screen, so its palettes go to their slots */",
+                 "    pk = spr_rp_start[frame];", "    pe = spr_rp_start[frame + 1u];",
+                 "    for (; pk != pe; ++pk) {", "        pl = spr_rp_list[pk];", "        ps = spr_rp_slot[pl];",
+                 "        if (ngc_spal_now[ps] != pl) {", "            ngc_spal_now[ps] = pl;",
+                 "            ngc_spal_dirty |= (unsigned short)(1u << ps);", "        }", "    }"] if recycle else []),
               "    /* d: position word of the first sprite in the shadow. */",
               "    d = (unsigned short *)ngc_soam + ((unsigned short)ngc_oam_used << 1) + 1;",
               "    key = ngc_slot_frame + ngc_oam_used;",
@@ -184,8 +274,10 @@ def sprites_source(sheets, tile_base, palettes, where="scene sprites", top=0, sh
               '    __asm("ld xde, 0");', '    __asm("ld de, 0x8C00");',
               '    __asm("ld bc, (_ngc_soam_count)");', '    __asm("ldir");', "}", "",
               "/* Vertical blank: copy what the last frame drew (attributes, positions, CP.C). */",
+              *(_recycle_publish(shadow, patch) if recycle else []),
               "void ngc_sprites_commit(void)", "{",
-              "    if (ngc_soam_count != 0u) ngc_soam_copy();", "}"]
+              "    if (ngc_soam_count != 0u) ngc_soam_copy();",
+              *(["    if (ngc_spal_dirty != 0u) ngc_spal_publish();"] if recycle else []), "}"]
     source = "\n".join(lines) + "\n"
     if shared_text:
         source = "unsigned char ngc_ui_sprite_cut(void);\n" + source
@@ -296,7 +388,7 @@ def export_scene_rom(background, sheets, palettes, steps, destination, max_delta
     if priority_source is not None:
         from .sprite_priority import masked_sprites_source, frame_mask_cache_layout, priority_mask_plan
         slots = actors * max(s.max_sprites() for s in sheets)
-        cache_base = base + sum(len(s.tiles) for s in sheets)
+        cache_base = base + sprite_tile_count(sheets)
         files["src/scene_sprites.c"] = masked_sprites_source(files["src/scene_sprites.c"], sheets, priority_source, cache_base, slots)
         dynamic = {"cache_tile_base": cache_base, "cache_tiles": slots, "shadow_bytes": slots * 16, "cache_metadata_bytes": slots * 8, "cache_control_bytes": 1, "row_transfer_bytes": 11}
         dynamic.update(frame_mask_cache_layout(sheets, slots, False))
@@ -304,7 +396,7 @@ def export_scene_rom(background, sheets, palettes, steps, destination, max_delta
         if dynamic["mask_rom"]["strategy"] == "preexpanded_rows":
             dynamic["row_transfer_bytes"] = 10
     report = {"background": background.report(), "sprite_tile_base": base,
-              "sprite_tiles": sum(len(s.tiles) for s in sheets),
+              "sprite_tiles": sprite_tile_count(sheets),
               "sheets": [{"name": s.name, "mode": s.mode, "tiles": len(s.tiles), "frames": len(s.frames),
                           "max_hardware_sprites": s.max_sprites()} for s in sheets],
               "path_frames": len(steps), "path_loops": loop}

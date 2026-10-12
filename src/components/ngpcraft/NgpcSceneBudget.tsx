@@ -1,15 +1,18 @@
 /*
- * NgpCraft: budget of a scene at the last build (tiles, background palettes,
- * actors, V3 warnings), in the scene sidebar. The V3 computes it while
- * building, so nothing is shown before the first build of the session.
+ * NgpCraft: budget of a scene in the scene sidebar. An estimate from the saved
+ * project (V3 `budget`), updated when the scene is opened and after each
+ * save, even for a scene the build would refuse; then the exact numbers of
+ * the last build (tiles, background palettes, actors, V3 warnings).
  */
-import React from "react";
+import React, { useEffect, useState } from "react";
+import API from "renderer/lib/api";
 import styled from "styled-components";
 import l10n from "shared/lib/lang/l10n";
 import { useAppSelector } from "store/hooks";
 import {
   NGPC_BACKGROUND_PALETTES,
   NGPC_TILE_SLOTS,
+  NgpcBudgetEstimate,
 } from "shared/lib/ngpcraft/sceneBudget";
 
 const Wrapper = styled.div`
@@ -61,6 +64,66 @@ interface NgpcSceneBudgetProps {
   sceneId: string;
 }
 
+const Estimate = ({ sceneId }: NgpcSceneBudgetProps) => {
+  const modified = useAppSelector((state) => state.document.modified);
+  const [estimate, setEstimate] = useState<NgpcBudgetEstimate | undefined>();
+  useEffect(() => {
+    if (modified) {
+      return;
+    }
+    let live = true;
+    API.ngpcraft
+      .estimateBudget(sceneId)
+      .then((result) => {
+        if (live) {
+          setEstimate("error" in result ? undefined : result);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      live = false;
+    };
+  }, [sceneId, modified]);
+  if (!estimate || estimate.sceneId !== sceneId) {
+    return modified ? (
+      <Muted>{l10n("FIELD_NGPC_BUDGET_SAVE_TO_UPDATE")}</Muted>
+    ) : null;
+  }
+  const heaviest = estimate.sheets
+    .slice(0, 3)
+    .map((sheet) => `${sheet.name} ${sheet.tiles}`)
+    .join(", ");
+  return (
+    <>
+      <Line>
+        <span>{l10n("FIELD_NGPC_BUDGET_ESTIMATE")}</span>
+        <span>
+          {estimate.usedTiles}/{NGPC_TILE_SLOTS}
+        </span>
+      </Line>
+      <Bar>
+        <BarFill $ratio={estimate.usedTiles / NGPC_TILE_SLOTS} />
+      </Bar>
+      <Muted>
+        {l10n("FIELD_NGPC_BUDGET_ESTIMATE_DETAIL", {
+          background: estimate.backgroundTiles + estimate.secondBackgroundTiles,
+          sprites: estimate.spriteTiles,
+          text: estimate.textReserve,
+        })}
+      </Muted>
+      {heaviest && (
+        <Muted>
+          {l10n("FIELD_NGPC_BUDGET_HEAVIEST", { sheets: heaviest })}
+        </Muted>
+      )}
+      {estimate.over && (
+        <Warning>{l10n("FIELD_NGPC_BUDGET_ESTIMATE_OVER")}</Warning>
+      )}
+      {modified && <Muted>{l10n("FIELD_NGPC_BUDGET_SAVE_TO_UPDATE")}</Muted>}
+    </>
+  );
+};
+
 export const NgpcSceneBudget = ({ sceneId }: NgpcSceneBudgetProps) => {
   const budget = useAppSelector(
     (state) => state.ngpcraft.sceneBudgets[sceneId],
@@ -72,6 +135,7 @@ export const NgpcSceneBudget = ({ sceneId }: NgpcSceneBudgetProps) => {
     return (
       <Wrapper>
         <Title>{l10n("FIELD_NGPC_BUDGET")}</Title>
+        <Estimate sceneId={sceneId} />
         <Muted>
           {anyBudget
             ? l10n("FIELD_NGPC_BUDGET_NOT_BUILT")
@@ -84,6 +148,7 @@ export const NgpcSceneBudget = ({ sceneId }: NgpcSceneBudgetProps) => {
   return (
     <Wrapper>
       <Title>{l10n("FIELD_NGPC_BUDGET")}</Title>
+      <Estimate sceneId={sceneId} />
       <Line>
         <span>{l10n("FIELD_NGPC_BUDGET_TILES")}</span>
         <span>

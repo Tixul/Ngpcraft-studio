@@ -22,7 +22,10 @@ import { isZoomSection } from "store/features/editor/editorHelpers";
 import trackerActions from "store/features/tracker/trackerActions";
 import { ConsoleLink } from "store/features/console/consoleState";
 import { actions as webTemplatesActions } from "store/features/webTemplates/webTemplatesState";
-import { setSceneBudgets } from "store/features/ngpcraft/ngpcraftState";
+import {
+  actions as ngpcraftActions,
+  setSceneBudgets,
+} from "store/features/ngpcraft/ngpcraftState";
 
 const urlParams = new URLSearchParams(window.location.search);
 const projectPath = urlParams.get("path");
@@ -472,6 +475,24 @@ API.events.debugger.data.subscribe((_, packet) => {
 
 API.events.ngpcraft.sceneBudgets.subscribe((_, budgets) => {
   store.dispatch(setSceneBudgets(budgets));
+});
+
+API.events.ngpcraft.autoSfx.subscribe((_, converted) => {
+  for (const { soundId, timelines } of converted) {
+    store.dispatch(ngpcraftActions.setSoundEffects({ soundId, timelines }));
+  }
+});
+
+API.events.ngpcraft.autoMusic.subscribe((_, converted) => {
+  for (const { resourceId, binding } of converted) {
+    store.dispatch(
+      ngpcraftActions.setResourceSetting({
+        resourceId,
+        key: "native_music",
+        value: binding,
+      }),
+    );
+  }
 });
 
 API.events.debugger.symbols.subscribe(

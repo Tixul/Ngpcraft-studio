@@ -45,9 +45,10 @@ def loop_source(source, width, height, where="second background"):
     width, height = -(-max(width, w) // 8) * 8, -(-max(height, h) // 8) * 8
     if (width, height) == (w, h):
         return source
-    if width > 2040 or height > 2040:
-        raise CompileError(f"{where}: looping needs a {width}x{height} map, over 2040 px; "
-                           "lower the rate or the scene size")
+    from .world import NGPC_MAX_CELLS, NGPC_MAX_PX
+    if width > NGPC_MAX_PX or height > NGPC_MAX_PX or (width // 8) * (height // 8) > NGPC_MAX_CELLS:
+        raise CompileError(f"{where}: looping needs a {width}x{height} px map, over the NGPC scene limit "
+                           f"({NGPC_MAX_PX} px per axis, {NGPC_MAX_CELLS} tiles in all); lower the rate or the scene size")
     pixels = tuple(source.pixels[(y % h)*w + x % w] for y in range(height) for x in range(width))
     indices = bytes(source.indices[(y % h)*w + x % w] for y in range(height) for x in range(width))
     tw, th = w // 8, h // 8
@@ -78,8 +79,13 @@ class SecondBackground:
 
 
 def _validate(source, where):
+    from .world import NGPC_MAX_CELLS, NGPC_MAX_PX
     w, h = source.width, source.height
-    if (any(type(v) is not int or v <= 0 or v % 8 or v > 2040 for v in (w, h)) or
+    if all(type(v) is int and v > 0 and v % 8 == 0 for v in (w, h)) and (
+            w > NGPC_MAX_PX or h > NGPC_MAX_PX or (w // 8) * (h // 8) > NGPC_MAX_CELLS):
+        raise CompileError(f"{where}: {w // 8}x{h // 8} tiles, over the NGPC scene limit "
+                           f"({NGPC_MAX_PX >> 3} tiles per axis, {NGPC_MAX_CELLS} in all; docs/PLAN_GRANDES_CARTES.md)")
+    if (any(type(v) is not int or v <= 0 or v % 8 for v in (w, h)) or
             len(source.pixels) != w*h or len(source.indices) != w*h or
             len(source.attributes) != (w//8)*(h//8) or
             any(type(v) is not int or not 0 <= v <= 4095 for v in source.pixels) or
@@ -94,26 +100,35 @@ def _validate(source, where):
 
 
 def compile_second_background(main_source, front_source, *, sprite_tiles=0,
-                              front_palette_limit=16, where="second background"):
+                              front_palette_limit=16, where="second background", main=None):
     """Compile assets only; callers must not claim streaming/text are delivered.
 
     Reserve sprite tiles and optional UI palette slots before allocation.
     Existing A3/A4 scenes without a second background are unaffected.
+    main: the scene's own compilation of main_source when it is not the plain
+    one (replaced tiles, sprite priority, palette changes: scene_build); a
+    tile the scripts rewrite at run time is never shared with SCR1.
     """
     if type(sprite_tiles) is not int or not 0 <= sprite_tiles <= 511:
         raise CompileError(f"{where}: sprite_tiles must be an integer in 0..511")
+    if main is not None and main.recycle:
+        raise CompileError(f"{where}: a second background over a main one of more than 16 palettes "
+                           "(recycled slots) is not delivered (docs/PALETTE_RECYCLE.md)")
     if type(front_palette_limit) is not int or not 1 <= front_palette_limit <= 16:
         raise CompileError(f"{where}: front_palette_limit must be an integer in 1..16")
     _validate(main_source, f"{where}.main")
     _validate(front_source, f"{where}.second")
-    main = compile_scene_background(main_source.width, main_source.height,
-                                    main_source.pixels, where=f"{where}.main",
-                                    backdrop=main_source.backdrop)
+    if main is None:
+        main = compile_scene_background(main_source.width, main_source.height,
+                                        main_source.pixels, where=f"{where}.main",
+                                        backdrop=main_source.backdrop)
     if main.complement_cells:
         x, y = main.complement_cells[0]
         raise CompileError(f"{where}.main: tile[{x},{y}]: case C: second background "
                            "conflicts with A4 colour complement on SCR1; use three opaque "
                            "colours plus a common backdrop or remove the second background")
+    if main.planes != (2,):
+        raise CompileError(f"{where}.main: the main background must be on SCR2 alone")
     w, h = front_source.width, front_source.height
     tiles, required = [], []
     for ty in range(0, h, 8):
@@ -132,7 +147,8 @@ def compile_second_background(main_source, front_source, *, sprite_tiles=0,
         raise CompileError(f"{where}.second: SCR1 uses {len(palettes)} palettes, "
                            f"budget {front_palette_limit}")
     patterns = list(main.tiles)
-    lookup = {v: main.tile_base+i for i, v in enumerate(patterns)}
+    rewritten = {tile for tile, _ in getattr(main, "animated_tiles", ())}
+    lookup = {v: main.tile_base+i for i, v in enumerate(patterns) if main.tile_base+i not in rewritten}
     tilemap = []
     for n, (pixels, colors) in enumerate(zip(tiles, required)):
         slot = next(i for i, p in enumerate(palettes) if set(colors) <= set(p))

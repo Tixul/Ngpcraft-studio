@@ -110,10 +110,13 @@ def projectile_source(definitions, frames, *, capacity, width_tiles, height_tile
         _integer(index, 0, 65535, where + ":definition_ids")
     if len(set(definition_ids)) != len(definition_ids):
         raise CompileError(f"{where}: duplicate definition_ids")
+    from .world import at_pos_width, pos_t, tile_t, wide
+    P, T = pos_t(), tile_t()      # world.py: GB Studio's widths, or the wide world's
+    top = "0xFFFFu" if wide() else "255u"
     lines = projectile_motion_source()
     lines += ["/* GBVM projectiles.c: byte list links, per-field RAM, no per-tick definition lookup. */",
               "unsigned char proj_head;", "static unsigned char proj_free;"]
-    for name, ctype, count in (("x", "unsigned short", capacity), ("y", "unsigned short", capacity),
+    for name, ctype, count in (("x", P, capacity), ("y", P, capacity),
                                ("dx", "short", capacity), ("dy", "short", capacity),
                                ("life", "unsigned short", capacity), ("frame", "unsigned short", capacity),
                                ("start", "unsigned short", capacity), ("end", "unsigned short", capacity),
@@ -131,7 +134,7 @@ def projectile_source(definitions, frames, *, capacity, width_tiles, height_tile
         lines += ["static unsigned short proj_slot[5];",
                   "void ngc_projectile_load_slot(unsigned char dest, unsigned short id)", "{",
                   "    if (dest < 5u) proj_slot[dest] = id;", "}", ""]
-    lines += ["unsigned char ngc_projectile_hit(const short *bounds, unsigned short x, unsigned short y,",
+    lines += [f"unsigned char ngc_projectile_hit(const short *bounds, {P} x, {P} y,",
               "                                unsigned char mask, unsigned char group);",
               "void ngc_sprite_draw(unsigned short frame, short x, short y);",
               "void ngc_projectiles_init(void)", "{", "    unsigned short i;",
@@ -142,7 +145,7 @@ def projectile_source(definitions, frames, *, capacity, width_tiles, height_tile
               "}", "",
               "unsigned char ngc_projectile_launch(unsigned short type, unsigned short x, unsigned short y, unsigned char angle)",
               "{", "    unsigned char i;", "    unsigned char direction;", "    unsigned char speed;",
-              "    unsigned short offset;", "    unsigned short pos[2];", "    short delta[2];", "    short *bounds;",
+              "    unsigned short offset;", f"    {P} pos[2];", "    short delta[2];", "    short *bounds;",
               *(["    if (type < 5u) type = proj_slot[type];"] if slots else []),
               "    i = proj_free;", "    if (i == 255u) return 0u;",
               "    direction = ngc_projectile_direction(angle);",
@@ -160,7 +163,9 @@ def projectile_source(definitions, frames, *, capacity, width_tiles, height_tile
             lines.append(f"        case {j}u: proj_start[i] = {start}u; proj_end[i] = {(end+1)&65535}u; break;")
         lines += ["        }", "        break;"]
     lines += ["    default: return 0u;  /* unreachable for a compiler-resolved type */", "    }",
-              "    proj_frame[i] = proj_start[i];", "    pos[0] = x; pos[1] = y;",
+              "    proj_frame[i] = proj_start[i];",
+              # world.py: the VM words are pixels in a wide world.
+              *([f"    pos[0] = ({P})x << 5; pos[1] = ({P})y << 5;"] if wide() else ["    pos[0] = x; pos[1] = y;"]),
               "    ngc_projectile_motion(pos, delta, angle, speed, offset);",
               "    proj_x[i] = pos[0]; proj_y[i] = pos[1]; proj_dx[i] = delta[0]; proj_dy[i] = delta[1];",
               "    proj_free = proj_next[i]; proj_next[i] = proj_head; proj_head = i;", "    return 1u;", "}", "",
@@ -171,14 +176,14 @@ def projectile_source(definitions, frames, *, capacity, width_tiles, height_tile
               "void ngc_projectiles_update(unsigned short time, short scroll_x, short scroll_y)", "{",
               "    unsigned char i;", "    unsigned char previous;",
               *(["    unsigned char iterator;"] if spread is not None else []),
-              "    unsigned char tx;", "    unsigned char ty;", "    unsigned char lo_x;", "    unsigned char hi_x;",
-              "    unsigned char lo_y;", "    unsigned char hi_y;", "    unsigned char edge;", "    unsigned short pos;",
-              "    tx = (unsigned char)((scroll_x > 0 ? (unsigned short)scroll_x : 0u) >> 3);",
-              "    ty = (unsigned char)((scroll_y > 0 ? (unsigned short)scroll_y : 0u) >> 3);",
-              "    edge = (unsigned char)((unsigned short)tx - 2u); lo_x = edge < tx ? edge : 0u;",
-              f"    edge = (unsigned char)((unsigned short)tx + {width_tiles}u + 2u); hi_x = edge > tx ? edge : 255u;",
-              "    edge = (unsigned char)((unsigned short)ty - 2u); lo_y = edge < ty ? edge : 0u;",
-              f"    edge = (unsigned char)((unsigned short)ty + {height_tiles}u + 2u); hi_y = edge > ty ? edge : 255u;",
+              f"    {T} tx;", f"    {T} ty;", f"    {T} lo_x;", f"    {T} hi_x;",
+              f"    {T} lo_y;", f"    {T} hi_y;", f"    {T} edge;", f"    {P} pos;",
+              f"    tx = ({T})((scroll_x > 0 ? (unsigned short)scroll_x : 0u) >> 3);",
+              f"    ty = ({T})((scroll_y > 0 ? (unsigned short)scroll_y : 0u) >> 3);",
+              f"    edge = ({T})((unsigned short)tx - 2u); lo_x = edge < tx ? edge : 0u;",
+              f"    edge = ({T})((unsigned short)tx + {width_tiles}u + 2u); hi_x = edge > tx ? edge : {top};",
+              f"    edge = ({T})((unsigned short)ty - 2u); lo_y = edge < ty ? edge : 0u;",
+              f"    edge = ({T})((unsigned short)ty + {height_tiles}u + 2u); hi_y = edge > ty ? edge : {top};",
               *(["    iterator = (unsigned char)time;"] if spread is not None else []),
               "    i = proj_head; previous = 255u;",
               "    while (i != 255u) {",
@@ -189,11 +194,11 @@ def projectile_source(definitions, frames, *, capacity, width_tiles, height_tile
               "            if (proj_frame[i] == proj_end[i]) {",
               "                if (!(proj_flags[i] & 1u)) proj_frame[i] = proj_start[i];",
               "                else proj_frame[i] = (unsigned short)(proj_frame[i] - 1u);", "            }", "        }",
-              "        pos = (unsigned short)(proj_x[i] + (unsigned short)proj_dx[i]);",
-              "        if ((unsigned char)(pos >> 8) < lo_x || (unsigned char)(pos >> 8) >= hi_x) {",
+              f"        pos = ({P})(proj_x[i] + ({P})proj_dx[i]);",
+              f"        if (({T})(pos >> 8) < lo_x || ({T})(pos >> 8) >= hi_x) {{",
               "            i = proj_remove(i, previous); continue;", "        }", "        proj_x[i] = pos;",
-              "        pos = (unsigned short)(proj_y[i] + (unsigned short)proj_dy[i]);",
-              "        if ((unsigned char)(pos >> 8) < lo_y || (unsigned char)(pos >> 8) >= hi_y) {",
+              f"        pos = ({P})(proj_y[i] + ({P})proj_dy[i]);",
+              f"        if (({T})(pos >> 8) < lo_y || ({T})(pos >> 8) >= hi_y) {{",
               "            i = proj_remove(i, previous); continue;", "        }", "        proj_y[i] = pos;",
               *([f"        if ((iterator & {spread}u) == 0u) {{",
                  "            iterator = (unsigned char)((unsigned short)iterator + 1u);",
@@ -223,12 +228,13 @@ def projectile_collision_source(groups, where="projectile actor bridge"):
         _integer(group, 0, 255, f"{where}:groups[{i}]")
     lines = []
     c_array(lines, "proj_actor_groups", groups, "unsigned char")
+    from .world import at_pos_width
     lines += ["void ngc_projectile_script(unsigned char actor, unsigned char group);",
               "/* GBVM actor_overlapping_bb returns the first overlapping actor, then the",
               " * mask is checked: an actor outside the mask (the player next to his own",
               " * melee hit) hid the others. NGPC (docs/ECARTS_GBSTUDIO.md, projectiles):",
               " * actors outside the mask are skipped, the first one in it is hit. */",
-              "unsigned char ngc_projectile_hit(const short *b, unsigned short x, unsigned short y, unsigned char mask, unsigned char group)",
+              *at_pos_width(["unsigned char ngc_projectile_hit(const short *b, unsigned short x, unsigned short y, unsigned char mask, unsigned char group)",
               "{", "    unsigned char i = 0u;", "    const short *o;",
               "    unsigned short left = (unsigned short)(x + (unsigned short)b[0]);",
               "    unsigned short right = (unsigned short)(x + (unsigned short)b[1]);",
@@ -239,7 +245,7 @@ def projectile_collision_source(groups, where="projectile actor bridge"):
               "            (unsigned short)(act_x[i] + (unsigned short)o[0]) <= right &&",
               "            (unsigned short)(act_x[i] + (unsigned short)o[1]) >= left &&",
               "            (unsigned short)(act_y[i] + (unsigned short)o[2]) <= bottom &&",
-              "            (unsigned short)(act_y[i] + (unsigned short)o[3]) >= top) {",
+              "            (unsigned short)(act_y[i] + (unsigned short)o[3]) >= top) {"]),
               "            ngc_projectile_script(i, group); return 1u;", "        }",
               "        if (mask == 1u) return 0u;  /* player-only fast path */",
               "        i = act_prev[i];", "    }", "    return 0u;", "}", ""]

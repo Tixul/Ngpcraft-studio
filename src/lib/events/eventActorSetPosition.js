@@ -36,7 +36,7 @@ const fields = [
         description: l10n("FIELD_X_DESC"),
         type: "value",
         min: 0,
-        max: 255,
+        max: 4095, // NgpCraft: NGPC scene limit (worldLimits.ts)
         width: "50%",
         unitsField: "units",
         unitsDefault: "tiles",
@@ -52,7 +52,7 @@ const fields = [
         description: l10n("FIELD_Y_DESC"),
         type: "value",
         min: 0,
-        max: 255,
+        max: 4095, // NgpCraft: NGPC scene limit (worldLimits.ts)
         width: "50%",
         unitsField: "units",
         unitsDefault: "tiles",

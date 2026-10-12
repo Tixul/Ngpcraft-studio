@@ -49,7 +49,11 @@ def switch(key, k):
     return ev(key, "EVENT_NGPC_BACKGROUND_VARIANT", variant=k)
 
 
-def project_case(root, witness=False):
+SECOND_ID = "lab-variants-second"
+SECOND_COLUMNS = (40, 88)     # px of the main image copied on the second background
+
+
+def project_case(root, witness=False, second=False):
     project = root / "project"
     derive(GBS2, project, "path_to_sample_town", (4, 10), fade=False)
     path = next((project / "project/scenes").rglob("scene.gbsres"))
@@ -83,16 +87,38 @@ def project_case(root, witness=False):
         if not witness:
             extension["ngpc_color_variants"] = [{"name": "Rotated",
                                                  "image": variant.relative_to(project).as_posix()}]
-    write_json(project / SIDECAR, {"schema": SCHEMA, "ngpc": {}, "resources": {bg: extension}})
+    resources = {bg: extension}
+    if second:
+        # PLAN_MEGAMAN S4: a band of the image on SCR1, the rest its backdrop
+        # colour (transparent on SCR1); the variant recolours SCR2 only.
+        from ngpcraft.scene_assets import background_source
+        write_json(project / SIDECAR, {"schema": SCHEMA, "ngpc": {}, "resources": resources})
+        loaded = load_project(project)
+        scene_data = loaded.scenes[0]
+        backdrop = background_source(loaded, scene_data).backdrop
+        fill = next(px[:3] for px in rgba if (px[0] >> 4) | (px[1] >> 4) << 4 | (px[2] >> 4) << 8 == backdrop)
+        band = png.with_name("lab_second.png")
+        write_png(band, [[rgba[y * w + x][:3] if SECOND_COLUMNS[0] <= x < SECOND_COLUMNS[1] else fill
+                          for x in range(w)] for y in range(h)])
+        source_res = next(json.loads(r.read_text(encoding="utf-8"))
+                          for r in (project / "assets/backgrounds").glob("*.gbsres")
+                          if json.loads(r.read_text(encoding="utf-8"))["id"] == bg)
+        write_json(band.with_name("lab_second.png.gbsres"),
+                   {**source_res, "id": SECOND_ID, "name": "lab second", "filename": "lab_second.png",
+                    "symbol": "bg_lab_second", "tileColors": ""})
+        resources[SECOND_ID] = {"ngpc_color": "native"}
+        resources[scene_data["id"]] = {"second_background": {"background_id": SECOND_ID,
+                                                             "scroll_x": "1", "scroll_y": "1"}}
+    write_json(project / SIDECAR, {"schema": SCHEMA, "ngpc": {}, "resources": resources})
     return project
 
 
-def run(out, toolchain, emulator, bios, witness=False):
+def run(out, toolchain, emulator, bios, witness=False, second=False):
     out = Path(out)
     if out.exists():
         raise ValueError("output must be a new directory")
     out.mkdir(parents=True)
-    project = project_case(out, witness)
+    project = project_case(out, witness, second)
     manifest = export_project(project, out / "export")
     build = build_rom(out / "export", toolchain)
     loaded = load_project(project)
@@ -113,6 +139,11 @@ def run(out, toolchain, emulator, bios, witness=False):
         if stop.stop_status != 40:
             raise ValueError("tick not reached")
 
+    front = None
+    if second:
+        from ngpcraft.scene_assets import background_source
+        scene_data = loaded.scenes[0]
+        front = background_source(loaded, {**scene_data, "backgroundId": SECOND_ID, "name": "lab second"})
     pictures = {}
     for value, variant in PHASES:
         for _ in range(400):
@@ -128,6 +159,16 @@ def run(out, toolchain, emulator, bios, witness=False):
     view = [y * 160 + x for y in range(top, top + view_h) for x in range(160)]
     before = pictures[1]
     rotated = [rotate(c) for c in before]
+    kept = 0
+    if front is not None:
+        # SCR1's opaque pixels keep their colours (scroll as committed).
+        raw = m.read(symbols["_ngc_scroll"]["address"], 4)
+        sx, sy = int.from_bytes(raw[:2], "little"), int.from_bytes(raw[2:], "little")
+        for i in view:
+            yy, xx = divmod(i, 160)
+            if front.indices[(sy + yy - top) * front.width + sx + xx]:
+                rotated[i] = before[i]
+                kept += 1
     expect = {1: before, 2: rotated, 3: rotated, 4: before, 5: rotated}
     phases = [{"marker": value, "variant": variant,
                "wrong_pixels": sum(pictures[value][i] != expect[value][i] for i in view)}
@@ -135,9 +176,11 @@ def run(out, toolchain, emulator, bios, witness=False):
     changed = sum(before[i] != rotate(before[i]) for i in view)
     result = {"schema": "ngpcraft-bg-variants-lab/1", "witness": witness, "phases": phases,
               "pixels_the_rotation_changes": changed, "view": [top, view_h],
+              "second_background_pixels_kept": kept,
               "features": manifest["features"], "rom_sha256": hashlib.sha256(rom).hexdigest(),
               "silicon_timing": [10, 8], "ram": "noise", "console_validated": False,
-              "passed": changed > 0 and all(p["wrong_pixels"] == 0 for p in phases)}
+              "passed": changed > 0 and all(p["wrong_pixels"] == 0 for p in phases)
+              and (front is None or kept > 0)}
     write_json(out / "bg-variants.json", result)
     return result
 
@@ -147,7 +190,8 @@ if __name__ == "__main__":
     for n in ("out", "toolchain", "emulator", "bios"):
         p.add_argument("--" + n, required=True)
     p.add_argument("--witness", action="store_true")
+    p.add_argument("--second", action="store_true", help="a second background the variant must not recolour")
     a = p.parse_args()
-    r = run(a.out, a.toolchain, a.emulator, a.bios, a.witness)
+    r = run(a.out, a.toolchain, a.emulator, a.bios, a.witness, a.second)
     print(json.dumps(r, indent=2))
     raise SystemExit(0 if r["passed"] != a.witness else 1)

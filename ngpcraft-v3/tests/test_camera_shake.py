@@ -36,14 +36,22 @@ class CameraShakeTests(unittest.TestCase):
         plain=stream_source(asset);shake=stream_source(asset,camera_shake=True)
         self.assertNotIn('ngc_stream_cell',plain);self.assertIn('ngc_stream_cell',shake)
         self.assertIn('wx < 0 || wy < 0 || wx >= 32 || wy >= 18',shake)
-    def test_second_independent_background_has_located_refusal(self):
+    def test_second_independent_background_shakes_with_the_main_one(self):
+        # Both planes take the offset; SCR1 follows the unshaken position
+        # (docs/PLAN_MEGAMAN.md S2, pixel proof: tools/lab_second_camera.py).
         from tools.demo_second_background import project_case as second
         with tempfile.TemporaryDirectory() as tmp:
             r=Path(tmp);path,_=second(r,text=False,transitions=False)
             scene=next((path/'project/scenes').rglob('scene.gbsres'));data=json.loads(scene.read_text(encoding='utf-8'))
             data['script'].insert(0,{'id':'shake-second','command':'EVENT_CAMERA_SHAKE','args':{'frames':30,'units':'frames','magnitude':{'type':'number','value':5}}})
             scene.write_text(json.dumps(data),encoding='utf-8')
-            with self.assertRaisesRegex(CompileError,'camera shake.*second background'):export_project(path,r/'out')
+            export_project(path,r/'out')
+            stream=(r/'out/src/scene_stream.c').read_text(encoding='utf-8')
+            self.assertIn('ngc_front_scroll_set((short)(ngc_scroll_base_next[0]',stream)
+            self.assertEqual(stream.count('x += (short)ngc_scroll_offset_x;'),2)
+            if os.environ.get('NGC_TEST_TOSHIBA'):
+                from ngpcraft.toolchain import build_rom
+                build_rom(r/'out',Path(os.environ['NGC_TEST_TOSHIBA']))
     @unittest.skipUnless(os.environ.get('NGC_TEST_TOSHIBA'),'requires Toshiba')
     def test_multi_scene_shake_links_one_shared_clock(self):
         from tools.demo_scene_switch import project_case as multi

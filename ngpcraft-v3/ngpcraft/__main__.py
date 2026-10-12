@@ -55,6 +55,9 @@ def main():
     cmd = subs.add_parser("export-music-library", help="export selected native multi-song audio without Clang")
     cmd.add_argument("library", type=Path)
     cmd.add_argument("--out", required=True, type=Path)
+    cmd = subs.add_parser("budget", help="estimate each scene's tiles/palettes for the editor (read only)")
+    cmd.add_argument("project", type=Path, help="GB Studio project directory (or its .gbsproj)")
+    cmd.add_argument("--scene", help="one scene id")
     cmd = subs.add_parser("palette-plan", help="NGPC native palettes of a background (read only, no toolchain)")
     cmd.add_argument("project", type=Path, help="GB Studio project directory (or its .gbsproj)")
     kind = cmd.add_mutually_exclusive_group(required=True)
@@ -114,6 +117,9 @@ def main():
         elif args.command == "export-music-library":
             from .music_library import export_library
             result = export_library(args.library, args.out)
+        elif args.command == "budget":
+            from .scene_budget import project_budget
+            result = project_budget(args.project, args.scene)
         elif args.command == "palette-plan":
             from .native_color import palette_plan, sprite_plan
             result = (palette_plan(args.project, args.background, args.backdrop) if args.background

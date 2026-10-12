@@ -54,6 +54,7 @@ _UI = {n: (SKIP, "ui.c state is not a GBVM save point (text window and printer)"
     "win_pos_y", "win_speed", "text_sound_data", "ngc_ui_text", "ngc_ui_avatar_attr", "ngc_ui_avatar_glyphs", "ngc_ui_cell_avatar",
     "ngc_ui_copy_source", "ngc_ui_copy_target", "ngc_ui_frame_source", "ngc_ui_frame_target", "ngc_ui_hw_rows", "ngc_ui_hw_cols", "ngc_ui_copy_count", "ngc_sprites_hidden", "ngc_current_scene_mem",
     "ngc_ui_map", "ngc_ui_offset", "ngc_ui_pending", "ngc_ui_pixels", "ngc_ui_scene", "ngc_ui_shared",
+    "ngc_ui_live",   # emit_ui._slot_support: set by ngc_ui_scene_load at every scene load
     "ngc_ui_tall", "ngc_ui_text_attr", "split_active", "split_line", "split_x", "split_y")}
 _ACTORS = {
     # actor_t fields (gbs_types.h), saved with `actors`
@@ -256,17 +257,38 @@ def describe(variables, where="export"):
     return out
 
 
-def check_capacity(payload_bytes, where="export"):
+def max_payload(slots=3):
+    """Largest payload the 32 journal pages hold for `slots` slots (2537 bytes for 3)."""
+    return (31 // slots) * 256 - 23
+
+
+def used_slots(text):
+    """Save slots a project's scripts name (GB Studio saveSlot is a constant 0..2): the journal keeps
+    the highest + 1 (docs/M5_SAVE.md). .SAVE_SLOT follows VM_RAISE EXCEPTION_SAVE/LOAD; VM_SAVE_PEEK
+    ends with the slot; VM_SAVE_CLEAR takes it."""
+    import re
+    found = [int(n) for n in re.findall(r"^\s*\.SAVE_SLOT\s+(\d+)\s*$", text, re.M)]
+    found += [int(n) for n in re.findall(r"^\s*VM_SAVE_PEEK\s+[^\n]*,\s*(\d+)\s*$", text, re.M)]
+    found += [int(n) for n in re.findall(r"^\s*VM_SAVE_CLEAR\s+(\d+)\s*$", text, re.M)]
+    if any(not 0 <= n <= 2 for n in found):
+        raise CompileError(f"save slots {sorted(set(found))}: GB Studio has slots 0..2")
+    return max(found, default=2) + 1
+
+
+def check_capacity(payload_bytes, where="export", slots=3):
     """Journal capacity for a target-measured maximum payload, including header.
 
     22 header bytes and the final commit byte leave 233 payload bytes in a
     one-page record. Reserve one extra page for recovery of a torn transfer.
+    slots: the slots the game uses (used_slots); 3 = all of GB Studio's.
     """
     if type(payload_bytes) is not int or not 0 <= payload_bytes <= 65535:
         raise CompileError(f"{where}: save state: invalid payload length {payload_bytes!r}")
+    if slots not in (1, 2, 3):
+        raise CompileError(f"{where}: save state: {slots!r} slots, 1..3 expected")
     pages = (payload_bytes + 23 + 255) // 256
-    if 3 * pages + 1 > 32:
+    if slots * pages + 1 > 32:
         raise CompileError(f"{where}: save state: {payload_bytes} bytes need {pages} pages per slot; "
-                           f"3 slots plus recovery need {3 * pages + 1} pages, only 32 available "
-                           "(maximum payload 2537 bytes)")
+                           f"{slots} slot{'s' if slots > 1 else ''} plus recovery need {slots * pages + 1} pages, "
+                           f"only 32 available (maximum payload {max_payload(slots)} bytes)")
     return pages

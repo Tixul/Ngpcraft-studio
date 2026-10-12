@@ -89,7 +89,9 @@ def attach_music(files,project,shared):
         "tables": {field: [] for field in ("env_curve_id", "pitch_curve_id", "macro_id")},
         "stream_extensions": [], "driver_profile": "sfx-native-mono-vblank/1"}
     if shared.get('nativeSfxSelected'):
-        library['sfx_roots']=['Sfx_PlayToneEx','Sfx_PlayNoiseEx']
+        from .project_sfx import used_voices
+        voices=used_voices(shared)
+        library['sfx_roots']=['Sfx_PlayToneEx']*(voices&1)+['Sfx_PlayNoiseEx']*(voices>>1&1)
         if 'save_state' in manifest['features'] or shared.get('nativeSfxCut'):
             library['sfx_roots'].append('Sfx_Stop')
     audio=generate_library(library,loading=True)

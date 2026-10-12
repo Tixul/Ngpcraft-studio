@@ -54,6 +54,9 @@ def variant_palettes(asset, base, variant, where):
         raise CompileError(f"{where}: colour variants need a background on one plane")
     if asset.animated_cells:
         raise CompileError(f"{where}: colour variants with replaced tiles are not delivered")
+    if asset.recycle:
+        raise CompileError(f"{where}: colour variants of a background over 16 palettes (recycled slots) "
+                           "are not delivered (docs/PALETTE_RECYCLE.md)")
     if len(variant) != len(base):
         raise CompileError(f"{where}: the variant image must have the background's size")
     width = asset.width

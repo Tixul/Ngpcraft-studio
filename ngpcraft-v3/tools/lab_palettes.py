@@ -31,7 +31,36 @@ SPRITES = [[f"{(200 - 16 * slot) % 256:02X}{(30 * i + 16 * slot) % 256:02X}{(64 
             for i in range(4)] for slot in range(8)]
 
 
-def project_case(root, witness=False):
+SECOND_ID = "lab-palettes-second"
+
+
+def add_second(project):
+    """PLAN_MEGAMAN S4: a band of the scene's image on SCR1; the background
+    palette events rewrite SCR2's words only, SCR1's must not change."""
+    from pathlib import PurePosixPath
+    from ngpcraft.png import read_png
+    from ngpcraft.project import load_project
+    from tools.lab_native_color import write_png
+    loaded = load_project(project)
+    scene = loaded.scenes[0]
+    rel, res = next((r, b) for r, b in loaded.by_type["background"] if b["id"] == scene["backgroundId"])
+    w, h, rgba = read_png(loaded.root / PurePosixPath(rel).with_suffix(""))
+    # GB priority tiles and four opaque colours (two palettes' colour 0) stay
+    # refused with a second background (case C): every tile on slot 0 here.
+    from ngpcraft.scene_assets import decompress_tile_colors
+    attrs = [0 for _ in decompress_tile_colors(res.get("tileColors") or "", rel)]
+    write_json(loaded.root / PurePosixPath(rel), {**res, "tileColors": "".join(f"{a:02x}!" for a in attrs)})
+    band = loaded.root / PurePosixPath(rel).parent / "lab_second.png"
+    write_png(band, [[rgba[y * w + x][:3] if 32 <= x < 96 else (255, 255, 255) for x in range(w)]
+                     for y in range(h)])
+    write_json(band.with_name("lab_second.png.gbsres"),
+               {**res, "id": SECOND_ID, "name": "lab second", "filename": "lab_second.png",
+                "symbol": "bg_lab_second", "tileColors": ""})
+    write_json(loaded.root / "ngpcraft.json", {"schema": "ngpcraft-project/1", "resources": {
+        scene["id"]: {"second_background": {"background_id": SECOND_ID, "scroll_x": "1", "scroll_y": "1"}}}})
+
+
+def project_case(root, witness=False, second=False):
     project = arena(root)
     for slot, colors in enumerate(PALETTES + [UI] + SPRITES):
         write_json(project / f"project/palettes/lab_{slot}.gbsres",
@@ -55,13 +84,15 @@ def project_case(root, witness=False):
         *sprites, set_value(44, 1), ev("after-sprites", "EVENT_WAIT", units="frames", frames=num(2)),
         ev("screen", "EVENT_TEXT", text="Palettes OK", closeWhen="key")])
     write_json(path, scene)
+    if second:
+        add_second(project)
     return project
 
 
-def run(out, toolchain, emulator, bios, witness=False):
+def run(out, toolchain, emulator, bios, witness=False, second=False):
     out = Path(out)
     out.mkdir(parents=True, exist_ok=False)
-    project = project_case(out, witness)
+    project = project_case(out, witness, second)
     manifest = export_project(project, out / "export")
     build = build_rom(out / "export", toolchain)
     rom = (out / "export/rom/game.ngc").read_bytes()
@@ -71,7 +102,8 @@ def run(out, toolchain, emulator, bios, witness=False):
         return [tuple(e) for key in ("palette_entries", "ui_palette_entries") for e in scene.get(key, ())]
     if witness:
         # The map of the same project with the events: without them, those words keep their colours.
-        entries = entries_of(export_project(project_case(out / "with-events"), out / "with-events/export"))
+        entries = entries_of(export_project(project_case(out / "with-events", second=second),
+                                            out / "with-events/export"))
     else:
         entries = entries_of(manifest)
     sys.path.insert(0, str(Path(emulator).resolve()))
@@ -145,7 +177,8 @@ if __name__ == "__main__":
     for name in ("out", "toolchain", "emulator", "bios"):
         parser.add_argument("--" + name, required=True)
     parser.add_argument("--witness", action="store_true")
+    parser.add_argument("--second", action="store_true")
     args = parser.parse_args()
-    result = run(Path(args.out), args.toolchain, args.emulator, args.bios, args.witness)
+    result = run(Path(args.out), args.toolchain, args.emulator, args.bios, args.witness, args.second)
     print(json.dumps({k: v for k, v in result.items() if k != "mismatches"} | {"mismatches": len(result["mismatches"])}, indent=2))
     raise SystemExit(bool(result["mismatches"]) != args.witness)

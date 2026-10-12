@@ -22,3 +22,5 @@ _work/
 # Personal demo (MegaX): hard-coded local paths and ripped assets, kept locally
 /tools/demo_megax.py
 /tools/probe_megax.py
+/tools/demo_megabig.py
+/tools/megabig_map.py

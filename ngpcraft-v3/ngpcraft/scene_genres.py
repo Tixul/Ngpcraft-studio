@@ -220,9 +220,9 @@ def _shmup_hooks(defines, triggers, hits):
     screen = "#define SHOOTER_TRIGGER_ACTIVATION ON_SCREEN_ENTER" in defines
     lines = []
     if triggers:
-        from .scene_triggers import SCREEN_BOX, trigger_source
+        from .scene_triggers import screen_box, trigger_source
         if screen:
-            lines += trigger_source(triggers, box=SCREEN_BOX, name="trigger_screen_update")
+            lines += trigger_source(triggers, box=screen_box(), name="trigger_screen_update")
             lines += ["#define NGC_SHMUP_SCREEN_TRIGGERS() trigger_screen_update()", "#define NGC_SHMUP_TRIGGERS() 0"]
         else:
             lines += trigger_source(triggers)
@@ -324,10 +324,68 @@ def _adventure_hooks(project, scene, triggers, interactions):
     return lines
 
 
+# Wide world (world.py, docs/PLAN_GRANDES_CARTES.md G6): the genres at the 32-bit position width.
+# (old, new, count) on the C text of genre_source; the counts fail the build when GB Studio's
+# files change, instead of leaving a position at 16 bits.
+WIDE_GENRE_COMMON = (
+    # sincos.h upoint_translate_angle: the step is signed (a UWORD would add 65536 minus it)
+    ("act_x[i] += (UWORD)((short)", "act_x[i] += (long)((short)", 1),
+    ("act_y[i] -= (UWORD)((short)", "act_y[i] -= (long)((short)", 1),
+    ("#define SUBPX_SNAP_PX(a) ((a) & 0xFFE0)", "#define SUBPX_SNAP_PX(a) ((a) & 0xFFFFFFE0u)", 1),
+    ("#define image_width_subpx ((UWORD)(NGC_COLL_W << 8))",
+     "#define image_width_subpx ((unsigned long)NGC_COLL_W << 8)", 1),
+    ("#define image_height_subpx ((UWORD)(NGC_COLL_H << 8))",
+     "#define image_height_subpx ((unsigned long)NGC_COLL_H << 8)", 1),
+    ("extern unsigned short ngc_camera_x;", "extern unsigned long ngc_camera_x;", 1),
+    ("extern unsigned short ngc_camera_y;", "extern unsigned long ngc_camera_y;", 1),
+)
+WIDE_GENRE_POSITIONS = {
+    "shmup": ("shooter_dest", "player_left", "player_right", "player_top", "player_bottom"),
+    "adventure": ("adv_attached_prev_x", "adv_attached_prev_y", "adv_temp_y", "new_x", "new_y", "prev_x",
+                  "prev_y", "target_x", "target_y", "temp_x", "temp_y"),
+    "pointnclick": ()}
+WIDE_GENRE_TEXT = {
+    "shmup": (("static UWORD add_signed_clamped_u16(UWORD value, WORD offset, UWORD min, UWORD max) {",
+               "static unsigned long add_signed_clamped_u16(unsigned long value, WORD offset, unsigned long min, "
+               "unsigned long max) {", 1),
+              ("    UWORD result;", "    unsigned long result;", 1)),
+    "adventure": (("#define VEL_TO_SUBPX(v) ((((v) & 0x8000) ? (((v) >> 8) | 0xFF00) : ((v) >> 8)) << 1)",
+                   "#define VEL_TO_SUBPX(v) ((WORD)((((v) & 0x8000) ? (((v) >> 8) | 0xFF00) : ((v) >> 8)) << 1))"
+                   "   /* wide world: signed (act_x[0] -= ...) */", 1),),
+    "pointnclick": ()}
+
+
+def _widen_genre(lines, state, where):
+    import re
+    from .scene_platform import WIDE_MACROS
+    from .world import at_pos_width
+    text = "\n".join(lines)
+    for old, new, count in WIDE_GENRE_COMMON + WIDE_GENRE_TEXT[state] + tuple((o, n, 1) for o, n in WIDE_MACROS):
+        if text.count(old) != count:
+            raise CompileError(f"{where}: {state} C changed (wide world): {old}")
+        text = text.replace(old, new)
+    for name in WIDE_GENRE_POSITIONS[state]:
+        text, n = re.subn(r"\bUWORD(\s+" + name + r")\b(?=\s*[;=])", r"unsigned long\1", text)
+        if n < 1:
+            raise CompileError(f"{where}: {state} position {name} changed (wide world)")
+    from .scene_platform import FRONT, OVERLAP
+    for block in (OVERLAP, OVERLAP_FROM, FRONT):          # the box tests only
+        text = text.replace("\n".join(block), "\n".join(at_pos_width(block)))
+    return text.split("\n")
+
+
 def genre_source(project, scene, width_tiles, height_tiles, interactions=None, triggers=None, hits=None, view_h=152,
                  callbacks=False):
     """C appended to scene_actors.c: prelude, the vendored state, its entry points
-    ngc_<state>_boot (shmup: engine fields), ngc_<state>_init, ngc_<state>_update."""
+    ngc_<state>_boot (shmup: engine fields), ngc_<state>_init, ngc_<state>_update.
+    In a wide world (world.py) the same C at the 32-bit position width."""
+    from .world import wide
+    lines = _genre_source(project, scene, width_tiles, height_tiles, interactions, triggers, hits, view_h, callbacks)
+    return _widen_genre(lines, state_name(scene), f"scene {scene['name']}") if wide() else lines
+
+
+def _genre_source(project, scene, width_tiles, height_tiles, interactions=None, triggers=None, hits=None, view_h=152,
+                  callbacks=False):
     from .scene_collisions import collision_groups, collision_source
     from .scene_platform import OVERLAP, PRELUDE as PLATFORM_PRELUDE
     state = state_name(scene)

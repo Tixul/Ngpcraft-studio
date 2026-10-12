@@ -24,6 +24,7 @@ import {
   readFile,
   remove,
 } from "fs-extra";
+import { createHash } from "crypto";
 import { convertMODDataToUGESong } from "shared/lib/uge/mod2uge/import";
 import { saveUGESong } from "shared/lib/uge/ugeHelper";
 import { getPython, getV3Root } from "lib/ngpcraft/v3Paths";
@@ -34,6 +35,15 @@ import type {
 
 export const NATIVE_AUDIO_FOLDER = "native-audio";
 
+// Fingerprint of the song file a conversion was made from, kept in the
+// conversion folder: the build converts again when the song has changed.
+export const CONVERTED_SOURCE_FILE = "converted-from.json";
+
+export const songFingerprint = async (file: string): Promise<string> =>
+  createHash("sha256")
+    .update(await readFile(file))
+    .digest("hex");
+
 const DEFAULT_POLICY = {
   schema: "ngpcraft-uge-conversion-policy/1",
   tick_mapping: "one-huge-call-per-vblank",
@@ -41,7 +51,8 @@ const DEFAULT_POLICY = {
   wave: "square",
   volume: "relative-amplitude-2db-attenuation",
   hardware_envelope_length_sweep: "discard",
-  stereo: "mono",
+  // NR51 routing kept: each side the song routes a channel to plays it (V3 music_pan.py).
+  stereo: "nr51",
   ngps_updates: "retrigger",
   intra_tick: "last-state",
   transpose_semitones: [0, 0, 0],
@@ -172,9 +183,18 @@ export const convertUge = async (
 
   // Keep the recipe with the song, as the V3 demo does.
   await outputJSON(Path.join(workDir, "policy.json"), policy, { spaces: 2 });
-  await outputJSON(Path.join(workDir, "initial-apu.json"), DEFAULT_INITIAL_APU, {
-    spaces: 2,
-  });
+  await outputJSON(
+    Path.join(workDir, CONVERTED_SOURCE_FILE),
+    { song: songPath, sha256: await songFingerprint(sourceFile) },
+    { spaces: 2 },
+  );
+  await outputJSON(
+    Path.join(workDir, "initial-apu.json"),
+    DEFAULT_INITIAL_APU,
+    {
+      spaces: 2,
+    },
+  );
   if (isMod) {
     await move(modUge, Path.join(workDir, "source.uge"), { overwrite: true });
   }

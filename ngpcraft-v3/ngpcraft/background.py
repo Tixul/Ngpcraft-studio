@@ -24,6 +24,9 @@ class Background:
     # and, per animated cell index, its class in that tuple.
     animated_tiles: tuple = ()
     animated_cells: tuple = ()
+    # Palette recycling (palette_recycle.py), layer 0 only: (logical palettes, hardware slot of each,
+    # ((block cx, cy), logical palettes used there) ...). () = the palettes stay loaded all along.
+    recycle: tuple = ()
 
     def report(self):
         return {"size_px": [self.width, self.height], "backdrop_rgb444": self.backdrop,
@@ -74,7 +77,7 @@ def _canonical(indices):
 
 def compile_background(width, height, pixels, *, planes=(1, 2), backdrop=None,
                        tile_base=0, tile_limit=512, palette_limit=16, where="background", animated=None,
-                       symbols=False):
+                       symbols=False, recycle=False):
     """Allocate static assets; planes are ordered front to back and caller-owned.
 
     A tile fits one plane iff <=3 colors remain after removing the backdrop.
@@ -88,12 +91,20 @@ def compile_background(width, height, pixels, *, planes=(1, 2), backdrop=None,
 
     symbols: pixels may also be palette_load symbols (slot, GB index) of the
     slots a script rewrites; packed like colours, resolved by the caller.
+
+    recycle: over palette_limit palettes on one plane (no complement, no
+    animated cell, no symbol), share hardware slots between palettes never
+    streamed together (palette_recycle.py) instead of refusing.
     """
     def fail(message):
         raise CompileError(f"{where}: {message}")
 
-    if any(type(v) is not int or v <= 0 or v % 8 or v > 2040 for v in (width, height)):
-        fail("width/height must be positive multiples of 8, at most 2040 px")
+    from .world import NGPC_MAX_PX, NGPC_MAX_CELLS
+    if any(type(v) is not int or v <= 0 or v % 8 or v > NGPC_MAX_PX for v in (width, height)):
+        fail(f"width/height must be positive multiples of 8, at most {NGPC_MAX_PX} px")
+    if (width >> 3) * (height >> 3) > NGPC_MAX_CELLS:
+        fail(f"{width >> 3}x{height >> 3} tiles: at most {NGPC_MAX_CELLS} tiles per scene "
+             "(16-bit map index, docs/PLAN_GRANDES_CARTES.md)")
     pixels = tuple(pixels)
     top = 0x101F if symbols else 0xFFF       # palette_load.symbol(7, 3)
     if len(pixels) != width*height or any(type(v) is not int or not 0 <= v <= top for v in pixels):
@@ -137,6 +148,16 @@ def compile_background(width, height, pixels, *, planes=(1, 2), backdrop=None,
     palettes = [pack_palettes([r[:3] for r in required])]
     if complement:
         palettes.append(pack_palettes([r[3:] for r in required]))
+    recycled = ()
+    if recycle and len(palettes[0]) > palette_limit and not complement and not animated and not symbols:
+        from .palette_recycle import assign
+        logical = palettes[0]
+        cell_palettes = [next(i for i, p in enumerate(logical) if set(r) <= set(p)) if r else -1 for r in required]
+        hardware, blocks = assign(width // 8, height // 8, cell_palettes, len(logical), palette_limit, where)
+        recycled = (logical, hardware, tuple(sorted(blocks.items())))
+        # The hardware view: slot s shows its first palette at load (counts and offsets stay right).
+        palettes[0] = tuple(next(logical[i] for i in range(len(logical)) if hardware[i] == s)
+                            for s in range(max(hardware) + 1))
     for plane, pal in zip(used_planes, palettes):
         if len(pal) > palette_limit:
             fail(f"SCR{plane}: allocation uses {len(pal)} palettes, budget {palette_limit}; "
@@ -147,7 +168,8 @@ def compile_background(width, height, pixels, *, planes=(1, 2), backdrop=None,
         tilemap = []
         for n, (tile, req) in enumerate(zip(tiles, required)):
             visible = req[:3] if layer == 0 else req[3:]
-            slot = next(i for i, p in enumerate(pal) if set(visible) <= set(p))
+            slot = next(i for i, p in enumerate(recycled[0] if recycled and layer == 0 else pal)
+                        if set(visible) <= set(p))
             if layer == 0 and n in animated:
                 group, variants = animated[n]
                 variants = tuple(tuple(v) for v in variants)
@@ -163,7 +185,12 @@ def compile_background(width, height, pixels, *, planes=(1, 2), backdrop=None,
                 cell_class[n] = class_of[key]
                 tilemap.append(classes[class_of[key]][0] | (slot << 9))
                 continue
-            indices = tuple(pal[slot].index(c)+1 if c in visible else 0 for c in tile)
+            if recycled and layer == 0:      # the logical palette's colours, its hardware slot
+                logical_pal = recycled[0][slot] if visible else ()
+                indices = tuple(logical_pal.index(c)+1 if c in visible else 0 for c in tile)
+                slot = recycled[1][slot] if visible else 0
+            else:
+                indices = tuple(pal[slot].index(c)+1 if c in visible else 0 for c in tile)
             data, flags = _canonical(indices)
             if data not in lookup:
                 if len(patterns) >= tile_limit:
@@ -174,4 +201,5 @@ def compile_background(width, height, pixels, *, planes=(1, 2), backdrop=None,
         maps.append(tuple(tilemap))
     return Background(width, height, backdrop, tile_base, tuple(patterns), used_planes,
                       tuple(palettes), tuple(maps), complement,
-                      animated_tiles=tuple(classes), animated_cells=tuple(sorted(cell_class.items())))
+                      animated_tiles=tuple(classes), animated_cells=tuple(sorted(cell_class.items())),
+                      recycle=recycled)

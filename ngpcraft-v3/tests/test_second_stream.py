@@ -104,13 +104,25 @@ class SecondStreamTests(unittest.TestCase):
                 self.assertEqual(looped.indices[y*200+x], small.indices[(y % 32)*64 + x % 64])
         self.assertEqual(len(looped.attributes), 25 * 19)
         self.assertIs(loop_source(small, 0, 0), small)
-        with self.assertRaisesRegex(CompileError, 'over 2040 px'):
-            loop_source(small, 2048, 0)
+        with self.assertRaisesRegex(CompileError, 'over the NGPC scene limit'):
+            loop_source(small, 32768, 0)
+        self.assertEqual(loop_source(small, 2048, 0).width, 2048)       # a wide scene's loop
         # Repeated tiles share the bank: no more patterns than the original.
         main = _source(160, 152, False)
         one = compile_second_background(main, _source(160, 152, True))
         many = compile_second_background(main, loop_source(_source(160, 152, True), 960, 152))
         self.assertEqual(len(many.main.tiles), len(one.main.tiles))
+
+    def test_percent_rate_saturates_only_where_a_wide_scene_reaches(self):
+        # p * N / 100 over 32767 (wide scene, world.py): saturated, then the second
+        # map's own clamp. A scene that cannot scroll that far keeps its C.
+        narrow = second_stream_source(compile_second_background(_source(2040, 152, False), _source(400, 152, True)),
+                                      scroll_x='400%')
+        self.assertNotIn('(short)32767', narrow)
+        wide = second_stream_source(compile_second_background(_source(8400, 152, False), _source(400, 152, True)),
+                                    scroll_x='400%')
+        self.assertIn('(ngc_scroll_next[0] > 8191u ? (short)32767 : ', wide)
+        self.assertNotRegex(wide, r'ngc_scroll_next\[1\] > \d+u \?')     # y cannot get there
 
     def test_view_and_bank_mismatches_are_not_silently_repaired(self):
         allocation = self.allocation((160, 152), (160, 144))
@@ -292,6 +304,18 @@ class SecondStreamRomTests(unittest.TestCase):
                 build_case(root, Path(ENV[0]), scroll_x=x, scroll_y=y, front_size=size)
                 result = observe(root, Path(ENV[1]), Path(ENV[2]))
                 self.assertTrue(result['passed'], result['frames_with_mismatch'][:5])
+
+    def test_wide_scene_percent_rate_and_witness(self):
+        # G7 (docs/PLAN_GRANDES_CARTES.md): 8400 px across at 400% and 8400 px down at 400%.
+        for main, front, x, y in (((8400, 152), (400, 152), '400%', '1'), ((240, 8400), (240, 400), '1', '400%')):
+            with self.subTest(main=main), tempfile.TemporaryDirectory() as tmp:
+                build_case(Path(tmp), Path(ENV[0]), main_size=main, front_size=front, scroll_x=x, scroll_y=y)
+                result = observe(Path(tmp), Path(ENV[1]), Path(ENV[2]))
+                self.assertTrue(result['passed'], result['frames_with_mismatch'][:5])
+        with tempfile.TemporaryDirectory() as tmp:
+            build_case(Path(tmp), Path(ENV[0]), main_size=(8400, 152), front_size=(400, 152),
+                       scroll_x='400%', unsaturated=True)
+            self.assertGreater(len(observe(Path(tmp), Path(ENV[1]), Path(ENV[2]))['frames_with_mismatch']), 10)
 
     def test_native_colours_on_both_planes(self):
         # Both planes in native colours (shared backdrop, front transparent on
