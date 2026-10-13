@@ -43,6 +43,13 @@ const readPtr = (m, addr) => {
   m._free(p);
   return v;
 };
+const readByte = (m, addr) => {
+  const p = m._malloc(1);
+  m._web_read_mem(addr, p, 1);
+  const v = m.HEAPU8[p];
+  m._free(p);
+  return v;
+};
 const picture = (m) => Buffer.from(m.HEAPU8.subarray(m._web_video(), m._web_video() + 160 * 152 * 4));
 
 // Unbroken reference run.
@@ -56,6 +63,7 @@ new DataView(m.HEAPU8.buffer).setUint32(bp, layout.VM_STEP >>> 0, true);
 m._web_set_breakpoints(bp, 1);
 let stops = 0;
 const hit = new Set();
+const banks = new Set();
 for (let f = 0; f < frames; f++) {
   let status = m._web_run(0);
   while (status === 40) {
@@ -64,16 +72,21 @@ for (let f = 0; f < frames; f++) {
     if (ctx < layout.CTXS || (ctx - layout.CTXS) % layout.sizeof) {
       throw new Error(`stop ${stops}: context 0x${ctx.toString(16)} is not in CTXS`);
     }
-    const address = readPtr(m, ctx + layout.fields.PC) - layout.bank_0_address;
-    if (!scripts.some(([, s]) => s.address <= address && address < s.address + s.bytes)) {
-      throw new Error(`stop ${stops}: PC bank offset ${address} is in no script`);
+    // As studio.js: label address = bank * 0x10000 + offset in the bank.
+    const bank = readByte(m, ctx + layout.fields.bank);
+    const bankAddresses = layout.bank_addresses || [layout.bank_0_address];
+    const offset = readPtr(m, ctx + layout.fields.PC) - bankAddresses[bank];
+    if (!scripts.some(([, s]) => (s.bank || 0) === bank && s.address <= offset && offset < s.address + s.bytes)) {
+      throw new Error(`stop ${stops}: PC bank ${bank} offset ${offset} is in no script`);
     }
+    banks.add(bank);
+    const address = bank * 0x10000 + offset;
     if (starts.has(address)) hit.add(starts.get(address));
     status = m._web_run(0);
   }
   if (![0, 1, 41].includes(status)) throw new Error(`frame ${f}: status ${status}`);
 }
 const same = picture(m).equals(reference);
-console.log(JSON.stringify({ frames, vm_steps: stops, events_started: hit.size,
+console.log(JSON.stringify({ frames, vm_steps: stops, banks_seen: [...banks], events_started: hit.size,
   events: [...hit].slice(0, 6), picture_equal_to_unbroken_run: same }, null, 1));
 if (!stops || !hit.size || !same) process.exit(1);

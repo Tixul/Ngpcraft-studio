@@ -154,12 +154,12 @@ def run(out, toolchain, emulator, bios):
         raise ValueError("output must be a new directory")
     project_path = project_case(out)
     import ngpcraft.gbvm.emit as emit
-    captured, assemble = [], emit.assemble_bank
-    emit.assemble_bank = lambda texts, *a, **kw: (captured.append(list(texts)), assemble(texts, *a, **kw))[1]
+    captured, assemble = [], emit.assemble_banks
+    emit.assemble_banks = lambda texts, *a, **kw: (captured.append(list(texts)), assemble(texts, *a, **kw))[1]
     try:
         manifest = export_project(project_path, out / "export")
     finally:
-        emit.assemble_bank = assemble
+        emit.assemble_banks = assemble
     asm = captured[0][0]
     (out / "init.asm").write_text(asm, encoding="utf-8")
     build_rom(out / "export", toolchain)

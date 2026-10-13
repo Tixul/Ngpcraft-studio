@@ -8,7 +8,7 @@
 const l10n = require("../helpers/l10n").default;
 
 const id = "EVENT_NGPC_BACKGROUND_VARIANT";
-const groups = ["EVENT_GROUP_COLOR"];
+const groups = ["EVENT_GROUP_NGPC", "EVENT_GROUP_COLOR"];
 
 const fields = [
   {

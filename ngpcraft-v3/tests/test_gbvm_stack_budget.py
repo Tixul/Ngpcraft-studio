@@ -109,6 +109,22 @@ class StackBudgetTests(unittest.TestCase):
         self.assertEqual(report["scripts"]["callee"]["words"], 5)
         self.assertEqual(report["words_per_context"], 9)
 
+    def test_far_call_into_another_bank_is_followed(self):
+        # docs/PLAN_MULTI_BANQUES.md piège 2: a call into another bank must not
+        # fall back to the vendored capacity (it sizes every context).
+        from ngpcraft.gbvm.assembler import assemble_banks
+        texts = [script("        VM_PUSH_CONST 1\n        VM_CALL_FAR ___bank_callee, _callee\n        VM_STOP", "caller"),
+                 script("        VM_STOP\n" * 6 + "        VM_STOP", "pad"),
+                 script("        VM_RESERVE 3\n        VM_POP 3\n        VM_RET_FAR_N 1", "callee")]
+        _, one, _, _ = assemble_banks(texts, {}, self.model)
+        _, split, _, _ = assemble_banks(texts, {}, self.model, bank_bytes=16)
+        self.assertEqual([s.bank for s in split], [0, 0, 1])
+        reports = [stack_budget(s, self.model, self.runtime) for s in (one, split)]
+        self.assertEqual(reports[0], reports[1])
+        self.assertEqual(reports[1]["scripts"]["caller"],
+                         {"words": 1 + 2 + 3, "entry_words": 0, "method": "bytecode_cfg", "far_calls": ["callee"]})
+        self.assertEqual(reports[1]["words_per_context"], 6)
+
     def test_nested_far_calls_and_wait_inside_the_callee(self):
         report = self.bank(("a", "        VM_CALL_FAR ___bank_b, _b\n        VM_STOP"),
                            ("b", "        VM_PUSH_CONST 4\n        VM_CALL_FAR ___bank_c, _c\n        VM_RET_FAR"),

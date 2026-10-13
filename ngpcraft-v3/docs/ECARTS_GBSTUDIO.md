@@ -435,6 +435,7 @@ reste à établir après une preuve de composition décor/sprites.
 | *If Color Supported* | Toujours vrai |
 | Câble link (*Link Host / Join / Close / Transfer*) | Livré 2026-10-09 (émulateur, 2 consoles) : machine d'échange de GBVM sur l'UART du BIOS NGPC, trames numérotées avec reprise après perte (absente de GBVM) ; plus de 16 variables refusé ([M6_LINK](M6_LINK.md)) |
 | Script GBVM brut (*GBVM Script*) | Accepté s'il n'utilise que des instructions prises en charge, sinon refusé avec la ligne du bloc en cause (livré 2026-10-09, `M4_GBVM_SCRIPT.md`) |
+| Horloge de cartouche MBC3 (`VM_RTC_LATCH/GET/SET/START`, plugins d'horloge) | Livré 2026-10-13, adapté : la minuterie suit le calendrier de la console (jours depuis 1990, 9 bits) plus un décalage que le jeu règle ; **le réglage dure jusqu'à l'extinction** (une MBC3 le garde) ; valeurs hors plage ramenées dans la plage ([M8_NGPC_SYSTEM](M8_NGPC_SYSTEM.md)) |
 | Types de cartouche (MBC), correction de couleurs LCD | Sans objet, ignorés |
 
 ## 13. Les fondus avancent par paliers réguliers — ✅
@@ -514,8 +515,9 @@ Disponibles en plus de GB Studio, sans rien changer à ce qui précède :
 - 16 palettes par plan et une palette par sprite ;
 - priorité des sprites par rapport aux plans ;
 - effets raster ;
-- horloge temps réel et alarme ;
-- langue de la console ;
+- horloge temps réel (livrée 2026-10-13 : *NGPC : Lire l'horloge*) et alarme (à faire) ;
+- langue de la console (livrée 2026-10-13 : *NGPC : Si langue de la console*), tension des
+  piles et extinction ([M8_NGPC_SYSTEM](M8_NGPC_SYSTEM.md)) ;
 - code C natif dans un plugin.
 
 Chacune aura sa page dédiée.

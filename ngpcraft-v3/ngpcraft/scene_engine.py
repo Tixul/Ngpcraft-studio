@@ -12,7 +12,9 @@ actors_update, actors_render, game_time++.
 from .scene_actors import actors_source
 from .background_stream import stream_source, view_of
 from .compiler import CompileError
-from .scene_sprites import PRIORITY_BEHIND, PRIORITY_BETWEEN, PRIORITY_FRONT, sprite_tile_count, sprites_source
+from .scene_sprites import (PRIORITY_BEHIND, PRIORITY_BETWEEN, PRIORITY_FRONT, single_instance_sheets,
+                            sprite_tile_budget, sprites_source, stream_plan)
+from .ui_text import UI_TILE_FIRST
 from .scene_planes import BACK_PLANE, FRONT_PLANE, plane_report
 
 FEATURES = ["streamed_background", "sprites", "actors"]
@@ -59,6 +61,17 @@ def engine_files(scene, moves=None, updates=None, cancel=False, topdown=None, in
     moves: None, or the movement features the scripts use (scene_actors.MOVE_FEATURES)."""
     bg = scene.background
     render_sheets = scene.sheets + scene.emote_sheets
+    # Tiles 384..511 are the text's when the scene prints (M2_TEXT D1, emit_ui.check_tiles).
+    sprite_base = bg.tile_base + len(bg.tiles)
+    tile_limit = UI_TILE_FIRST if text else 512
+    # Sheets one actor shows (streamable when the sprites do not fit): not a target
+    # of Actor Set Spritesheet, not a projectile's.
+    single = single_instance_sheets(
+        [a["sheet"] for a in scene.actors],
+        {entry[1] for entry in scene.sprite_switches}
+        | ({scene.sheet_ids.index(s) for s in scene.projectiles.sheet_ids if s in scene.sheet_ids}
+           if scene.projectiles is not None else set()))
+    where = f"scene {scene.name}"
     view_h, top = view_of(bg)
     second = scene.second_background
     shared_text = bool(text and (second is not None or bg.complement_cells or bg.priority_cells))
@@ -81,14 +94,15 @@ def engine_files(scene, moves=None, updates=None, cancel=False, topdown=None, in
                                   scroll_bounds=scroll_bounds, parallax=scene.parallax,
                                   parallax_export=parallax_export, where=f"scene {scene.name}", patch=patch)
     files = {"src/scene_stream.c": streaming,
-             "src/scene_sprites.c": sprites_source(render_sheets, bg.tile_base + len(bg.tiles), scene.palettes,
+             "src/scene_sprites.c": sprites_source(render_sheets, sprite_base, scene.palettes,
                                                    where=f"scene {scene.name}", top=top, shadow=shadow,
                                                    priority=PRIORITY_BETWEEN if bg.priority_cells or (text and not shared_text) else PRIORITY_FRONT,
                                                    shared_text=shared_text,
                                                    # second background behind: a GB priority sprite goes
                                                    # between the planes, behind the main one only.
                                                    behind_level=PRIORITY_BETWEEN if second is not None and second[3]
-                                                   else PRIORITY_BEHIND, recycle=scene.sprite_recycle, patch=patch),
+                                                   else PRIORITY_BEHIND, recycle=scene.sprite_recycle, patch=patch,
+                                                   tile_limit=tile_limit, single=single),
              "src/scene_actors.c": actors_source(list(scene.actors), scene.sheets, bg.height, view_h=view_h,
                                                  moves=moves, bounds=scene.bounds, collisions=scene.collisions,
                                                  width_px=bg.width, updates=updates, cancel=cancel,
@@ -148,12 +162,15 @@ def engine_files(scene, moves=None, updates=None, cancel=False, topdown=None, in
         if scene.sprite_recycle:
             raise CompileError(f"scene {scene.name}: recycled sprite palettes with the GB sprite priority mask "
                                "are not delivered (docs/PALETTE_RECYCLE.md)")
+        if stream_plan(render_sheets, sprite_base, tile_limit, single, where):
+            raise CompileError(f"scene {scene.name}: streamed sprite sheets (sprites over the tiles left) with "
+                               "the GB sprite priority mask are not delivered yet (docs/ETUDE_RECYCLAGE_TUILES.md)")
         slots = min(64, sum(max(scene.sheets[s].max_sprites() for s in
                                {a["sheet"], *(entry[1] for entry in scene.sprite_switches)}) for a in scene.actors)
                     + (4 if scene.emotes else 0)
                     + (scene.projectile_capacity * max(scene.sheets[scene.sheet_ids.index(s)].max_sprites()
                         for s in scene.projectiles.sheet_ids) if scene.projectiles is not None and scene.projectiles.definitions else 0))
-        cache_base = bg.tile_base + len(bg.tiles) + sprite_tile_count(render_sheets)
+        cache_base = sprite_base + sprite_tile_budget(render_sheets, sprite_base, tile_limit, single, where)
         try:
             files["src/scene_sprites.c"] = masked_sprites_source(files["src/scene_sprites.c"], render_sheets,
                 scene.background_source, cache_base, slots, top=top)
@@ -173,7 +190,10 @@ def engine_files(scene, moves=None, updates=None, cancel=False, topdown=None, in
         files["src/scene_stream.c"] += "\n" + replace_source(bg, scene.replace_plan)
     report = {"scene": scene.name, "background": bg.report(), "planes": plane_report(bg, text=text, second=second is not None),
               "sheets": [s.name for s in scene.sheets],
-              "sprite_tiles": sprite_tile_count(render_sheets),
+              "sprite_tiles": sprite_tile_budget(render_sheets, sprite_base, tile_limit, single, where),
+              **({"sprite_streamed": [render_sheets[i].name for i in
+                                      stream_plan(render_sheets, sprite_base, tile_limit, single, where)]}
+                 if stream_plan(render_sheets, sprite_base, tile_limit, single, where) else {}),
               "actors": list(scene.names), "view": {"height": view_h, "top_band": top},
               "warnings": ([f"scene {scene.name}: background {bg.width}x{bg.height} px shown with black "
                             f"bands of {top} px above and below; replace or adapt it to 152 px "

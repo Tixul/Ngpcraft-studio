@@ -22,12 +22,15 @@ import re
 from ..compiler import CompileError
 from ..project import load_model as load_gbstudio_model, option_long_press, frame_rate
 from ..runtime_units import describe_unit, emit_unit_files, select_units
-from .assembler import (CAMERA_PROPERTIES, ENGINE_MEMORY, NATIVES, SCROLL_BOUNDS, TEXT_MEMORY, UNREAD_MEMORY, assemble_bank,
+from .assembler import (BANK_BYTES, CAMERA_PROPERTIES, ENGINE_MEMORY, NATIVES, SCROLL_BOUNDS, TEXT_MEMORY, UNREAD_MEMORY,
+                        assemble_banks,
                         load_model)
+from .script_refs import banked, banks_scope, entry_params, entry_start, script_refs, set_banked
 from .sprite_assets import DEFAULT_FRAME, sprite_assets, emote_assets, bank_assets, global_projectile_symbols
 from .stack_budget import stack_budget
 from .platform_callbacks import slots as callback_slots, support as callback_support, bodies as callback_bodies
 from .platform_callbacks import natives as callback_natives
+from .platform_callbacks import CALL_NATIVES
 from .builder import js_object_keys
 from .projectiles import FUNCTIONS as PROJECTILE_FUNCTIONS, atan2_source, hit_support
 from ..parallax import share_timer0
@@ -264,6 +267,8 @@ from ..ui_text import font_table, scene_ui
 DECODERS.update(UI_DECODERS)
 from . import link as link_cable                     # EVENT_LINK_* (docs/M6_LINK.md)
 DECODERS.update(link_cable.DECODERS)
+from . import ngpc_system                       # NGPC clock, power off (docs/M8_NGPC_SYSTEM.md)
+DECODERS.update(ngpc_system.DECODERS)
 # Movement instructions and their ACTOR_ATTR_* operand (vm.i), read by
 # move_features to emit only the movement code the scripts use.
 MOVE_INSTRUCTIONS = ("VM_ACTOR_MOVE_TO_INIT", "VM_ACTOR_MOVE_TO_X", "VM_ACTOR_MOVE_TO_Y", "VM_ACTOR_MOVE_TO_XY",
@@ -1051,6 +1056,32 @@ def _c_bytes(data):
     return "\n    " + ",\n    ".join(rows) + "\n"
 
 
+# Size of a script bank (assembler.assemble_banks). Smaller only in tests: a
+# small project then spans several banks (docs/PLAN_MULTI_BANQUES.md É6).
+SCRIPT_BANK_BYTES = BANK_BYTES
+
+
+def bank_arrays(banks, comment):
+    """game.c: one ROM array per script bank, then GBVM's bank table
+    (ngc_banks[ctx->bank] + offset). One bank: the text it always had."""
+    if len(banks) > 1:
+        comment = [f"/* {len(banks)} script banks (assembler.assemble_banks: a script address is an offset",
+                   " * in its bank; byte 0 of banks 1.. is a reserved VM_STOP; a scene is its index). */"]
+    return [*comment, *(f"static const unsigned char ngc_bank_{k}[] = {{{_c_bytes(data)}}};"
+                        for k, data in enumerate(banks)),
+            "static const unsigned char * const ngc_banks[] = {"
+            + ", ".join(f"ngc_bank_{k}" for k in range(len(banks))) + "};"]
+
+
+def ref_report(name, refs):
+    """export.json: the scripts of a table by offset, and their banks when the
+    export has several (script_refs.py)."""
+    report = {name: {i: r.address for i, r in refs.items()}}
+    if banked():
+        report[f"{name}_banks"] = {i: r.bank for i, r in refs.items()}
+    return report
+
+
 def constant_rpn_pairs(texts, model=None, rpn=None):
     """A closed bytecode shape: every RPN is the same small number of pairs.
 
@@ -1189,7 +1220,10 @@ MEMORY_POINTER = {"DIV_REG": ((0, "(UBYTE *)0x8009"),), "game_time": ((0, "(UBYT
                   "pause_state_update": ((0, "(UBYTE *)&ngc_pause_state_update"),),
                   # GBVM current_scene is a far pointer {bank, address}; here a scene
                   # is bank 0 at its table index (assembler symbols ___bank_X, _X).
-                  "current_scene": ((0, "ngc_current_scene_ref()"), (1, "ngc_current_scene_ref() + 1"))}
+                  "current_scene": ((0, "ngc_current_scene_ref()"), (1, "ngc_current_scene_ref() + 1")),
+                  # NGPC system work (SDK SysWork.txt): Language 0 = Japanese, 1 = English;
+                  # Battery_Voltage 0..0x3FF, a little-endian word (docs/M8_NGPC_SYSTEM.md).
+                  "ngc_language": ((0, "(UBYTE *)0x6F87"),), "ngc_battery": ((0, "(UBYTE *)0x6F80"),)}
 # Scene symbol values for scripts: the reachable scenes are their table index;
 # any other scene (an ifCurrentSceneIs on a scene never entered) is 0xFFFF, never
 # the current one, and a scene change to it is no change (ngc_vm_exception).
@@ -1312,7 +1346,7 @@ def gbvm_source(runtime, macros, rpn, natives, memory, model, fade_style=0, scen
                 input_contexts=None, ui=None, heap_words=None, stack_words=None, tick_frames=1, platform_callbacks=(), callback_attach=False, callback_detach=False, callback_contexts=None,
                 adventure_callbacks=(), adventure_attach=False, adventure_detach=False, constant_pairs=0, timer_contexts=None, projectile_actors=None, save=None, thread_contexts=None,
                 projectile_slots=False,
-                palette_maps=None, text_sound=(False, False), color_variants=None):
+                palette_maps=None, text_sound=(False, False), color_variants=None, system_natives=()):
     """save: None, or (saves, loads) when the scripts save or load data
     (docs/M5_SAVE.md): EXCEPTION_SAVE / EXCEPTION_LOAD on the flash journal.
     scene_palettes: the scene engine is linked: it has loaded the palettes before
@@ -1586,7 +1620,12 @@ void ngc_actors_scroll(short cx, short cy);
         c.append(callback_support(platform_callbacks, callback_attach, callback_detach))
     if adventure_callbacks:
         c.append(callback_support(adventure_callbacks, adventure_attach, adventure_detach, "adventure"))
+    # NGPC clock and power off (ngpc_system.py): before the natives' dispatcher and the handlers.
+    system_c = ngpc_system.source(handlers, system_natives)
+    if system_c:
+        c.append(system_c)
     link = any(fn in handlers for fn in link_cable.LINK_FUNCTIONS)
+    gb_clock = any(fn in handlers for fn in ngpc_system.RTC_FUNCTIONS)
     link_emitted = False
     for fn in handlers:
         if fn in INLINE_FUNCTIONS:
@@ -1612,6 +1651,8 @@ void ngc_actors_scroll(short cx, short cy);
             # No scene launches what it loads: no slot map was compiled.
             c.append("static void vm_projectile_load_type(SCRIPT_CTX * THIS, UBYTE dest, UBYTE src, UWORD table) {\n"
                      "    (void)THIS; (void)dest; (void)src; (void)table;  /* nothing launched after a load */\n}\n")
+        elif fn in ngpc_system.RTC_FUNCTIONS:
+            continue                    # system_c above
         elif fn in link_cable.LINK_FUNCTIONS:
             if not link_emitted:
                 c.append(link_cable.source("vm_sio_exchange" in handlers))
@@ -1649,6 +1690,8 @@ void ngc_actors_scroll(short cx, short cy);
                 at = c.index("static void vm_call_native(SCRIPT_CTX *THIS, UBYTE bank, UWORD ptr)")
                 c.insert(at, runtime_source(color_variants, scenes=scenes, shadow=fade or scenes, fade=fade))
                 c.append("    if (ptr == 7u) ngc_bg_variant(THIS);")
+            for name in system_natives:
+                c.append(f"    if (ptr == {CALL_NATIVES[name]}u) {name}(THIS);")
             c.append("}")
         elif fn == "vm_rpn":
             rpn_c = rpn_source(functions, rpn, constant_pairs)
@@ -1738,8 +1781,8 @@ void ngc_actors_scroll(short cx, short cy);
         c.append(MUSIC_EVENTS_SOURCE)
     if update_contexts is not None:
         c += [*([] if "script_terminate" in handlers else [functions["script_terminate"]]),
-              "void ngc_vm_execute(unsigned short addr, unsigned short *handle)", "{",
-              "    (void)script_execute(0u, (UBYTE *)(ngc_banks[0] + addr), handle, 0u);", "}",
+              f"void ngc_vm_execute({entry_params()}, unsigned short *handle)", "{",
+              f"    (void)script_execute({entry_start()}, handle, 0u);", "}",
               "void ngc_vm_terminate(unsigned short handle)", "{",
               "    (void)script_terminate((UBYTE)handle);", "}",
               # Public symbol of the actor updates unit; with several scenes the
@@ -1750,19 +1793,19 @@ void ngc_actors_scroll(short cx, short cy);
               "    (void)script_execute(bank, (UBYTE *)(banks[bank] + addr), 0, 0u);", "}"]
     if interaction_contexts is not None:
         c += ["/* topdown.c interaction: one thread-local argument, value 0. */",
-              "void ngc_vm_interact(unsigned short addr)", "{", "    SCRIPT_CTX *ctx;",
-              "    ctx = script_execute(0u, (UBYTE *)(ngc_banks[0] + addr), 0, 0u);",
+              f"void ngc_vm_interact({entry_params()})", "{", "    SCRIPT_CTX *ctx;",
+              f"    ctx = script_execute({entry_start()}, 0, 0u);",
               "    if (ctx) *(ctx->stack_ptr++) = 0;", "}"]
     if trigger_contexts is not None:
-        c += ["void ngc_vm_trigger(unsigned short addr, unsigned short argument)", "{", "    SCRIPT_CTX *ctx;",
-              "    ctx = script_execute(0u, (UBYTE *)(ngc_banks[0] + addr), 0, 0u);",
+        c += [f"void ngc_vm_trigger({entry_params()}, unsigned short argument)", "{", "    SCRIPT_CTX *ctx;",
+              f"    ctx = script_execute({entry_start()}, 0, 0u);",
               "    if (ctx) *(ctx->stack_ptr++) = argument;", "}"]
     if projectile_actors is not None:
         c.append(functions["script_detach_hthread"])
         c.append(hit_support(projectile_actors))
     if hit_contexts is not None:
-        c += ["void ngc_vm_hit(unsigned short addr, unsigned short argument)", "{", "    SCRIPT_CTX *ctx;",
-              "    ctx = script_execute(0u, (UBYTE *)(ngc_banks[0] + addr), 0, 0u);",
+        c += [f"void ngc_vm_hit({entry_params()}, unsigned short argument)", "{", "    SCRIPT_CTX *ctx;",
+              f"    ctx = script_execute({entry_start()}, 0, 0u);",
               "    if (ctx) *(ctx->stack_ptr++) = argument;", "}"]
     if scene_palettes:
         c += ["/* vm.h VM_ISLOCKED, for the scene engine's actors_update. */",
@@ -1771,7 +1814,7 @@ void ngc_actors_scroll(short cx, short cy);
         if "vm_raise" not in handlers:
             raise CompileError("several scenes without any VM_RAISE (internal: no scene change compiled)")
         return c_scenes(c, fade_style, model["constants"]["EXCEPTION_CHANGE_SCENE"], inputs, fade, timers,
-                        music_routines=routines, link=link,
+                        music_routines=routines, link=link, gb_clock=gb_clock,
                         save=save and (model["constants"]["EXCEPTION_SAVE"], model["constants"]["EXCEPTION_LOAD"],
                                        save[1])), handlers
     if save:
@@ -1784,7 +1827,8 @@ void ngc_actors_scroll(short cx, short cy);
            if inputs else []),
          *(["    timers_init(0u);              /* core_run: timers_init(FALSE) */"] if timers else []),
          *(["    music_init_events(0u);        /* core_run: music_init_events(FALSE) */"] if routines else []),
-         *(["    ngc_link_init();              /* core.c: SIO_init */"] if link else [])]
+         *(["    ngc_link_init();              /* core.c: SIO_init */"] if link else []),
+         *(["    ngc_gbrtc_init();             /* GBVM clock: running, no offset */"] if gb_clock else [])]
     if fade:
         # GBVM's statics start at zero: the Game Boy C start-up clears .bss.
         # startup.c does not (initialized_ram_supported: false), and a console
@@ -1806,7 +1850,7 @@ void ngc_actors_scroll(short cx, short cy);
 
 
 def c_scenes(c, fade_style, change_scene, inputs=False, fade=True, timers=False, save=None, music_routines=False,
-             link=False):
+             link=False, gb_clock=False):
     """GBVM core.c pieces the scene manager (game.c) calls, several scenes.
     save: None, or (EXCEPTION_SAVE, EXCEPTION_LOAD, loads used)."""
     if save and save[2] and not fade:
@@ -1828,10 +1872,12 @@ def c_scenes(c, fade_style, change_scene, inputs=False, fade=True, timers=False,
           *(["    timers_init(0u);"] if timers else []),
           *(["    music_init_events(0u);"] if music_routines else []),
           *(["    ngc_link_init();                 /* core.c: SIO_init */"] if link else []),
+          *(["    ngc_gbrtc_init();                /* GBVM clock: running, no offset */"] if gb_clock else []),
           *(["    fade_init();", f"    fade_style = {fade_style}u;  /* engine field fade_style */"] if fade else []), "}",
+          "/* load_scene: the scene's init thread. */" if banked() else
           "/* load_scene: the scene's init thread (bank 0). */",
-          "void ngc_vm_run(unsigned short addr)", "{",
-          "    (void)script_execute(0u, (UBYTE *)(ngc_banks[0] + addr), 0, 0u);", "}",
+          f"void ngc_vm_run({entry_params()})", "{",
+          f"    (void)script_execute({entry_start()}, 0, 0u);", "}",
           "/* EXCEPTION_CHANGE_SCENE: kill all threads, but don't clear variables. */",
           "void ngc_vm_kill(void)", "{", "    script_runner_init(0u);",
           *(["    events_init(0u);                  /* reset input events on scene change */"]
@@ -2091,7 +2137,7 @@ def projectile_scene(project, scene, registry, texts, hits, addresses, compiled_
                 raise CompileError(f"scene {scene['name']}: {where}: hit scripts in a {scene['type']} scene "
                                    "are not delivered; projectiles could not run them")
     selections = tuple(s for s in registry.selections if s.index in used) + loaded_projectiles(registry, texts, global_tables)
-    bindings = {h.index: (0, addresses[compiled_hits[h.entity["id"]][0]]) for h in hits}
+    bindings = {h.index: addresses[compiled_hits[h.entity["id"]][0]] for h in hits}
 
     def activations(events):
         count = 0
@@ -2247,6 +2293,7 @@ def shared_plane_of(report):
         return 0
     return 2 if report.get("second_background", {}).get("behind") else 1
 
+@banks_scope
 def generate_project(project, inits, variables_lookup):
     from ..project_sfx import sound_options
     tick_frames = 2 if frame_rate(project) == 30 else 1
@@ -2350,9 +2397,11 @@ def generate_project(project, inits, variables_lookup):
     sprite_symbols.update(global_projectile_symbols(shared))
     frame_tilesets("\n".join(texts), "export")
     shared["warnings"] += link_slot_warnings(texts, variables)
-    data, bank_scripts, macros, rpn = assemble_bank(texts, variables, model, sprites=sprite_symbols,
-                                                    constants=global_constants(shared),
-                                                    scenes=scene_symbols(project, {resources[start_id]["symbol"]: 0}))
+    banks, bank_scripts, macros, rpn = assemble_banks(texts, variables, model, sprites=sprite_symbols,
+                                                      constants=global_constants(shared),
+                                                      scenes=scene_symbols(project, {resources[start_id]["symbol"]: 0}),
+                                                      bank_bytes=SCRIPT_BANK_BYTES)
+    set_banked(len(banks))
     stack_used = sorted(m for m in SCENE_INSTRUCTIONS if m in macros)
     if stack_used:
         raise CompileError(f"{', '.join(stack_used)}: the scene stack is delivered with scene changes "
@@ -2363,7 +2412,7 @@ def generate_project(project, inits, variables_lookup):
                            "only (docs/M5_SAVE.md); this export has a single reachable scene")
     entry = next(s for s in bank_scripts if s.symbol == symbol)
     text = "\n".join(texts)  # dependencies of every reachable script
-    addresses = {s.symbol: s.address for s in bank_scripts}
+    addresses = script_refs(bank_scripts)
     actor_updates = {u.actor_index + 1: addresses[compiled_updates[u.actor["id"]][0]] for u in active_updates}
     actor_interactions = {u.actor_index + 1: addresses[compiled_interactions[u.actor["id"]][0]] for u in active_interactions}
     trigger_data = [(t.trigger, addresses[compiled_triggers[t.trigger['id']][0]]) for t in active_triggers]
@@ -2509,7 +2558,8 @@ def generate_project(project, inits, variables_lookup):
                                    projectile_slots=bool(projectiles) and any(s.index >= SLOT_BASE for s in projectiles[0]),
                                    palette_maps=[[tuple(e) for e in engine_report.get("palette_entries", ())] +
                                                  [tuple(e) for e in (start_ui.palette_entries if prints else ())]],
-                                   color_variants=[engine_report.get("color_variants")] if variants_used else None)
+                                   color_variants=[engine_report.get("color_variants")] if variants_used else None,
+                                   system_natives=ngpc_system.natives_used(text))
     if blocker and timers:
         raise CompileError(f"timer scripts need the scene engine, which this start scene cannot use: {blocker}")
     if not blocker:
@@ -2546,6 +2596,7 @@ def generate_project(project, inits, variables_lookup):
         features.append("music_routines")
         engine_report["music_routines"] = routines
     features += link_features(macros)
+    features += ngpc_system.features(macros, text)
     if inputs:
         features.append("input_events")
         engine_report["input_contexts"] = capacity
@@ -2574,7 +2625,7 @@ def generate_project(project, inits, variables_lookup):
     if active_interactions:
         features.append("actor_interactions")
         engine_report["interaction_contexts"] = capacity
-        engine_report["actor_interactions"] = actor_interactions
+        engine_report.update(ref_report("actor_interactions", actor_interactions))
     if callback_slots(text):
         features.append("platform_callbacks")
     if callback_slots(text, "adventure"):
@@ -2627,7 +2678,7 @@ def generate_project(project, inits, variables_lookup):
     if active_updates:
         features.append("actor_updates")
         engine_report["update_contexts"] = contexts
-        engine_report["actor_updates"] = actor_updates
+        engine_report.update(ref_report("actor_updates", actor_updates))
     features += translated_features(project, features)
     units = select_units(features, "rom")
     game = ['#include "game.h"', '#include "gbvm.h"', *([] if blocker else declarations()),
@@ -2636,13 +2687,11 @@ def generate_project(project, inits, variables_lookup):
             *(UI_DECLARATIONS if prints else []),
             *(["void ngc_collision_update(void);"] if hit_data is not None else []),
             f"/* {symbol}: {scenes[start_id].path}, init thread (contract C10) */",
-            "/* Bank 0 (assembler.py: a script address is an offset in its bank). */",
-            f"static const unsigned char ngc_bank_0[] = {{{_c_bytes(data)}}};",
-            "static const unsigned char * const ngc_banks[] = {ngc_bank_0};",
+            *bank_arrays(banks, ["/* Bank 0 (assembler.py: a script address is an offset in its bank). */"]),
             *(["void ngc_vm_prepare(const unsigned char * const *banks, unsigned char bank, unsigned short addr);"]
               if active_updates else []),
             "void ngc_game_init(void)", "{",
-            *([f"    ngc_vm_prepare(ngc_banks, 0u, {entry.address}u);"] if active_updates else []),
+            *([f"    ngc_vm_prepare(ngc_banks, {entry.bank}u, {entry.address}u);"] if active_updates else []),
             *(["    ngc_ui_start(0u);                 /* initialize UI before actors render */"] if prints else []),
             *([f"    ngc_{state_of(topdown)}_boot();              /* script_engine_init: engine fields */"]
               if state_of(topdown) in BOOT_STATES else []),
@@ -2650,7 +2699,7 @@ def generate_project(project, inits, variables_lookup):
                                   if not (patched and fades and line == "    ngc_sprites_commit();")]),
             *input_game_lines(state_of(topdown), inputs, prints, bool(timers), bool(routines))[1],
             *(["    ngc_ui_scene_load(0u);            /* load_scene: UI tiles and palettes */"] if prints else []),
-            f"    ngc_vm_start(ngc_banks, 0u, {entry.address}u);  /* {symbol} */",
+            f"    ngc_vm_start(ngc_banks, {entry.bank}u, {entry.address}u);  /* {symbol} */",
             # Recycled palettes go through the fade shadow, which ngc_vm_start
             # initializes (fade_init: faded out): the first sprites after it.
             *(["    ngc_sprites_commit();             /* recycled palettes: after the fade manager */"]
@@ -2687,12 +2736,13 @@ def generate_project(project, inits, variables_lookup):
         "warnings": script_warnings(shared, [engine_report] if "warnings" in engine_report else []),
         "platform": {"profile": "retail-ngpc", "viewport": [160, 152], "initialized_ram_supported": False},
         "project": {"root": str(project.root), "start_scene": start_id},
-        "scripts": {s.symbol: {"source": s.source, "bank": 0, "address": s.address,
+        "scripts": {s.symbol: {"source": s.source, "bank": s.bank, "address": s.address,
                                "bytes": len(s.data), "sha256": hashlib.sha256(s.data).hexdigest(),
                                **({"debug_labels": [list(d) for d in s.debug]} if s.debug else {})}
                     for s in bank_scripts},
         "variables": variables,
         "gbvm": {"commit": runtime["gbvm_commit"], "heap_words": len(variables), "stack_budget": stacks,
+                 **({"script_banks": [len(b) for b in banks]} if len(banks) > 1 else {}),
                  "opcodes": sorted(m for m in macros if m in model["macros"]),
                  "rpn": sorted(rpn), "natives": natives, "functions": handlers,
                  "adaptations": runtime_adaptations(runtime, handlers, natives, rpn, constant_rpn_pairs(texts, model, rpn))},
@@ -2773,6 +2823,7 @@ def stack_source():
         "    return stack_scene[stack_n];", "}", ""])
 
 
+@banks_scope
 def generate_scenes(project, inits, graph, resources, variables, model, shared, upd, inter, trig, hit, compiled):
     tick_frames = 2 if frame_rate(project) == 30 else 1
     """Every scene reachable from the start scene through EVENT_SWITCH_SCENE
@@ -2801,9 +2852,10 @@ def generate_scenes(project, inits, graph, resources, variables, model, shared, 
     select_music(shared, texts)
     frame_tilesets("\n".join(texts), "export")
     shared["warnings"] += link_slot_warnings(texts, variables)
-    data, bank_scripts, macros, rpn = assemble_bank(texts, variables, model, scenes=symbols, sprites=bank_assets(shared),
-                                                    constants=global_constants(shared))
-    addresses = {s.symbol: s.address for s in bank_scripts}
+    banks, bank_scripts, macros, rpn = assemble_banks(texts, variables, model, scenes=symbols, sprites=bank_assets(shared),
+                                                      constants=global_constants(shared), bank_bytes=SCRIPT_BANK_BYTES)
+    set_banked(len(banks))
+    addresses = script_refs(bank_scripts)
     text = "\n".join(texts)
     natives = sorted(n for n in NATIVES if f"b_{n}" in text)
     memory = engine_memory(text, macros, model)
@@ -2828,6 +2880,8 @@ def generate_scenes(project, inits, graph, resources, variables, model, shared, 
     callback_attach = "b_plat_callback_attach" in text
     callback_detach = "b_plat_callback_detach" in text
     variants_used = "b_ngc_bg_variant" in text      # native_variants.py, VM_CALL_NATIVE
+    # ngpc_system.py: read while text is still the scripts' text (reassigned below).
+    system_natives, system_features = ngpc_system.natives_used(text), ngpc_system.features(macros, text)
     text = any(m in macros for m in UI_DECODERS)
     # docs/M2_TEXT.md D1, per scene: only a scene whose own
     # scripts (and the scripts they call) use the UI keeps tiles 384..511.
@@ -2850,8 +2904,9 @@ def generate_scenes(project, inits, graph, resources, variables, model, shared, 
         a_trig = [t for t in trig[0] if t.scene_id == sid]
         a_hit = [h for h in hit[0] if h.scene_id == sid]
         scene_texts = with_called_scripts([t for _, t in groups[k]], shared)
-        _, _, scene_macros, _ = assemble_bank(scene_texts, variables, model, scenes=symbols, sprites=bank_assets(shared),
-                                              constants=global_constants(shared))
+        # The macros this scene's scripts use (placement irrelevant: banks as large as the export's).
+        _, _, scene_macros, _ = assemble_banks(scene_texts, variables, model, scenes=symbols, sprites=bank_assets(shared),
+                                               constants=global_constants(shared), bank_bytes=SCRIPT_BANK_BYTES)
         scene_text = "\n".join(scene_texts)
         scene_ui_on = scene_texts_ui[k]
         validate_logo_scripts(scene, scene_macros, scene_text)
@@ -2946,7 +3001,8 @@ def generate_scenes(project, inits, graph, resources, variables, model, shared, 
         variant_maps.append(report.get("color_variants"))
         if "src/scene_input.c" in files:
             input_c = files.pop("src/scene_input.c")
-        report = {"index": k, "id": sid, "init_address": addresses[compiled[sid][0]],
+        init = addresses[compiled[sid][0]]
+        report = {"index": k, "id": sid, "init_address": init.address, **({"init_bank": init.bank} if banked() else {}),
                   "movement": None if moves is None else list(moves), **report}
         if state_of(topdown) == "topdown":
             report["topdown"] = {"grid_px": topdown[0], "interact_mask": topdown[1], "option_long_press": topdown[2]}
@@ -3006,7 +3062,8 @@ def generate_scenes(project, inits, graph, resources, variables, model, shared, 
                                    projectile_actors=projectile_actors, save=(save, loads) if save else None,
                                    projectile_slots=projectile_slots,
                                    palette_maps=palette_maps,
-                                   color_variants=variant_maps if variants_used else None)
+                                   color_variants=variant_maps if variants_used else None,
+                                   system_natives=system_natives)
     engine_c, link = link_scenes(engines, publish={"src/scene_actors.c": {} if set(macros) & {"VM_CAMERA_MOVE_TO", "VM_CAMERA_SET_POS"}
                                                 else {"cam_settings": "ngc_camera_settings"}},
                                  extra={"src/scene_actors.c": keep_source(used["hits"])
@@ -3093,6 +3150,7 @@ def generate_scenes(project, inits, graph, resources, variables, model, shared, 
         if used[flag]:
             features.append(feature)
     features += link_features(macros)
+    features += system_features
     features += translated_features(project, features)
     units = select_units(features, "rom")
     start = index[project.settings["startSceneId"]]
@@ -3100,18 +3158,18 @@ def generate_scenes(project, inits, graph, resources, variables, model, shared, 
             *input_game_lines(scene_states(used), used["inputs"], text, used["timers"], used["routines"])[0],
             *(["void ngc_collision_update(void);"] if used["hits"] else []),
             *(UI_DECLARATIONS if text else []),
-            "void ngc_vm_run(unsigned short addr);", "void ngc_vm_kill(void);",
+            f"void ngc_vm_run({entry_params()});", "void ngc_vm_kill(void);",
             "unsigned short ngc_vm_exception(void);", "void ngc_palette_show(void);",
             "void ngc_scene_keep(unsigned char step);", "extern unsigned char ngc_scene;",
             "void ngc_vm_frame_end(void);",
             *(["void ngc_scene_stack_reset(void);"] if stack else []),
             *(["void ngc_vm_load(unsigned char slot);", "void ngc_actors_resume(void);"] if loads else []),
-            "/* Bank 0: the scripts of every reachable scene (assembler.py: a script",
-            " * address is an offset in its bank; a scene is its index below). */",
-            f"static const unsigned char ngc_bank_0[] = {{{_c_bytes(data)}}};",
-            "static const unsigned char * const ngc_banks[] = {ngc_bank_0};",
+            *bank_arrays(banks, ["/* Bank 0: the scripts of every reachable scene (assembler.py: a script",
+                                 " * address is an offset in its bank; a scene is its index below). */"]),
             "/* Per scene: its init thread, and half its view height (camera centre). */"]
     c_array_lines(game, "ngc_scene_init", [r["init_address"] for r in reports], "unsigned short")
+    if banked():
+        c_array_lines(game, "ngc_scene_init_bank", [r["init_bank"] for r in reports], "unsigned char")
     c_array_lines(game, "ngc_scene_half_h", [r["view"]["height"] >> 1 for r in reports], "unsigned char")
     game += ["/* GBVM data_manager.c load_scene (init_data), then what core.c does after it:",
              " * player_init and state_init, camera_update, scroll_repaint,",
@@ -3123,7 +3181,8 @@ def generate_scenes(project, inits, graph, resources, variables, model, shared, 
              *(["    ngc_ui_scene_load(k);             /* load_scene: ui_load_tiles, UI palettes */"]
                if text else []),
              "    if (keep) ngc_scene_keep(1u);",
-             "    ngc_vm_run(ngc_scene_init[k]);          /* end of load_scene */",
+             ("    ngc_vm_run(ngc_scene_init_bank[k], ngc_scene_init[k]);  /* end of load_scene */" if banked()
+              else "    ngc_vm_run(ngc_scene_init[k]);          /* end of load_scene */"),
              *[f"    ngc_{s}_init();" for s in SCENE_STATES if used[s]],
              *(["    if (keep) ngc_scene_keep(2u);"] if used["hits"] else []),
              "    ngc_camera_update();",
@@ -3150,8 +3209,11 @@ def generate_scenes(project, inits, graph, resources, variables, model, shared, 
                 "    ngc_actors_repaint((short)(ngc_camera_x >> 5), (short)(ngc_camera_y >> 5));",
                 "    ngc_scroll_commit();", "    ngc_sprites_commit();", "    ngc_palette_show();", "}"]
                if loads else []),
+             *(["void ngc_journal_forget(void);"] if save else []),
              "void ngc_game_init(void)", "{",
              "    ngc_vm_start(ngc_banks, 0u, 0u);",
+             *(["    ngc_journal_forget();             /* scan cache: random RAM on a console */"]
+               if save else []),
              *(["    ngc_scene_stack_reset();          /* load_init: random RAM on a console */"]
                if stack else []),
              *(["    ngc_input_init();"] if any(used[s] for s in SCENE_STATES) or used["inputs"] or text
@@ -3219,12 +3281,13 @@ def generate_scenes(project, inits, graph, resources, variables, model, shared, 
         **({"save_slots": save_slots} if save_slots is not None else {}),
         "platform": {"profile": "retail-ngpc", "viewport": [160, 152], "initialized_ram_supported": False},
         "project": {"root": str(project.root), "start_scene": table[start]},
-        "scripts": {s.symbol: {"source": s.source, "bank": 0, "address": s.address,
+        "scripts": {s.symbol: {"source": s.source, "bank": s.bank, "address": s.address,
                                "bytes": len(s.data), "sha256": hashlib.sha256(s.data).hexdigest(),
                                **({"debug_labels": [list(d) for d in s.debug]} if s.debug else {})}
                     for s in bank_scripts},
         "variables": variables,
         "gbvm": {"commit": runtime["gbvm_commit"], "heap_words": len(variables), "stack_budget": stacks,
+                 **({"script_banks": [len(b) for b in banks]} if len(banks) > 1 else {}),
                  "opcodes": sorted(m for m in macros if m in model["macros"]),
                  "rpn": sorted(rpn), "natives": natives, "functions": handlers,
                  "adaptations": runtime_adaptations(runtime, handlers, natives, rpn, constant_rpn_pairs(texts, model, rpn))},

@@ -111,12 +111,14 @@ def scene_budget(project, scene):
         for actor in scene["actors"]:
             merged, _, _ = builder.actor(actor)
             ids.append(merged["spriteSheetId"])
+        shown = list(ids)               # one entry per actor (player first)
         # Sheets the scripts launch or switch to (projectiles, Set Sprite),
         # in the scene and in the custom scripts it calls.
-        ids += _script_sheets(project, scene)
+        scripted = _script_sheets(project, scene)
+        ids += scripted
         ids = [i for i in dict.fromkeys(ids) if i]
         loaded = sprite_sheets(project, set(ids))
-        sheets, per_sheet = [], []
+        sheets, sheet_ids, per_sheet = [], [], []
         for sid in ids:
             if sid not in loaded:
                 continue
@@ -128,14 +130,31 @@ def scene_budget(project, scene):
                 errors.append(str(exc))
                 continue
             sheets.append(sheet)
+            sheet_ids.append(sid)
             per_sheet.append({"name": loaded[sid][0]["name"], "tiles": len(pool_tiles([sheet])[0])})
         # sprites.align_palettes: a recoloured sheet shares its drawing's tiles
         from .sprites import align_palettes
-        out["sprite_tiles"] = len(pool_tiles(align_palettes(sheets))[0]) if sheets else 0
+        out["text_reserve"] = TEXT_RESERVE if _prints(scene) else 0
+        aligned = align_palettes(sheets) if sheets else []
+        out["sprite_tiles"] = len(pool_tiles(aligned)[0]) if sheets else 0
         out["sheets"] = sorted(per_sheet, key=lambda s: -s["tiles"])
+        # Over the tiles left, the sheets one actor shows are streamed as the
+        # build does (scene_sprites.stream_plan): their count is then the build's.
+        base = out["background_tiles"] + out["second_background_tiles"]
+        limit = TILES - out["text_reserve"]
+        if sheets and base + out["sprite_tiles"] > limit:
+            from collections import Counter
+            from .scene_sprites import sprite_tile_budget, stream_plan
+            counts = Counter(shown)
+            single = frozenset(n for n, sid in enumerate(sheet_ids)
+                               if counts[sid] == 1 and sid not in set(scripted))
+            streamed = stream_plan(aligned, base, limit, single)
+            if streamed:
+                out["sprite_tiles"] = sprite_tile_budget(aligned, base, limit, single)
+                out["sprite_streamed"] = [aligned[i].name for i in streamed]
     else:
         out["sprite_tiles"], out["sheets"] = 0, []
-    out["text_reserve"] = TEXT_RESERVE if _prints(scene) else 0
+        out["text_reserve"] = TEXT_RESERVE if _prints(scene) else 0
     used = (out["background_tiles"] + out["second_background_tiles"]
             + out["sprite_tiles"] + out["text_reserve"])
     out["used_tiles"] = used

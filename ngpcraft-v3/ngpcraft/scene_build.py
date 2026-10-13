@@ -17,7 +17,7 @@ from .compiler import CompileError
 from .scene_assets import background_source, decompress_tile_colors, sprite_palettes, sprite_sheets
 from .scene_init import _Builder
 from .project import load_model
-from .scene_sprites import sprite_tile_count
+from .scene_sprites import single_instance_sheets, sprite_tile_budget, sprite_tile_count
 from .sprites import NgpcSheet, ngpc_sheet
 from .parallax import compile_parallax
 
@@ -304,9 +304,22 @@ def build_engine_scene(project, scene, default_mode=None, sprite_switches=(), em
                 160 + rate_offset(config["scroll_x"], source.width - 160) if config.get("loop_x") else 0,
                 view_h + rate_offset(config["scroll_y"], source.height - view_h) if config.get("loop_y") else 0,
                 where + ".second_background")
-        allocation = compile_second_background(source, front_source,
-                        sprite_tiles=sprite_tile_count(sheets + emote_sheets), where=where + ".second_background",
-                        main=background)
+        # The sprites take all their tiles, or less with the sheets one actor shows
+        # streamed (scene_sprites.stream_plan): all of them first, streaming only if needed.
+        sprite_count = sprite_tile_count(sheets + emote_sheets)
+        try:
+            allocation = compile_second_background(source, front_source, sprite_tiles=min(sprite_count, 511),
+                                                   where=where + ".second_background", main=background)
+        except CompileError:
+            single = single_instance_sheets(
+                [e["sheet"] for e in engine], {sheet_ids.index(s) for _, s in sprite_switches}
+                | ({sheet_ids.index(s) for s in compiled_projectiles.sheet_ids if s in sheet_ids}
+                   if compiled_projectiles is not None else set()))
+            streamed = sprite_tile_budget(sheets + emote_sheets, 0, 0, single)   # every eligible sheet streamed
+            if streamed >= sprite_count:
+                raise
+            allocation = compile_second_background(source, front_source, sprite_tiles=streamed,
+                                                   where=where + ".second_background", main=background)
         background = allocation.main
         second = (allocation, config["scroll_x"], config["scroll_y"], bool(config.get("behind")))
     palettes = sprite_palettes(project, scene)

@@ -220,13 +220,15 @@ def collision_capacity(scripts, custom_events=None, warnings=None):
 
 
 def collision_source(config):
+    """config: groups, actors (actor index -> ScriptRef), player (ScriptRef or None)."""
+    from .gbvm.script_refs import const_args, entry_params, ref_tables, table_args
     groups,addresses,player = config['groups'],config['actors'],config['player']
     lines=['/* GBVM actor.c player collision callbacks, after actors_render. */',
            'static unsigned char collision_pending;', 'static unsigned char collision_iframes;',
-           'void ngc_vm_hit(unsigned short addr, unsigned short argument);']
+           f'void ngc_vm_hit({entry_params()}, unsigned short argument);']
     c_array(lines,'act_collision_group',groups,'unsigned char')
     if addresses:
-        c_array(lines,'act_hit_addr',[addresses[i] if i in addresses else 0 for i in range(len(groups))],'unsigned short')
+        ref_tables(lines, 'act_hit', [addresses.get(i) for i in range(len(groups))], 'actor collision scripts')
     # world.py: the box sums at the export's position width.
     lines += at_pos_width(['static unsigned char player_overlap(void)', '{',
               '    unsigned char i = act_prev[0];', '    const short *box;',
@@ -246,9 +248,9 @@ def collision_source(config):
               '    if (collision_iframes == 0u && collision_pending != 255u) {',
               '        if (act_collision_group[collision_pending] & 0x0Fu) {']
     if player is not None:
-        lines += [f'            ngc_vm_hit({player}u, (unsigned short)(act_collision_group[collision_pending] & 0x0Fu));']
+        lines += [f'            ngc_vm_hit({const_args(player)}, (unsigned short)(act_collision_group[collision_pending] & 0x0Fu));']
     if addresses:
-        lines += ['            if (act_hit_addr[collision_pending]) ngc_vm_hit(act_hit_addr[collision_pending], 0u);']
+        lines += [f'            if (act_hit_addr[collision_pending]) ngc_vm_hit({table_args("act_hit", "collision_pending")}, 0u);']
     lines += [f'            collision_iframes = {HURT_IFRAMES}u;',
               '        }', '    } else if (collision_iframes != 0u) --collision_iframes;',
               '    collision_pending = 255u;', '}', '']

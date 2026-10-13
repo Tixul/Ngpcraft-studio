@@ -109,7 +109,9 @@ _DISPLAY = {n: (SKIP, "display, streaming or input of the frame: rebuilt after l
     "ngc_mask_y", "ngc_oam_prev", "ngc_oam_used", "ngc_scol", "ngc_slot_frame", "ngc_soam", "ngc_soam_count",
     "ngc_front_scroll", "ngc_front_scroll_next", "ngc_front_stream_tx", "ngc_front_stream_ty", "ngc_scroll",
     "ngc_scroll_base_next", "ngc_scroll_next", "ngc_stream_tx", "ngc_stream_ty", "ngc_frame", "ngc_sys_time",
-    "ngc_joy", "ngc_joy_pressed", "ngc_last_joy", "ngc_option_ticks", "ngc_recent_joy")}
+    "ngc_joy", "ngc_joy_pressed", "ngc_last_joy", "ngc_option_ticks", "ngc_recent_joy",
+    # Streamed sprite sheets (scene_sprites._stream_source): emptied by ngc_sprites_load.
+    "ngc_st_in", "ngc_st_pub", "ngc_st_cur", "ngc_st_want", "ngc_st_src", "ngc_st_dst", "ngc_st_words", "ngc_st_hold")}
 # Function statics: the state of one call (script_runner_update's quantum,
 # ui_draw_text_buffer_char's saved settings, scratch pointers).
 _FUNCTION = {
@@ -150,7 +152,7 @@ CLASSIFICATION['ngc_music_current'] = (SAVE, 'music_current_track_bank + music_c
 # writing this snapshot, never by the saved gameplay state.
 _SAVE_TRANSIENT = """ngc_flash_dst ngc_flash_src sj_bad sj_best sj_block_best
 sj_block_w sj_buffer sj_check sj_copy sj_end sj_free sj_head sj_length
-sj_mode sj_page_w sj_pos sj_produce sj_read sj_sum sj_top""".split()
+sj_mode sj_page_w sj_pos sj_produce sj_read sj_scanned sj_sum sj_top""".split()
 CLASSIFICATION.update({name: (SKIP, 'flash/journal transaction scratch: not game state')
                        for name in _SAVE_TRANSIENT})
 

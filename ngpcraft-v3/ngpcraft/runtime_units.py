@@ -197,8 +197,8 @@ UNITS += (
                      "(_first_ctx, _executing_ctx, _VM_STEP); ngpcraft/debug_build.py",),
          license="MIT; GBVM_LICENSE.txt; Copyright (c) 2020 Toxa",
          tests=("tests/test_debug_build.py",), backend="gbvm"),
-    Unit("game_debug", ("_ngc_bank_0",), feature="debug", dependencies=("gbvm_debug",), object="game.rel",
-         provenance=("ngpcraft/debug_build.py: the script bank of game.c made public",),
+    Unit("game_debug", ("_ngc_bank_0", "_ngc_banks"), feature="debug", dependencies=("gbvm_debug",), object="game.rel",
+         provenance=("ngpcraft/debug_build.py: the first script bank and the bank table of game.c made public",),
          license="MIT", tests=("tests/test_debug_build.py",), backend="gbvm"),
     Unit("gbvm_link_exchange", ("_ngc_com_buf", "_ngc_com_count"), feature="link_exchange",
          dependencies=("gbvm",), object="gbvm.rel",
@@ -207,6 +207,12 @@ UNITS += (
                      "two-player mode); ngpcraft/gbvm/link.py",),
          license="MIT; GBVM_LICENSE.txt; Copyright (c) 2020 Toxa",
          tests=("tests/test_link.py",), backend="gbvm"),
+    Unit("gbvm_ngpc_clock", ("_ngc_rtc_ptr", "_ngc_rtc_raw"), feature="ngpc_clock",
+         dependencies=("gbvm",), object="gbvm.rel",
+         provenance=("SNK SDK SysCall.txt VECT_RTCGET by SWI 1 (XHL3 = 7 BCD bytes); GBVM src/core/vm_rtc.c "
+                     "at commit bd6f41c (VM_RTC_* on the NGPC calendar); ngpcraft/gbvm/ngpc_system.py",),
+         license="MIT; GBVM_LICENSE.txt; Copyright (c) 2020 Toxa",
+         tests=("tests/test_ngpc_system.py",), backend="gbvm"),
     Unit("gbvm_music_routines", ("_music_events_update",), feature="music_routines",
          dependencies=("gbvm",), object="gbvm.rel",
          provenance=("GBVM src/core/music_manager.c (music_init_events, music_events_update) and "
@@ -495,7 +501,7 @@ UNITS += (
          provenance=("Producer given to the journal and reader of a load: ngpcraft/save_emit.py game_source",),
          tests=("tests/test_save_emit.py",)),
     Unit("save_journal", ("_ngc_journal_save", "_ngc_journal_clear", "_ngc_journal_find", "_ngc_save_put",
-                          "_ngc_save_get"),
+                          "_ngc_save_get", "_ngc_journal_forget"),
          feature="save_journal", dependencies=("save_flash", "save_state_game"),
          files=(("save_journal.c", "src/save_journal.c"),), backend="gbvm",
          provenance=("Journal of records over two 8 KiB flash blocks, three slots: ngpcraft/runtime/save_journal.c "

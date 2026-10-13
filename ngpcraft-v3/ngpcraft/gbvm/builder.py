@@ -747,6 +747,60 @@ class ScriptBuilder:
         self._stack_pop(1)
         self._add_nl()
 
+    def _store_arg0(self, variable):
+        """variable = .ARG0 (direct or indirect variable)."""
+        alias = self.get_variable_alias(variable)
+        if self._is_indirect_variable(variable):
+            self._set_ind(alias, ".ARG0")
+        else:
+            self._set(alias, ".ARG0")
+
+    def ngpc_clock_get(self, variables):
+        """EVENT_NGPC_CLOCK_GET (gbvm/ngpc_system.py): {field: variable} from the
+        console clock, one read for all (first field: CLOCK_READ)."""
+        from .ngpc_system import CLOCK_FIELDS, CLOCK_NATIVE, CLOCK_READ
+        unknown = sorted(set(variables) - set(CLOCK_FIELDS))
+        if unknown:
+            raise CompileError(f"{self.source}: clock fields {unknown}: expected {list(CLOCK_FIELDS)}")
+        self._add_comment("NGPC Store Clock In Variables")
+        first = True
+        for code, field in enumerate(CLOCK_FIELDS):
+            if field not in variables:
+                continue
+            if first:
+                self.dependencies += [f"b_{CLOCK_NATIVE}", f"_{CLOCK_NATIVE}"]
+            self._stack_push_const(code | (CLOCK_READ if first else 0))
+            first = False
+            self._add_cmd("VM_CALL_NATIVE", f"b_{CLOCK_NATIVE}", f"_{CLOCK_NATIVE}")
+            self._store_arg0(variables[field])
+            self._stack_pop(1)
+        self._add_nl()
+
+    def ngpc_battery_get(self, variable):
+        """EVENT_NGPC_BATTERY_GET: Battery_Voltage (0x6F80, 0..1023, SDK SysWork.txt)."""
+        self._add_comment("NGPC Store Battery Voltage In Variable")
+        self._stack_push_const(0)
+        self._get_mem_int16(".ARG0", "ngc_battery")
+        self._store_arg0(variable)
+        self._stack_pop(1)
+        self._add_nl()
+
+    def ngpc_if_language(self, language, true_path=None, false_path=None):
+        """EVENT_NGPC_IF_LANGUAGE: Language (0x6F87): 0 = Japanese, 1 = English (SDK SysWork.txt)."""
+        codes = {"japanese": 0, "english": 1}
+        if language not in codes:
+            raise CompileError(f"{self.source}: console language {language!r}: expected 'english' or 'japanese'")
+        self._if_device("ngc_language", f"NGPC If Console Language {language}", "ngc_language",
+                        true_path, false_path, value=codes[language])
+
+    def ngpc_shutdown(self):
+        """EVENT_NGPC_SHUTDOWN: VECT_SHUTDOWN (gbvm/ngpc_system.py)."""
+        from .ngpc_system import SHUTDOWN_NATIVE
+        self._add_comment("NGPC Switch Off")
+        self.dependencies += [f"b_{SHUTDOWN_NATIVE}", f"_{SHUTDOWN_NATIVE}"]
+        self._add_cmd("VM_CALL_NATIVE", f"b_{SHUTDOWN_NATIVE}", f"_{SHUTDOWN_NATIVE}")
+        self._add_nl()
+
     # -- input scripts (scriptBuilder.ts inputScriptSet / inputScriptRemove) --
     def input_script_set(self, input_, override, script, symbol=None):
         from .custom_events import compile_sub_script
@@ -1945,7 +1999,7 @@ class ScriptBuilder:
         """scriptBuilder.ts ifDeviceGBA: _is_GBA is 0 on the NGPC (ECARTS 12)."""
         self._if_device("is_gba", "If Device GBA", "_is_GBA", true_path, false_path)
 
-    def _if_device(self, local, comment, memory, true_path, false_path):
+    def _if_device(self, local, comment, memory, true_path, false_path, value=1):
         true_path = [] if true_path is None else true_path
         false_path = [] if false_path is None else false_path
         is_cgb_ref = self._declare_local(local, 1, True)
@@ -1953,7 +2007,7 @@ class ScriptBuilder:
         end_label = self.get_next_label()
         self._add_comment(comment)
         self._get_mem_uint8(is_cgb_ref, memory)
-        self._if_const(".NE", is_cgb_ref, 1, false_label, 0)
+        self._if_const(".NE", is_cgb_ref, value, false_label, 0)
         self._add_nl()
         self._compile_path(true_path)
         self._jump(end_label)

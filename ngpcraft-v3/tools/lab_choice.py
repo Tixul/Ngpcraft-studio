@@ -231,12 +231,12 @@ def run(out, toolchain, emulator, bios, witness=None, *, project_factory=project
         raise ValueError("output must be a new directory")
     project_path = project_factory(out)
     import ngpcraft.gbvm.emit as emit
-    captured, assemble = [], emit.assemble_bank
-    emit.assemble_bank = lambda texts, *a, **kw: (captured.append(list(texts)), assemble(texts, *a, **kw))[1]
+    captured, assemble = [], emit.assemble_banks
+    emit.assemble_banks = lambda texts, *a, **kw: (captured.append(list(texts)), assemble(texts, *a, **kw))[1]
     try:
         manifest = export_project(project_path, out / "export")
     finally:
-        emit.assemble_bank = assemble
+        emit.assemble_banks = assemble
     asm = captured[0][0]                  # the scene's init thread (C10), GB Studio's text
     (out / "init.asm").write_text(asm, encoding="utf-8")
     if witness == "cancel-last":

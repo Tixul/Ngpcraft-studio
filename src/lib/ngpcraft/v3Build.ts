@@ -41,6 +41,7 @@ import {
   getToolchainPath,
   getV3Root,
   toolchainHomeForV3,
+  v3Env,
 } from "lib/ngpcraft/v3Paths";
 
 interface V3Tools {
@@ -232,11 +233,7 @@ const runV3 = async (
     ["-B", "-m", "ngpcraft", ...args],
     {
       cwd: tools.v3Root,
-      env: {
-        ...process.env,
-        NGPC_TOSHIBA_HOME: tools.toolchainHome,
-        PYTHONIOENCODING: "utf-8",
-      },
+      env: v3Env({ NGPC_TOSHIBA_HOME: tools.toolchainHome }),
     },
     {
       onLog: (line) => {

@@ -186,7 +186,13 @@ class StudioDebugger {
     let ctx = this.readPtr(layout.first_ctx);
     while (ctx && out.length < 64) {
       const pc = this.readPtr(ctx + f.PC);
-      const address = pc - layout.bank_0_address;
+      // Labels are bank * 0x10000 + offset in the bank (ngpcraft-v3
+      // debug_build.py); one bank: bank_0_address only (older builds).
+      const bank = this.readByte(ctx + f.bank);
+      const bankAddresses = layout.bank_addresses || [layout.bank_0_address];
+      const address = bank < bankAddresses.length
+        ? bank * 0x10000 + (pc - bankAddresses[bank])
+        : -1;
       const closestAddr = this.closestAddress(address);
       const closestSymbol = closestAddr >= 0 ? this.labelSymbols.get(closestAddr) : '';
       const stackPtr = this.readPtr(ctx + f.stack_ptr);
@@ -198,7 +204,7 @@ class StudioDebugger {
       const prevCtx = prev[out.length];
       out.push({
         address,
-        bank: this.readByte(ctx + f.bank),
+        bank,
         current: ctx === currentCtx,
         closestAddr,
         closestSymbol,

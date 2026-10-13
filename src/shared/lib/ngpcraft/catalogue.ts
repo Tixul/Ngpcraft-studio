@@ -28,6 +28,11 @@ export type NgpcEventDelivery = "delivered" | "adapted" | "refused" | "plugin";
 // Studio: the V3 compiles them natively (ngpcraft-v3/ngpcraft/parity NGPC_EVENTS).
 export const NGPC_EVENTS: ReadonlySet<string> = new Set([
   "EVENT_NGPC_BACKGROUND_VARIANT",
+  // ngpcraft-v3/docs/M8_NGPC_SYSTEM.md
+  "EVENT_NGPC_CLOCK_GET",
+  "EVENT_NGPC_IF_LANGUAGE",
+  "EVENT_NGPC_BATTERY_GET",
+  "EVENT_NGPC_SHUTDOWN",
 ]);
 
 export const ngpcEventDelivery = (

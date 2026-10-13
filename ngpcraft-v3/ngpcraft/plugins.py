@@ -13,10 +13,17 @@ as the events around it, and the NGPC adaptations of V3 apply.
 Engine plugins (C or assembly for the Game Boy engine, engine.json) are not
 event plugins: their code cannot run on the NGPC (engine_plugins).
 
-Requirements, only when a project has event plugins: Node, a GB Studio 4.3.2
-source tree (`src`) and node_modules holding its QuickJS and TypeScript:
-NGPCRAFT_NODE, NGPCRAFT_GBSTUDIO_SRC, NGPCRAFT_GBSTUDIO_MODULES (defaults: the
-published reference beside the repository and the editor's node_modules).
+Requirements, only when a project has event plugins (bridge_command), first
+found wins:
+  - NGPCRAFT_PLUGIN_HOST: the packaged editor, run as
+    `<host> --ngpcraft-plugin-bridge` (its own bridge and bundle; set by the
+    editor for the V3 it launches);
+  - NGPCRAFT_GBSTUDIO_BUNDLE: GB Studio's modules in one file
+    (src/lib/forge/hooks/bundle-plugin-bridge.js), run by Node;
+  - Node, a GB Studio 4.3.2 source tree (`src`) and node_modules holding its
+    QuickJS and TypeScript: NGPCRAFT_NODE, NGPCRAFT_GBSTUDIO_SRC,
+    NGPCRAFT_GBSTUDIO_MODULES (defaults: the published reference beside the
+    repository and the editor's node_modules).
 """
 import inspect
 import json
@@ -123,26 +130,42 @@ def _json(value):
     return None
 
 
+def bridge_command():
+    """(command line of the plugin bridge, missing requirements) — see the module docstring."""
+    host = os.environ.get("NGPCRAFT_PLUGIN_HOST")
+    if host:
+        return [host, "--ngpcraft-plugin-bridge"], [] if Path(host).is_file() else [
+            f"the editor (NGPCRAFT_PLUGIN_HOST: {host} not found)"]
+    node = os.environ.get("NGPCRAFT_NODE") or shutil.which("node")
+    bundle = os.environ.get("NGPCRAFT_GBSTUDIO_BUNDLE")
+    if bundle:
+        missing = [what for what, ok in (("Node (NGPCRAFT_NODE)", node),
+                                         (f"the GB Studio bundle (NGPCRAFT_GBSTUDIO_BUNDLE: {bundle})",
+                                          Path(bundle).is_file())) if not ok]
+        return [node, str(BRIDGE), "--bundle", bundle], missing
+    src = Path(os.environ.get("NGPCRAFT_GBSTUDIO_SRC") or DEFAULT_SRC)
+    modules = Path(os.environ.get("NGPCRAFT_GBSTUDIO_MODULES") or DEFAULT_MODULES)
+    missing = [what for what, ok in (
+        ("Node (NGPCRAFT_NODE)", node),
+        ("GB Studio 4.3.2 sources (NGPCRAFT_GBSTUDIO_SRC)",
+         (src / "lib/scriptEventsHandlers/untrustedHandler.ts").is_file()),
+        ("node_modules with QuickJS and TypeScript (NGPCRAFT_GBSTUDIO_MODULES)",
+         (modules / "quickjs-emscripten-core").is_dir() and (modules / "typescript").is_dir()),
+    ) if not ok]
+    return [node, str(BRIDGE), str(src), str(modules)], missing
+
+
 class PluginBridge:
     """One Node process per export; serves the plugins' builder calls."""
 
     def __init__(self, files):
-        node = os.environ.get("NGPCRAFT_NODE") or shutil.which("node")
-        src = Path(os.environ.get("NGPCRAFT_GBSTUDIO_SRC") or DEFAULT_SRC)
-        modules = Path(os.environ.get("NGPCRAFT_GBSTUDIO_MODULES") or DEFAULT_MODULES)
-        missing = [what for what, ok in (
-            ("Node (NGPCRAFT_NODE)", node),
-            ("GB Studio 4.3.2 sources (NGPCRAFT_GBSTUDIO_SRC)",
-             (src / "lib/scriptEventsHandlers/untrustedHandler.ts").is_file()),
-            ("node_modules with QuickJS and TypeScript (NGPCRAFT_GBSTUDIO_MODULES)",
-             (modules / "quickjs-emscripten-core").is_dir() and (modules / "typescript").is_dir()),
-        ) if not ok]
+        command, missing = bridge_command()
         if missing:
             raise CompileError("event plugins need " + ", ".join(missing) + " (docs/M7_PLUGINS.md)")
         # Console output of GB Studio or of a plugin: a file, never a pipe nobody drains
         # (a full pipe would block the bridge).
         self.log = tempfile.TemporaryFile()
-        self.process = subprocess.Popen([node, str(BRIDGE), str(src), str(modules)], stdin=subprocess.PIPE,
+        self.process = subprocess.Popen(command, stdin=subprocess.PIPE,
                                         stdout=subprocess.PIPE, stderr=self.log, text=True, encoding="utf-8")
         self.builder = None
         self.error = None
@@ -160,6 +183,8 @@ class PluginBridge:
 
     def _receive(self):
         line = self.process.stdout.readline()
+        while line.strip() == "" and line:      # Electron (plugin host) starts stdout with a blank line on Windows
+            line = self.process.stdout.readline()
         if not line:
             self.process.wait()
             self.log.seek(0)

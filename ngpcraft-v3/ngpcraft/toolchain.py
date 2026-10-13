@@ -260,7 +260,7 @@ def build_rom(export_dir, toolchain_root=None):
         result["save"] = save
     if "debug" in manifest["features"]:
         from .debug_build import read_layout
-        result["debug"] = read_layout(data, link_audit["public_symbols"])
+        result["debug"] = read_layout(data, link_audit["public_symbols"], manifest["debug"]["banks"]["count"])
     (dest / "game.ngc").write_bytes(data)
     (dest / "build-report.json").write_text(json.dumps(result, indent=2), encoding="utf-8")
     return result

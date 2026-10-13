@@ -15,11 +15,7 @@ from tools import plugin_fixture
 
 
 def bridge_available():
-    src = Path(os.environ.get("NGPCRAFT_GBSTUDIO_SRC") or plugins.DEFAULT_SRC)
-    modules = Path(os.environ.get("NGPCRAFT_GBSTUDIO_MODULES") or plugins.DEFAULT_MODULES)
-    return (shutil.which(os.environ.get("NGPCRAFT_NODE") or "node") is not None
-            and (src / "lib/scriptEventsHandlers/untrustedHandler.ts").is_file()
-            and (modules / "quickjs-emscripten-core").is_dir())
+    return not plugins.bridge_command()[1]
 
 
 OPTIONS = {"scene": {"id": "s1", "actors": [], "symbol": "scene_1"}, "scriptSymbolName": "script_test",
@@ -50,13 +46,34 @@ class PluginDiscoveryTests(unittest.TestCase):
                          plugins.normalize("variable_set_to_script_value"))
         self.assertNotEqual(plugins.normalize("_rpn"), plugins.normalize("rpn"))
 
+    def test_bridge_command_host_then_bundle_then_sources(self):
+        from unittest import mock
+        root = Path(tempfile.mkdtemp())
+        host, bundle = root / "ngpcraft-studio.exe", root / "gbstudio_bridge.cjs"
+        host.write_text("", encoding="utf-8")
+        bundle.write_text("", encoding="utf-8")
+        clean = {k: v for k, v in os.environ.items() if k not in ("NGPCRAFT_PLUGIN_HOST", "NGPCRAFT_GBSTUDIO_BUNDLE")}
+        with mock.patch.dict(os.environ, {**clean, "NGPCRAFT_PLUGIN_HOST": str(host),
+                                          "NGPCRAFT_GBSTUDIO_BUNDLE": str(bundle)}, clear=True):
+            self.assertEqual(plugins.bridge_command(), ([str(host), "--ngpcraft-plugin-bridge"], []))
+        with mock.patch.dict(os.environ, {**clean, "NGPCRAFT_PLUGIN_HOST": str(root / "absent.exe")}, clear=True):
+            self.assertIn("NGPCRAFT_PLUGIN_HOST", plugins.bridge_command()[1][0])
+        with mock.patch.dict(os.environ, {**clean, "NGPCRAFT_NODE": "node", "NGPCRAFT_GBSTUDIO_BUNDLE": str(bundle)},
+                             clear=True):
+            self.assertEqual(plugins.bridge_command(), (["node", str(plugins.BRIDGE), "--bundle", str(bundle)], []))
+        with mock.patch.dict(os.environ, {**clean, "NGPCRAFT_NODE": "node",
+                                          "NGPCRAFT_GBSTUDIO_SRC": str(root / "nowhere")}, clear=True):
+            command, missing = plugins.bridge_command()
+            self.assertEqual(command[1:3], [str(plugins.BRIDGE), str(root / "nowhere")])
+            self.assertEqual(missing, ["GB Studio 4.3.2 sources (NGPCRAFT_GBSTUDIO_SRC)"])
+
     def test_projectile_adapters_follow_the_released_order(self):
         from ngpcraft.projectiles import FIELDS
         self.assertEqual(FIELDS, ("spriteSheetId", "spriteStateId", "speed", "animSpeed", "loopAnim", "lifeTime",
                                   "initialOffset", "destroyOnHit", "collisionGroup", "collisionMask"))
 
 
-@unittest.skipUnless(bridge_available(), "Node, GB Studio 4.3.2 sources and its node_modules required")
+@unittest.skipUnless(bridge_available(), "plugin bridge requirements (plugins.bridge_command)")
 class PluginBridgeTests(unittest.TestCase):
     def setUp(self):
         self.root = Path(tempfile.mkdtemp())

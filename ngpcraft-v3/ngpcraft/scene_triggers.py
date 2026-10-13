@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from .compiler import CompileError
 from .project import load_model
 from .world import NGPC_MAX_TILES, is_wide_size, pos_t, tile_t
+from .gbvm.script_refs import const_args, entry_params
 from .scene_init import _Builder, _map_script
 
 @dataclass
@@ -91,7 +92,7 @@ def trigger_source(triggers, force=False, box=None, name='trigger_update', decla
     T = tile_t()
     lines = ['/* GBVM trigger.h intersection and trigger.c transition order. */',
              *(['static unsigned char trigger_last;',
-                'void ngc_vm_trigger(unsigned short addr, unsigned short argument);'] if declare else []),
+                f'void ngc_vm_trigger({entry_params()}, unsigned short argument);'] if declare else []),
              f'static unsigned char {name}({"unsigned char force" if force else "void"})', '{',
              '    unsigned char hit = 255u;', '    unsigned char called = 0u;',
              f'    {T} l, r, t, b;',
@@ -103,17 +104,17 @@ def trigger_source(triggers, force=False, box=None, name='trigger_update', decla
         lines += ['    if (hit == trigger_last) {', '        if (!force) return 0u;', '        switch (hit) {']
         for i, (tr, addr) in enumerate(triggers):
             if tr['script']:
-                lines += [f'        case {i}u: ngc_vm_trigger({addr}u, 1u); called = 1u; break;']
+                lines += [f'        case {i}u: ngc_vm_trigger({const_args(addr)}, 1u); called = 1u; break;']
         lines += ['        default: break;', '        }', '        return called;', '    }', '    switch (hit) {']
     else:
         lines += ['    if (hit == trigger_last) return 0u;', '    switch (hit) {']
     for i, (tr, addr) in enumerate(triggers):
         if tr['script']:
-            lines += [f'    case {i}u: ngc_vm_trigger({addr}u, 1u); called = 1u; break;']
+            lines += [f'    case {i}u: ngc_vm_trigger({const_args(addr)}, 1u); called = 1u; break;']
     lines += ['    default: break;', '    }', '    switch (trigger_last) {']
     for i, (tr, addr) in enumerate(triggers):
         if tr['leaveScript']:
-            lines += [f'    case {i}u: ngc_vm_trigger({addr}u, 2u); called = 1u; break;']
+            lines += [f'    case {i}u: ngc_vm_trigger({const_args(addr)}, 2u); called = 1u; break;']
     lines += ['    default: break;', '    }', '    trigger_last = hit;', '    return called;', '}', '']
     return lines
 
@@ -125,7 +126,7 @@ def trigger_lookup_source(triggers):
     a script: compileData.ts drops the others, so NGC_TRIGGER_HAS_SCRIPT is 1."""
     T = tile_t()
     lines = ['/* GBVM trigger.h trigger_at_intersection and trigger.c trigger_interact. */',
-             'void ngc_vm_trigger(unsigned short addr, unsigned short argument);',
+             f'void ngc_vm_trigger({entry_params()}, unsigned short argument);',
              'static unsigned char trigger_at_player(void)', '{', f'    {T} l, r, t, b;',
              *(f'    {v} = ({T})({e} >> 8);' for v, e in zip('lrtb', player_box()))]
     for i, (tr, addr) in enumerate(triggers):
@@ -134,6 +135,6 @@ def trigger_lookup_source(triggers):
     lines += ['    return 255u;', '}', 'static void trigger_interact(unsigned char i)', '{', '    switch (i) {']
     for i, (tr, addr) in enumerate(triggers):
         if tr['script']:
-            lines.append(f'    case {i}u: ngc_vm_trigger({addr}u, 1u); break;')
+            lines.append(f'    case {i}u: ngc_vm_trigger({const_args(addr)}, 1u); break;')
     lines += ['    default: break;', '    }', '}', '']
     return lines

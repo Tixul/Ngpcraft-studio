@@ -27,11 +27,20 @@ NGPC adaptations (docs/BACKEND_GBVM.md §3):
 - a scene is named by a far pointer (`IMPORT_FAR_PTR_DATA _scene`, macro.i
   FAR_PTR_DATA: `.db` bank, `.dw` address): the bank is 0 and the address
   word is the index of the scene in the export's scene table (`scenes`);
-- a script called with VM_CALL_FAR (a custom script) is named by bank and
-  address too: bank 0, its address in the bank. Each script also defines its
-  own `___bank_<name> = 255` (the bank packer's placeholder): for a script of
-  this bank the table's 0 is kept. assemble_bank resolves the addresses in
-  two passes (instruction sizes do not depend on them).
+- a script called with VM_CALL_FAR (a custom script), or started in a context
+  of its own (VM_CONTEXT_PREPARE, VM_TIMER_PREPARE, VM_BEGINTHREAD,
+  VM_MUSIC_ROUTINE, a state script's VM_PUSH_CONST), is named by bank and
+  address, as on the Game Boy: the bank assemble_banks placed it in and its
+  offset there. Each script also defines its own `___bank_<name> = 255` (the
+  bank packer's placeholder), replaced by that bank. Instruction sizes do not
+  depend on these values: sizes first, then placement, then the final bytes.
+- several banks (docs/PLAN_MULTI_BANQUES.md): GB Studio compiles every script
+  `#pragma bank 255` and GBDK spreads them over ROM banks; here each bank is
+  one C array (`ngc_bank_<n>`) of at most 64 KB, scripts placed whole in
+  caller order. Offset 0 means "no script" in the engine's tables (actor
+  updates, interactions, hits): byte 0 of every bank after the first is a
+  VM_STOP no script starts at; bank 0 starts with a scene's init thread,
+  which the engine starts without that test (emit.check_entry_refs).
 """
 from dataclasses import dataclass
 import json
@@ -93,6 +102,10 @@ def _translated_memory():
     names = [n for n in script_variables() if n not in ENGINE_MEMORY]
     return {name: max(ENGINE_MEMORY.values()) + 1 + i for i, name in enumerate(names)}
 ENGINE_MEMORY.update(_translated_memory())
+# NGPC system work read by NGPC events (docs/M8_NGPC_SYSTEM.md, SDK SysWork.txt): Language
+# (0x6F87) and Battery_Voltage (0x6F80, a word), after every other index (exports unchanged).
+NGPC_SYSTEM_MEMORY = ("ngc_language", "ngc_battery")
+ENGINE_MEMORY.update({name: max(ENGINE_MEMORY.values()) + 1 + i for i, name in enumerate(NGPC_SYSTEM_MEMORY)})
 # RPN pseudo-macros (vm.i) -> the vm_rpn case they need (vm.h VM_OP_*).
 RPN_MACROS = {".R_INT8": "VM_OP_INT8", ".R_INT16": "VM_OP_INT16", ".R_REF": "VM_OP_REF",
               ".R_REF_IND": "VM_OP_REF_IND", ".R_REF_SET": "VM_OP_REF_SET",
@@ -342,17 +355,18 @@ def _pass(text, variables, model, labels, base, scenes=None, scripts=None, sprit
         symbols[f"_{name}"] = index
         symbols[f"___bank_{name}"] = 0
     banked = set()
-    for name, address in (scripts or {}).items():
+    for name, (bank, address) in (scripts or {}).items():
         symbols[f"_{name}"] = address
-        symbols[f"___bank_{name}"] = 0
+        symbols[f"___bank_{name}"] = bank
         banked.add(f"___bank_{name}")
     name, started, found = None, False, {}
     asm = _Assembler(model, symbols)
     for number, line in enumerate(text.split("\n"), 1):
         where = f"line {number}"
         # Text data (scriptBuilderBase _string, _dw), read before the comment
-        # split: a ';' may be part of the text.
-        m = re.fullmatch(r'        \.asciz "(.*)"', line.rstrip()) if started else None
+        # split: a ';' may be part of the text. Any indentation, as for the other
+        # lines (an EVENT_GBVM_SCRIPT block comes as typed, e.g. GB Studio's RTC example).
+        m = re.fullmatch(r'\s+\.asciz "(.*)"', line.rstrip()) if started else None
         if m:
             asm.out += _asciz(m[1], where)
             continue
@@ -375,7 +389,7 @@ def _pass(text, variables, model, labels, base, scenes=None, scripts=None, sprit
                 continue
             m = re.fullmatch(r"(\.LOCAL_\w+|\.SCRIPT_ARG_\w+|___bank_\w+) = (-?\d+)", code)
             if m and m[1] in banked:
-                continue                       # this bank's script: bank 0 (see above)
+                continue                       # an assembled script: its placed bank (see above)
             if m:
                 if m[1] in symbols:
                     raise CompileError(f"{where}: {m[1]} defined twice")
@@ -462,57 +476,98 @@ def assemble(text, variables, model=None, base=0, scenes=None, scripts=None, spr
 class BankScript:
     symbol: str
     source: str
-    address: int
+    address: int                # offset in its bank
     data: bytes
     debug: tuple = ()           # (GBVM$ debug symbol, bank address), debug builds only
+    bank: int = 0               # ngc_banks index (vm.h SCRIPT_CTX bank)
 
 
-def assemble_bank(texts, variables, model=None, scenes=None, sprites=None, constants=None):
-    """Pack reachable scripts in caller order in bank 0, without padding.
+BANK_BYTES = 0x10000            # one ngc_bank_<n> array: 16-bit offsets (ngc_addr)
+# SCRIPT_CTX.bank is a UBYTE and 255 is the bank packer's placeholder
+# (`___bank_<name> = 255`): banks 0..254. 16 Mbit holds 32 banks of 64 KB.
+MAX_BANKS = 255
 
-    Each script has its own local labels, relocated to its bank address.
-    Return (bank bytes, BankScript entries, used macros, used RPN cases).
-    Cross-script calls and splitting across multiple banks are not delivered.
+
+def assemble_banks(texts, variables, model=None, scenes=None, sprites=None, constants=None, bank_bytes=BANK_BYTES,
+                   split=True):
+    """Place reachable scripts whole, in caller order, in as many banks as they
+    need (docs/PLAN_MULTI_BANQUES.md), without padding.
+
+    Three passes: each script's size (instruction sizes do not depend on the
+    script symbols), the placement (a script that does not fit the current
+    bank opens the next one, whose byte 0 is a reserved VM_STOP), then the
+    final bytes with every `___bank_<script>` / `_<script>` resolved. The same
+    texts always give the same placement. `bank_bytes` is smaller only in
+    tests (it forces several banks on a small project); `split=False` keeps
+    one bank and refuses what does not fit it (assemble_bank).
+    Return (banks' bytes, BankScript entries, used macros, used RPN cases).
     """
     model = model or load_model()
-    # Scripts of this bank, for VM_CALL_FAR: placeholders first (sizes), then
-    # the addresses found by the first layout.
+    if type(bank_bytes) is not int or not 2 <= bank_bytes <= BANK_BYTES:
+        raise CompileError(f"script bank size {bank_bytes!r}: expected 2..{BANK_BYTES} bytes")
     names = []
     for index, text in enumerate(texts):
         m = re.search(r"^\.module (\w+)$", text, re.M)
         if not m:
-            raise CompileError(f"bank 0 script[{index}]: no .module line")
+            raise CompileError(f"script[{index}]: no .module line")
         names.append(m[1])
-    called = {n: 0 for n in names}
-    for _ in range(2):
-        offset, layout = 0, {}
-        for index, text in enumerate(texts):
-            layout[names[index]] = offset
-            try:
-                _, code, _, _ = assemble(text, variables, model, base=offset, scenes=scenes, scripts=called, sprites=sprites,
-                                         constants=constants)
-            except CompileError as exc:
-                raise CompileError(f"bank 0 script[{index}]: {exc}") from None
-            offset += len(code)
-        called = layout
-    data, scripts, symbols = bytearray(), [], set()
-    macros, rpn = set(), set()
+    if not texts:
+        raise CompileError("no scripts to assemble")
+    # Pass 1: sizes, every script symbol at bank 0 address 0.
+    placeholders = {n: (0, 0) for n in names}
+    sizes = []
     for index, text in enumerate(texts):
+        try:
+            _, code, _, _ = assemble(text, variables, model, base=0, scenes=scenes, scripts=placeholders,
+                                     sprites=sprites, constants=constants)
+        except CompileError as exc:
+            raise CompileError(f"{'bank 0 ' if not split else ''}script[{index}]: {exc}") from None
+        if not code:
+            raise CompileError(f"script[{index}]: empty script {names[index]}")
+        sizes.append(len(code))
+    # Pass 2: placement. Offset 0 of banks 1.. is the reserved VM_STOP.
+    stop = model["opcodes"]["OP_VM_STOP"]
+    layout, bank, offset = {}, 0, 0
+    for index, size in enumerate(sizes):
+        # Without split, the final pass refuses what overflows bank 0 (script base).
+        if split and offset + size > bank_bytes:
+            if offset == (0 if bank == 0 else 1) or 1 + size > bank_bytes:
+                raise CompileError(f"script[{index}] {names[index]}: {size} bytes do not fit a script bank "
+                                   f"of {bank_bytes} bytes (byte 0 of banks 1.. is reserved); "
+                                   "a script is never split")
+            bank, offset = bank + 1, 1
+            if bank >= MAX_BANKS:
+                raise CompileError(f"scripts need more than {MAX_BANKS} banks of {bank_bytes} bytes")
+        if names[index] in layout:
+            raise CompileError(f"bank {bank} script[{index}]: duplicate script symbol {names[index]}")
+        layout[names[index]] = (bank, offset)
+        offset += size
+    # Pass 3: final bytes.
+    banks = [bytearray() for _ in range(bank + 1)]
+    for data in banks[1:]:
+        data.append(stop)
+    scripts, macros, rpn = [], set(), set()
+    for index, text in enumerate(texts):
+        bank, address = layout[names[index]]
         debug = []
         try:
-            name, code, used, cases = assemble(text, variables, model, base=len(data), scenes=scenes,
-                                               scripts=called, sprites=sprites, constants=constants, debug=debug)
+            name, code, used, cases = assemble(text, variables, model, base=address, scenes=scenes,
+                                               scripts=layout, sprites=sprites, constants=constants, debug=debug)
         except CompileError as exc:
-            raise CompileError(f"bank 0 script[{index}]: {exc}") from None
-        if name in symbols:
-            raise CompileError(f"bank 0 script[{index}]: duplicate script symbol {name}")
-        if not code:
-            raise CompileError(f"bank 0 script[{index}]: empty script {name}")
-        symbols.add(name)
-        scripts.append(BankScript(name, text, len(data), code, tuple(debug)))
-        data.extend(code)
+            raise CompileError(f"bank {bank} script[{index}]: {exc}") from None
+        if len(code) != sizes[index] or len(banks[bank]) != address:
+            raise CompileError(f"bank {bank} script[{index}] {name}: its size depends on a script address "
+                               "(not supported)")
+        scripts.append(BankScript(name, text, address, code, tuple(debug), bank))
+        banks[bank].extend(code)
         macros.update(used)
         rpn.update(cases)
-    if not scripts:
-        raise CompileError("bank 0: no scripts to assemble")
-    return bytes(data), tuple(scripts), macros, rpn
+    return tuple(bytes(b) for b in banks), tuple(scripts), macros, rpn
+
+
+def assemble_bank(texts, variables, model=None, scenes=None, sprites=None, constants=None):
+    """Every script in bank 0 (assemble_banks without splitting): refused if
+    they do not fit 64 KB. Return (bank bytes, BankScript entries, used
+    macros, used RPN cases)."""
+    banks, scripts, macros, rpn = assemble_banks(texts, variables, model, scenes, sprites, constants, split=False)
+    return banks[0], scripts, macros, rpn

@@ -27,7 +27,7 @@ import {
 import { createHash } from "crypto";
 import { convertMODDataToUGESong } from "shared/lib/uge/mod2uge/import";
 import { saveUGESong } from "shared/lib/uge/ugeHelper";
-import { getPython, getV3Root } from "lib/ngpcraft/v3Paths";
+import { getPython, getV3Root, v3Env } from "lib/ngpcraft/v3Paths";
 import type {
   ConvertUgeResult,
   NgpcNativeMusicHeldScore,
@@ -82,7 +82,7 @@ const runV3 = (
     let stderr = "";
     const child = spawn(python, ["-B", "-m", "ngpcraft", ...args], {
       cwd,
-      env: { ...process.env, PYTHONIOENCODING: "utf-8" },
+      env: v3Env(),
     });
     child.stdout.on("data", () => {});
     child.stderr.on("data", (d) => {

@@ -47,7 +47,8 @@ module.exports = {
    * that runs in the main process.
    */
   entry: {
-    index: appPath("gb-studio", "main.ts"),
+    // NgpCraft: boot.ts starts the editor (main.ts) or the plugin bridge.
+    index: appPath("gb-studio", "boot.ts"),
     buildWorker: srcPath("lib", "compiler", "buildWorker.ts"),
   },
   output: {

@@ -4,7 +4,7 @@ Hardware read: NgpCraft_base_template/src/core/ngpc_input.c (MIT), Sys Lever
 0x6F82 once per game tick. Button order mapped to GBDK's J_* bits. No repeat
 timer: GBVM only uses held, pressed and most-recent direction here.
 """
-from .background_rom import c_array
+from .gbvm.script_refs import entry_params, ref_tables, table_args
 from .compiler import CompileError
 from .project import load_model
 from .scene_init import _Builder, _commented
@@ -120,9 +120,8 @@ def topdown_source(n, grid, interact_mask, interactions, triggers=None, hits=Non
         lines += trigger_source(triggers)
     if interactions:
         lookup = {**interactions, **hits['actors']} if hits else interactions
-        c_array(lines, "act_interact_addr", [lookup[i] if i in lookup else 0 for i in range(n)],
-                "unsigned short")
-        lines.append("void ngc_vm_interact(unsigned short addr);")
+        ref_tables(lines, "act_interact", [lookup.get(i) for i in range(n)], "topdown actor scripts")
+        lines.append(f"void ngc_vm_interact({entry_params()});")
     lines += ["void ngc_topdown_init(void)", "{", "    player_moving = 0u; player_max_pos = 0u;",
               *(["    trigger_last = 255u;"] if triggers else []),
               *(["    collision_iframes = 0u; collision_pending = 255u;"] if hits else []),
@@ -197,7 +196,7 @@ def topdown_source(n, grid, interact_mask, interactions, triggers=None, hits=Non
         lines += [f"        if (ngc_joy_pressed & {interact_mask}u) {{", "            hit = player_front(1u);",
                   ("            if (hit != 255u && !(act_collision_group[hit] & 0x0Fu)) {" if hits else "            if (hit != 255u) {"),
                   "                ngc_actor_set_dir(hit, (unsigned char)((act_dir[0] + 2u) & 3u), 0u);",
-                  "                player_moving = 0u;", "                ngc_vm_interact(act_interact_addr[hit]);",
+                  "                player_moving = 0u;", f"                ngc_vm_interact({table_args('act_interact', 'hit')});",
                   "            }", "        }"]
     off = 2 if grid == 16 else 1
     for direction, axis, sign in ((1, "x", "+"), (3, "x", "-"), (0, "y", "+"), (2, "y", "-")):

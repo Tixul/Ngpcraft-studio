@@ -215,8 +215,9 @@ def compile_projectiles(selections, sheets, raw_sheets, *, where="projectiles"):
 def build_projectile_assets(project, selections, resident=(), *, mode=None, where="projectiles"):
     """Append reachable sheets, retaining actor/switch frames and tile indices.
 
-    Scene background and synthetic emote budgets remain the caller's job. This
-    checks the renderer's 512-tile sprite limit; no PNG for an unused type is read.
+    Scene background and synthetic emote budgets remain the caller's job, and the
+    sprite renderer checks the tiles (all resident, or its reservoir:
+    scene_sprites.sprites_source); no PNG for an unused type is read.
     """
     resources = {sheet["id"]: (rel, sheet) for rel, sheet in project.by_type["sprite"]}
     pairs = list(resident)
@@ -238,10 +239,6 @@ def build_projectile_assets(project, selections, resident=(), *, mode=None, wher
                                      mono=project.settings["colorMode"] == "mono",
                                      native=is_native(project, sid))))
         ids.add(sid)
-    from .scene_sprites import sprite_tile_count
-    tiles = sprite_tile_count([sheet for _, sheet in pairs])
-    if tiles > 512:
-        raise CompileError(f"{where}: resident sprite sheets need {tiles} tiles, renderer limit is 512")
     compiled = compile_projectiles(selections, pairs, {sid: raw for sid, (_, raw) in resources.items()}, where=where)
     from dataclasses import replace
     from .gbvm.emit import engine_field

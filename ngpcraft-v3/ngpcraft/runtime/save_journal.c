@@ -38,6 +38,12 @@ static SjRef sj_best[SJ_SLOTS];             /* newest record of each slot */
 static SjRef sj_block_best[2][SJ_SLOTS];    /* newest of each slot within one block */
 static SjRef sj_top;                        /* newest record of all */
 static unsigned char sj_free[2];            /* first page after the last used one */
+/* 1: sj_best / sj_top / sj_free describe the flash as it is. Only this journal
+ * writes the blocks, so the scan is kept until its next write: a scan reads
+ * both blocks and checks each record's CRC (4.4 KB for MegaX), and a title
+ * reading 48 variables (Peek Data) waited 6.8 s on it. Cleared at boot by
+ * ngc_journal_forget (ngc_game_init: random RAM on a console). */
+static unsigned char sj_scanned;
 static unsigned char sj_buffer[SJ_PAGE];    /* RAM source of a page write */
 
 /* CRC16-CCITT, initial 0xFFFF, MSB first (Over Rev crc_byte), by table. */
@@ -169,6 +175,13 @@ static void sj_scan(void)
             sj_free[block] = page;
         }
     }
+    sj_scanned = 1u;
+}
+
+/* At boot: no scan kept yet. */
+void ngc_journal_forget(void)
+{
+    sj_scanned = 0u;
 }
 
 /* The state is produced by the caller, byte by byte, through
@@ -378,22 +391,28 @@ static unsigned char sj_write(unsigned char slot, unsigned char kind)
  * 1 on success. */
 unsigned char ngc_journal_save(unsigned char slot, unsigned char (*produce)(void))
 {
+    unsigned char ok;
     if (!ngc_flash_ready()) return 0u;
     sj_mode = SJ_COUNT;
     sj_pos = 0u;
     if (!produce()) return 0u;
     sj_length = sj_pos;
     sj_produce = produce;
-    return sj_write(slot, SJ_STATE);
+    ok = sj_write(slot, SJ_STATE);
+    sj_scanned = 0u;                /* the flash changed */
+    return ok;
 }
 
 /* GB Studio data_clear. */
 unsigned char ngc_journal_clear(unsigned char slot)
 {
+    unsigned char ok;
     if (!ngc_flash_ready()) return 0u;
     sj_produce = 0;
     sj_length = 0u;
-    return sj_write(slot, SJ_CLEARED);
+    ok = sj_write(slot, SJ_CLEARED);
+    sj_scanned = 0u;                /* the flash changed */
+    return ok;
 }
 
 /* data_load / If Data Saved / Peek: the slot's state in flash, or 0 when
@@ -405,7 +424,7 @@ const volatile unsigned char * ngc_journal_find(unsigned char slot, unsigned sho
     const volatile unsigned char * p;
     sj_read = 0;
     if (!ngc_flash_ready()) return 0;
-    sj_scan();
+    if (!sj_scanned) sj_scan();
     if (!sj_best[slot].kind) return 0;
     p = ngc_flash_block(sj_best[slot].block) + (unsigned short)sj_best[slot].page * SJ_PAGE;
     if (p[4] != SJ_STATE || sj_long(p + 12) != ngc_save_signature) return 0;

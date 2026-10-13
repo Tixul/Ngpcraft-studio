@@ -919,9 +919,33 @@ def _event_if_flags_compare(input_, b):
         input_.get("true"), [] if input_.get("__disableElse") else input_.get("false"))
 
 
+# EVENT_NGPC_CLOCK_GET (src/lib/events/eventNgpcClockGet.js): which variables "parts" shows.
+NGPC_CLOCK_PARTS = {"time": ("hour", "minute", "second"),
+                    "date": ("year", "month", "day", "weekday"),
+                    "datetime": ("year", "month", "day", "weekday", "hour", "minute", "second")}
+
+
+def _event_ngpc_clock_get(input_, b):
+    parts = input_.get("parts", "time")
+    if parts not in NGPC_CLOCK_PARTS:
+        raise CompileError(f"clock parts {parts!r}: expected {sorted(NGPC_CLOCK_PARTS)}")
+    b.ngpc_clock_get({field: input_.get("variable" + field.capitalize())
+                      for field in NGPC_CLOCK_PARTS[parts]})
+
+
+def _event_ngpc_if_language(input_, b):
+    true_path, false_path = _paths(input_)
+    b.ngpc_if_language(input_.get("language", "english"), true_path, false_path)
+
+
 HANDLERS = {
     # NGPC event of the NgpCraft Studio editor (src/lib/events/eventNgpcBackgroundVariant.js).
     "EVENT_NGPC_BACKGROUND_VARIANT": lambda input_, b: b.ngpc_background_variant(input_.get("variant")),
+    # NGPC system events (src/lib/events/eventNgpc*.js, docs/M8_NGPC_SYSTEM.md).
+    "EVENT_NGPC_CLOCK_GET": _event_ngpc_clock_get,
+    "EVENT_NGPC_IF_LANGUAGE": _event_ngpc_if_language,
+    "EVENT_NGPC_BATTERY_GET": lambda input_, b: b.ngpc_battery_get(input_.get("variable")),
+    "EVENT_NGPC_SHUTDOWN": lambda input_, b: b.ngpc_shutdown(),
     "EVENT_SET_FLAGS": lambda input_, b: b.variable_set_to_value(input_.get("variable"), _flag_mask(input_)),
     "EVENT_ADD_FLAGS": lambda input_, b: b.variable_add_flags(input_.get("variable"), _flag_mask(input_)),
     "EVENT_CLEAR_FLAGS": lambda input_, b: b.variable_clear_flags(input_.get("variable"), _flag_mask(input_)),

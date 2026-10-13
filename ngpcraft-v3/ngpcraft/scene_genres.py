@@ -15,6 +15,7 @@ import json
 from pathlib import Path
 
 from .background_rom import c_array
+from .gbvm.script_refs import const_args, entry_params, ref_tables, table_args
 from .compiler import CompileError
 
 RUNTIME = {state: Path(__file__).with_name("runtime") / f"{state}_runtime.json"
@@ -231,7 +232,7 @@ def _shmup_hooks(defines, triggers, hits):
         lines += ["#define NGC_SHMUP_TRIGGERS() 0", "#define NGC_SHMUP_SCREEN_TRIGGERS() 0"]
     if hits and hits["player"] is not None:
         lines += ["#define NGC_PLAYER_HAS_HIT_SCRIPT 1",
-                  f"#define NGC_PLAYER_HIT(g) ngc_vm_hit({hits['player']}u, (unsigned short)(g))"]
+                  f"#define NGC_PLAYER_HIT(g) ngc_vm_hit({const_args(hits['player'])}, (unsigned short)(g))"]
     else:
         lines += ["#define NGC_PLAYER_HAS_HIT_SCRIPT 0", "#define NGC_PLAYER_HIT(g) ((void)(g))"]
     return lines
@@ -258,18 +259,18 @@ def _click_hooks(project, scene, triggers, interactions, hits):
         # actor_t.script: the interaction script, or for an actor with a collision
         # group the combined script (compileData.ts), whose branch 0 is its script.
         # 0: no script (an actor with neither).
-        c_array(lines, "act_click_addr", [interactions[i] if i in interactions else hit_actors[i] if i in hit_actors
-                                          else 0 for i in range(n)],
-                "unsigned short")
+        ref_tables(lines, "act_click", [interactions.get(i, hit_actors.get(i)) for i in range(n)],
+                   f"scene {scene['name']}: actor scripts")
+        click = table_args("act_click", "i")
         if interactions and hit_actors:
             c_array(lines, "act_click_combined", [1 if i in hit_actors else 0 for i in range(n)], "unsigned char")
-            body = ["    if (act_click_combined[i]) ngc_vm_hit(act_click_addr[i], 0u);",
-                    "    else ngc_vm_interact(act_click_addr[i]);"]
+            body = [f"    if (act_click_combined[i]) ngc_vm_hit({click}, 0u);",
+                    f"    else ngc_vm_interact({click});"]
         elif interactions:
-            body = ["    ngc_vm_interact(act_click_addr[i]);"]
+            body = [f"    ngc_vm_interact({click});"]
         else:
-            body = ["    ngc_vm_hit(act_click_addr[i], 0u);"]
-        lines += [*(["void ngc_vm_interact(unsigned short addr);"] if interactions else []),
+            body = [f"    ngc_vm_hit({click}, 0u);"]
+        lines += [*([f"void ngc_vm_interact({entry_params()});"] if interactions else []),
                   "/* pointnclick.c: script_execute(actor->script, ..., 1, 0). */",
                   "static void click_actor(unsigned char i)", "{", *body, "}"]
         lines += ["#define NGC_ACTOR_HAS_SCRIPT(i) (act_click_addr[i] != 0u)",
@@ -312,12 +313,12 @@ def _adventure_hooks(project, scene, triggers, interactions):
         lines.append("#define NGC_ADVENTURE_TRIGGERS() ((void)0)")
     if interactions:
         n = len(collision_groups(project, scene))
-        c_array(lines, "act_interact_addr", [interactions[i] if i in interactions else 0 for i in range(n)],
-                "unsigned short")
-        lines += ["void ngc_vm_interact(unsigned short addr);"] + FRONT + [
+        ref_tables(lines, "act_interact", [interactions.get(i) for i in range(n)],
+                   f"scene {scene['name']}: actor interactions")
+        lines += [f"void ngc_vm_interact({entry_params()});"] + FRONT + [
                   "#define NGC_ACTOR_IN_FRONT(grid) plat_front_script()",
                   "#define NGC_ACTOR_HAS_SCRIPT(i) (act_interact_addr[i] != 0u)",
-                  "#define NGC_ACTOR_INTERACT(i) ngc_vm_interact(act_interact_addr[i])"]
+                  f"#define NGC_ACTOR_INTERACT(i) ngc_vm_interact({table_args('act_interact', 'i')})"]
     else:
         lines += ["#define NGC_ACTOR_IN_FRONT(grid) 255u", "#define NGC_ACTOR_HAS_SCRIPT(i) 0",
                   "#define NGC_ACTOR_INTERACT(i) ((void)(i))"]

@@ -6,7 +6,7 @@
  * (sample playback) are refused by the V3 with its reason.
  */
 import { spawn } from "child_process";
-import { getPython, getV3Root } from "lib/ngpcraft/v3Paths";
+import { getPython, getV3Root, v3Env } from "lib/ngpcraft/v3Paths";
 import type {
   ConvertSfxResult,
   NgpcNativeSfxStep,
@@ -22,7 +22,7 @@ const runV3 = (
     let stderr = "";
     const child = spawn(python, ["-B", "-m", "ngpcraft", ...args], {
       cwd,
-      env: { ...process.env, PYTHONIOENCODING: "utf-8" },
+      env: v3Env(),
     });
     child.stdout.on("data", (d) => {
       stdout += d;

@@ -72,6 +72,16 @@ class BigMapExportTests(unittest.TestCase):
         self.assertIn("extern unsigned long ngc_camera_x;", (export / "src/game.c").read_text(encoding="utf-8"))
         self.assertEqual(audit(export), [])
 
+    def test_shaken_camera_left_of_the_scene_is_tile16_minus_one(self):
+        # actor.c's uint8_t tile16 wraps a shaken draw_scroll_x of 0 - 2 to -1; at the wide width the
+        # unsigned 16-bit value made every actor offscreen (MegaX v21: a boss landing at the room's
+        # edge shook the camera, X and the boss vanished for good).
+        for rx, kind in ((2, "unsigned short"), (1, "unsigned char")):
+            with self.subTest(width=kind):
+                actors = (self.export(rx, 1) / "src/scene_actors.c").read_text(encoding="utf-8")
+                self.assertIn(f"    {kind} sx = ({kind})(({kind})((short)draw_x >> 4) + 64u);", actors)
+                self.assertIn(f"    {kind} sy = ({kind})(({kind})((short)draw_y >> 4) + 64u);", actors)
+
     def test_ngpc_limits_per_axis_and_in_all(self):
         self.refused(26, 1, r"4186x18 tiles; an NGPC scene has at most 4095 tiles per axis")
         self.refused(2, 12, r"322x216 tiles; .* 65535 tiles in all")

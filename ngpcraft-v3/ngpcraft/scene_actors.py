@@ -21,6 +21,7 @@ from .world import pos_mask, pos_max, pos_t, spos_t, tile_t, wide
 FLAGS = {"pinned": 1, "hidden": 2, "anim_noloop": 4, "collision": 8, "persistent": 0x10}
 NIL = 0xFF
 from .actor_capacity import NGPC_ACTOR_CAPACITY
+from .gbvm.script_refs import entry_params, ref_tables, table_args
 
 MAX_ACTORS = NGPC_ACTOR_CAPACITY + 1  # NGPC ceiling; scene_init requires explicit opt-in above GB capacity
 
@@ -357,14 +358,15 @@ def actors_source(actors, sheets, height_px, where="scene actors", view_h=152, m
              "void ngc_scroll_set(short x, short y);", "extern unsigned short ngc_scroll_next[2];",
              "void ngc_sprites_begin(void);", "void ngc_sprite_draw(unsigned short frame, short x, short y);",
              "void ngc_sprites_end(void);", ""]
+    # updates: actor index -> ScriptRef (gbvm/script_refs.py; offset 0 = none).
     if updates:
-        if any(type(i) is not int or not 1 <= i < n or not 0 < addr <= 65535
-               for i, addr in updates.items()):
+        if any(type(i) is not int or not 1 <= i < n or not 0 < ref.address <= 65535
+               for i, ref in updates.items()):
             raise CompileError(f"{where}: invalid actor update addresses")
-        lines += ["void ngc_vm_execute(unsigned short addr, unsigned short *handle);",
+        lines += [f"void ngc_vm_execute({entry_params()}, unsigned short *handle);",
                   "void ngc_vm_terminate(unsigned short handle);",
                   f"static unsigned short act_update_handle[{n}];"]
-        c_array(lines, "act_update_addr", [updates[i] if i in updates else 0 for i in range(n)])
+        ref_tables(lines, "act_update", [updates.get(i) for i in range(n)], f"{where}: actor updates")
     c_array(lines, "act_spr_order", order)
     # Bounds in RAM when a script changes them (Set Spritesheet, Set Collision
     # Box): reset from act_init_bounds at each scene load.
@@ -495,12 +497,15 @@ def actors_source(actors, sheets, height_px, where="scene actors", view_h=152, m
               *(["    /* world.py: the VM words are pixels */",
                  f"    act_x[i] = ({P})x << 5;", f"    act_y[i] = ({P})y << 5;"]
                 if wide() else ["    act_x[i] = x;", "    act_y[i] = y;"]), "}", "",
-              "/* Tile16 test of actor.c (offset 64, 3 tile16 of bounds, screen 10x9). */",
+              "/* Tile16 test of actor.c (offset 64, 3 tile16 of bounds, screen 10x9).",
+              " * A camera shake at the scene edge makes draw_x/y negative (0 - 2): actor.c's",
+              " * uint8_t wraps it to tile16 -1; the wide world's wider type must shift it signed,",
+              " * else every actor is offscreen and the shaking script itself is deactivated. */",
               "static unsigned char offscreen(unsigned char i)", "{",
               f"    {T} ax = ({T})(({T})(act_x[i] >> 9) + 67u);",
               f"    {T} ay = ({T})(({T})(act_y[i] >> 9) + 67u);",
-              f"    {T} sx = ({T})(({T})(draw_x >> 4) + 64u);",
-              f"    {T} sy = ({T})(({T})(draw_y >> 4) + 64u);",
+              f"    {T} sx = ({T})(({T})((short)draw_x >> 4) + 64u);",
+              f"    {T} sy = ({T})(({T})((short)draw_y >> 4) + 64u);",
               f"    return (unsigned char)(ax < sx || ax > ({T})(sx + 16u) ||",
               f"                           ay < sy || ay > ({T})(sy + 15u));", "}", "",
               "static void activate(unsigned char i)", "{",
@@ -511,7 +516,8 @@ def actors_source(actors, sheets, height_px, where="scene actors", view_h=152, m
               "    act_flags[i] |= 0x20u;", "    set_anim(i, act_dir[i]);",
               "    inact_head = dl_remove(inact_head, i);", "    act_head = dl_push(act_head, i);",
               *(["    act_update_handle[i] = 0x8000u;",
-                 "    if (act_update_addr[i]) ngc_vm_execute(act_update_addr[i], &act_update_handle[i]);"] if updates else []),
+                 f"    if (act_update_addr[i]) ngc_vm_execute({table_args('act_update', 'i')}, &act_update_handle[i]);"]
+                if updates else []),
               "}", "",
               "static void deactivate(unsigned char i)", "{",
               "    if (!(act_flags[i] & 0x20u) || i == 0u) return;",
@@ -761,7 +767,7 @@ def actors_source(actors, sheets, height_px, where="scene actors", view_h=152, m
         lines += ["/* GBVM vm_actor.c vm_actor_begin_update: restart a terminated update script. */",
                   "void ngc_actor_start_update(unsigned char i)", "{",
                   *(["    if (act_update_addr[i] && (act_update_handle[i] & 0x8000u))",
-                     "        ngc_vm_execute(act_update_addr[i], &act_update_handle[i]);"]
+                     f"        ngc_vm_execute({table_args('act_update', 'i')}, &act_update_handle[i]);"]
                     if updates else ["    (void)i;  /* This scene has no actor update scripts. */"]),
                   "}", ""]
     if cancel:

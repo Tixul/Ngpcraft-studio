@@ -21,53 +21,17 @@
 // Values: JS undefined is {"__undef__": 1}; a function is {"__fn__": id}.
 const fs = require('node:fs');
 const path = require('node:path');
-const Module = require('node:module');
-
-const [src, modules] = process.argv.slice(2);
-const depsRequire = Module.createRequire(path.join(modules, '__ngpcraft_bridge.cjs'));
-const ts = depsRequire('typescript');
-// package.json "imports" of GB Studio (webpack alias in the editor).
-const ALIASES = {'#my-quickjs-variant': '@jitl/quickjs-singlefile-cjs-release-sync'};
-const srcRoot = path.resolve(src);
-const originalResolve = Module._resolveFilename;
-Module._resolveFilename = function(specifier, parent, ...rest) {
-  if (Object.prototype.hasOwnProperty.call(ALIASES, specifier)) return depsRequire.resolve(ALIASES[specifier]);
-  if (specifier === '../helpers/l10n') return path.join(src, 'shared/lib/lang/l10n.ts');
-  if (specifier.startsWith('.') && parent) {
-    const base = path.resolve(path.dirname(parent.filename), specifier);
-    for (const c of [base + '.ts', base + '.js', base + '.json', path.join(base, 'index.ts')]) {
-      if (fs.existsSync(c) && fs.statSync(c).isFile()) return c;
-    }
-  }
-  if (/^(shared|lib|consts|store|components|renderer|lang)(\/|$)/.test(specifier)) {
-    const base = path.join(src, specifier);
-    for (const c of [base + '.ts', base + '.js', base + '.json', base, path.join(base, 'index.ts')]) {
-      if (fs.existsSync(c) && fs.statSync(c).isFile()) return c;
-    }
-  }
-  if (!specifier.startsWith('.') && !path.isAbsolute(specifier) && !Module.isBuiltin(specifier)) {
-    try { return depsRequire.resolve(specifier); } catch (_) {}
-  }
-  return originalResolve.call(this, specifier, parent, ...rest);
-};
-const compileTs = (module, filename) => {
-  const out = ts.transpileModule(fs.readFileSync(filename, 'utf8'), {fileName: filename, compilerOptions: {
-    module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020, esModuleInterop: true, resolveJsonModule: true,
-  }}).outputText;
-  module._compile(out, filename);
-};
-const originalJs = Module._extensions['.js'];
-Module._extensions['.js'] = function(module, filename) {
-  // GB Studio's own .js sources are ES modules bundled by webpack.
-  if (!path.resolve(filename).startsWith(srcRoot)) return originalJs(module, filename);
-  return compileTs(module, filename);
-};
-Module._extensions['.ts'] = compileTs;
 
 // Console output (GB Studio's or a plugin's) must not corrupt the protocol: stderr only.
 console.log = (...args) => process.stderr.write(args.map(String).join(' ') + '\n');
 console.warn = console.log;
 console.error = console.log;
+
+// GB Studio's code: a source tree (<src> <node_modules>) or a bundle (--bundle <file>).
+const loader = require('./plugin_bridge_gbstudio.cjs');
+const args = process.argv.slice(2);
+const gb = args[0] === '--bundle' ? loader.fromBundle(args[1]) : loader.fromSources(args[0], args[1]);
+const {ScriptBuilder, LATEST_PROJECT_VERSION, loadScriptEventHandlerFromUntrustedString, signatures} = gb;
 
 // -- line protocol -----------------------------------------------------------
 let pending = '';
@@ -164,11 +128,6 @@ const request = (message) => {
   }
 };
 
-const ScriptBuilder = require(path.join(src, 'lib/compiler/scriptBuilder/scriptBuilder.ts')).default;
-// The editor loads its language before compiling: English, the language of export.json warnings.
-require(path.join(src, 'shared/lib/lang/l10n.ts')).setL10NData(require(path.join(src, 'lang/en.json')));
-const {LATEST_PROJECT_VERSION} = require(path.join(src, 'lib/project/migration/migrateProjectResources.ts'));
-
 const newBuilder = (options) => {
   const argLookup = options.argLookup || {actor: {}, variable: {}};
   const sb = new ScriptBuilder([], {
@@ -190,27 +149,12 @@ const newBuilder = (options) => {
 
 // A V3 method replaces GB Studio's only if every positional call of GB Studio fits it
 // (same arity; names differ between the ports). Otherwise GB Studio's own body runs,
-// and its inner calls reach V3. Signatures read from the released TypeScript.
-const signatures = {};
-for (const file of ['scriptBuilderBase.ts', 'scriptBuilder.ts']) {
-  const full = path.join(src, 'lib/compiler/scriptBuilder', file);
-  const sf = ts.createSourceFile(full, fs.readFileSync(full, 'utf8'), ts.ScriptTarget.ES2020, true);
-  const visit = (node) => {
-    if (ts.isPropertyDeclaration(node) && node.initializer &&
-        (ts.isArrowFunction(node.initializer) || ts.isFunctionExpression(node.initializer))) {
-      const params = node.initializer.parameters;
-      signatures[node.name.getText(sf)] = {
-        required: params.filter((q) => !q.questionToken && !q.initializer && !q.dotDotDotToken).length,
-        total: params.some((q) => q.dotDotDotToken) ? Infinity : params.length};
-    }
-    ts.forEachChild(node, visit);
-  };
-  visit(sf);
-}
+// and its inner calls reach V3. Signatures read from the released TypeScript
+// (plugin_bridge_gbstudio.cjs; total null = rest parameter).
 const callableAs = (key, v3) => {
   const gb = signatures[key];
   if (!gb) return false;
-  return v3.required <= gb.required && (v3.varargs || v3.total >= gb.total);
+  return v3.required <= gb.required && (v3.varargs || (gb.total !== null && v3.total >= gb.total));
 };
 
 const serve = (m) => {
@@ -271,9 +215,6 @@ const serve = (m) => {
     throw new Error(`plugin bridge: unexpected message ${m.op}`);
   }
 };
-
-const {loadScriptEventHandlerFromUntrustedString} =
-  require(path.join(src, 'lib/scriptEventsHandlers/untrustedHandler.ts'));
 
 (async () => {
   const first = readMessage();

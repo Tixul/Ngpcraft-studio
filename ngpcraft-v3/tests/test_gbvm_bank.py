@@ -11,7 +11,7 @@ from unittest.mock import patch
 from gbs_fixture import GBS2, event, make_project, number
 
 from ngpcraft.compiler import CompileError
-from ngpcraft.gbvm.assembler import assemble, assemble_bank
+from ngpcraft.gbvm.assembler import assemble, assemble_bank, assemble_banks
 
 
 def script(name, body):
@@ -64,6 +64,70 @@ class BankTests(unittest.TestCase):
                            script("second", "        VM_JUMP 1$\n")], {})
 
 
+def placed(name, body):
+    """A script as scriptBuilderBase writes it: its own bank placeholder first."""
+    return f".module {name}\n___bank_{name} = 255\n.globl ___bank_{name}\n\n_{name}::\n{body}"
+
+
+class SeveralBanksTests(unittest.TestCase):
+    """docs/PLAN_MULTI_BANQUES.md É1. Bytes from vm.i: STOP=00, PUSH_CONST=01
+    value(hi,lo), JUMP=09 addr(hi,lo), CALL_FAR=0A addr(hi,lo) bank,
+    RET_FAR=0B 00, IDLE=18, CONTEXT_PREPARE=55 addr(hi,lo) bank slot."""
+
+    def test_scripts_fill_banks_in_order_and_far_calls_carry_the_bank(self):
+        init = placed("init", "        VM_CALL_FAR ___bank_lib, _lib\n        VM_STOP\n")       # 5 bytes
+        update = placed("update", "1$:\n        VM_IDLE\n        VM_JUMP 1$\n")                 # 4 bytes
+        lib = placed("lib", "        VM_CONTEXT_PREPARE 1, ___bank_update, _update\n"
+                            "        VM_PUSH_CONST ___bank_init\n        VM_RET_FAR\n")         # 10 bytes
+        banks, entries, _, _ = assemble_banks([init, update, lib], {}, bank_bytes=12)
+        self.assertEqual([(e.symbol, e.bank, e.address) for e in entries],
+                         [("init", 0, 0), ("update", 0, 5), ("lib", 1, 1)])
+        self.assertEqual(banks[0].hex(" "), "0a 00 01 01 00 18 09 00 05")
+        # Bank 1: reserved VM_STOP at 0, then lib at offset 1.
+        self.assertEqual(banks[1].hex(" "), "00 55 00 05 00 01 01 00 00 0b 00")
+
+    def test_local_labels_are_offsets_in_their_own_bank(self):
+        filler = placed("filler", "        VM_STOP\n" * 6)
+        loop = placed("loop", "        VM_STOP\n1$:\n        VM_IDLE\n        VM_JUMP 1$\n")
+        banks, entries, _, _ = assemble_banks([filler, loop], {}, bank_bytes=8)
+        self.assertEqual([(e.bank, e.address) for e in entries], [(0, 0), (1, 1)])
+        self.assertEqual(banks[1].hex(" "), "00 00 18 09 00 02")
+
+    def test_a_script_ending_exactly_at_the_bank_end_stays_there(self):
+        texts = [placed("a", "        VM_STOP\n" * 5), placed("b", "        VM_STOP\n" * 3),
+                 placed("c", "        VM_STOP\n")]
+        banks, entries, _, _ = assemble_banks(texts, {}, bank_bytes=8)
+        self.assertEqual([(e.bank, e.address) for e in entries], [(0, 0), (0, 5), (1, 1)])
+        self.assertEqual([len(b) for b in banks], [8, 2])
+
+    def test_too_large_scripts_are_refused_never_split(self):
+        with self.assertRaisesRegex(CompileError, r"script\[0\] big: 9 bytes do not fit a script bank of 8"):
+            assemble_banks([placed("big", "        VM_STOP\n" * 9)], {}, bank_bytes=8)
+        # Bank 1.. keep byte 0: 8 bytes fit bank 0 alone, not a later bank.
+        with self.assertRaisesRegex(CompileError, r"script\[1\] full: 8 bytes do not fit"):
+            assemble_banks([placed("a", "        VM_STOP\n"), placed("full", "        VM_STOP\n" * 8)], {},
+                           bank_bytes=8)
+        with self.assertRaisesRegex(CompileError, "script bank size"):
+            assemble_banks([placed("a", "        VM_STOP\n")], {}, bank_bytes=65537)
+
+    def test_one_bank_is_what_assemble_bank_gives(self):
+        texts = [placed("init", "        VM_CALL_FAR ___bank_lib, _lib\n        VM_STOP\n"),
+                 placed("lib", "        VM_RET_FAR\n")]
+        banks, entries, macros, rpn = assemble_banks(texts, {})
+        self.assertEqual((banks[0], entries, macros, rpn), assemble_bank(texts, {}))
+        self.assertEqual(len(banks), 1)
+        self.assertTrue(all(e.bank == 0 for e in entries))
+
+    def test_placement_is_deterministic(self):
+        texts = [placed(f"s{i}", "        VM_STOP\n" * (1 + i % 5)) for i in range(40)]
+        first = assemble_banks(texts, {}, bank_bytes=16)
+        self.assertEqual(first, assemble_banks(texts, {}, bank_bytes=16))
+        self.assertGreater(len(first[0]), 1)
+        for e in first[1]:
+            self.assertEqual(first[0][e.bank][e.address:e.address + len(e.data)], e.data)
+            self.assertNotEqual((e.bank > 0, e.address), (True, 0))
+
+
 @unittest.skipUnless(all(os.environ.get(k) for k in
                         ("NGC_TEST_TOSHIBA", "NGC_TEST_EMULATOR", "NGC_TEST_BIOS"))
                      and GBS2.is_dir(), "set Toshiba/emulator/BIOS paths")
@@ -78,14 +142,14 @@ class BankRomTests(unittest.TestCase):
         # A stopped script before the live script forces a nonzero entry and
         # relocated backward jumps, without adding a new event or runtime API.
         def prefixed(texts, variables, model, **options):
-            return assemble_bank([script("prefix", "        VM_STOP\n" * 17), *texts],
-                                 variables, model, **options)
+            return assemble_banks([script("prefix", "        VM_STOP\n" * 17), *texts],
+                                  variables, model, **options)
 
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             project = make_project(root / "project", [loop])
             out = root / "out"
-            with patch("ngpcraft.gbvm.emit.assemble_bank", side_effect=prefixed):
+            with patch("ngpcraft.gbvm.emit.assemble_banks", side_effect=prefixed):
                 manifest = export_project(project, out)
             entries = list(manifest["scripts"].values())
             self.assertEqual(sorted(s["address"] for s in entries), [0, 17])

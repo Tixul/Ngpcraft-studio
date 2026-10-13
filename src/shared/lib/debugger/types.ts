@@ -44,6 +44,9 @@ export interface NgpcDebugInfo {
     sizeof: number;
     fields: Record<string, number>;
     bank_0_address: number;
+    // Console address of each script bank (ngc_banks); labels are
+    // bank * 0x10000 + offset. Absent from builds before several banks.
+    bank_addresses?: number[];
     first_ctx: number;
     executing_ctx: number;
     CTXS: number;

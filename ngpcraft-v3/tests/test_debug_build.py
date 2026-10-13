@@ -94,6 +94,71 @@ class DebugRomTests(unittest.TestCase):
             # The loop and the text event start are executed instructions.
             self.assertTrue(any("$c_text$" in s for s in hit), hit)
 
+    def test_banked_contexts_map_to_the_labels_of_their_bank(self):
+        # docs/PLAN_MULTI_BANQUES.md É5: a context's label address is
+        # bank * 0x10000 + (PC - ngc_banks[bank]); a thread placed in bank 1.
+        from unittest.mock import patch
+        from ngpcraft.toolchain import build_rom
+        from ngpcraft.project import encode_resource
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            project, _ = project_case(root)
+            path = next(project.rglob("scene.gbsres"))
+            scene = json.loads(path.read_text(encoding="utf-8"))
+            frames = {"type": "number", "value": 1}
+            loop = {"id": "t_loop", "command": "EVENT_LOOP", "args": {}, "children": {"true": [
+                {"id": "t_inc", "command": "EVENT_INC_VALUE", "args": {"variable": "3"}},
+                {"id": "t_wait", "command": "EVENT_WAIT", "args": {"units": "frames", "frames": frames}}]}}
+            # No text: a modal dialogue waiting for a button would stop every other thread.
+            idle = {"id": "i_loop", "command": "EVENT_LOOP", "args": {}, "children": {"true": [
+                {"id": "i_wait", "command": "EVENT_WAIT", "args": {"units": "frames", "frames": frames}}]}}
+            scene["script"] = [{"id": "t_start", "command": "EVENT_THREAD_START", "args": {"variable": "4"},
+                                "children": {"true": [loop]}}, idle]
+            path.write_text(encode_resource(scene), encoding="utf-8", newline="")
+            one = export_project(project, root / "one", debug=True)
+            largest = max(s["bytes"] for s in one["scripts"].values())
+            with patch("ngpcraft.gbvm.emit.SCRIPT_BANK_BYTES", largest + 1):
+                manifest = export_project(project, root / "export", debug=True)
+            self.assertGreater(manifest["debug"]["banks"]["count"], 1)
+            build = build_rom(root / "export", Path(TOSHIBA))
+            layout = build["debug"]
+            banks = layout["bank_addresses"]
+            self.assertEqual(len(banks), manifest["debug"]["banks"]["count"])
+            self.assertEqual(banks[0], layout["bank_0_address"])
+            rom = (root / "export/rom/game.ngc").read_bytes()
+            sys.path.insert(0, str(Path(EMULATOR).resolve()))
+            from core import native
+            machine = native.NativeMachine(rom, bios=Path(BIOS).read_bytes())
+            machine.set_timing_silicon(word_wait=10, bios_wait=8)
+            machine.reset(bios_handoff=True)
+            machine.set_breakpoints([layout["VM_STEP"]])
+            starts = {e["address"]: (e["script"], e["symbol"]) for e in manifest["debug"]["labels"]
+                      if e["symbol"].startswith("GBVM$")}
+            hit, seen = set(), set()
+            for _ in range(600):
+                stop, _ = machine.run(3_000_000, record=False)
+                if stop.stop_status != 40:
+                    break
+                xsp = machine.cpu().regs[7]
+                ctx = int.from_bytes(machine.read(xsp + manifest["debug"]["step_context"]["offset"], 4), "little")
+                pc = int.from_bytes(machine.read(ctx + layout["fields"]["PC"], 4), "little")
+                bank = machine.read(ctx + layout["fields"]["bank"], 1)[0]
+                offset = pc - banks[bank]
+                self.assertTrue(any(s["bank"] == bank and s["address"] <= offset < s["address"] + s["bytes"]
+                                    for s in manifest["scripts"].values()), (bank, hex(pc)))
+                seen.add(bank)
+                address = bank * manifest["debug"]["banks"]["address_span"] + offset
+                if address in starts:
+                    hit.add(starts[address])
+                machine.set_breakpoints([])
+                machine.run(1, record=False)
+                machine.set_breakpoints([layout["VM_STEP"]])
+            thread = next(s for s, v in manifest["scripts"].items() if v["bank"] > 0 and "thread" in s)
+            self.assertIn(manifest["scripts"][thread]["bank"], seen)
+            # GB Studio names a thread's events after the script that starts it.
+            self.assertTrue(any(script == thread and "$t_inc$" in s for script, s in hit), hit)
+            self.assertTrue(any(script != thread and "$i_wait$" in s for script, s in hit), hit)
+
 
 if __name__ == "__main__":
     unittest.main()

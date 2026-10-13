@@ -6,7 +6,7 @@
  */
 import Path from "path";
 import { spawn } from "child_process";
-import { getPython, getV3Root } from "lib/ngpcraft/v3Paths";
+import { getPython, getV3Root, v3Env } from "lib/ngpcraft/v3Paths";
 import type { NgpcBudgetEstimate } from "shared/lib/ngpcraft/sceneBudget";
 
 interface V3SceneEstimate {
@@ -42,7 +42,7 @@ export const readBudgetEstimate = async (
           "--scene",
           sceneId,
         ],
-        { cwd: v3Root, env: { ...process.env, PYTHONIOENCODING: "utf-8" } },
+        { cwd: v3Root, env: v3Env() },
       );
       child.stdout.on("data", (d) => {
         out += d;

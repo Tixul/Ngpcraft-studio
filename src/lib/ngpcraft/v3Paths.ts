@@ -19,6 +19,7 @@ import { chmod, ensureDir, pathExists, writeFile } from "fs-extra";
 import settings from "electron-settings";
 import { ngpcraftDefaultV3Root } from "consts";
 import { NGPCRAFT_SETTINGS } from "shared/lib/ngpcraft/settingsKeys";
+import { bundledPluginBridge } from "lib/ngpcraft/pluginBridgeHost";
 
 export { NGPCRAFT_SETTINGS };
 
@@ -146,3 +147,18 @@ export const ngpcraftSoundCreatorCandidates = [
     "ngpc_sound_creator.exe",
   ),
 ].filter((path): path is string => Boolean(path));
+
+// Environment of every V3 the editor starts. Packaged editor: event plugins
+// run through this application (NGPCRAFT_PLUGIN_HOST, pluginBridgeHost.ts),
+// which carries the bridge and the GB Studio modules; from the sources, the
+// V3 finds Node and the GB Studio sources itself (docs/M7_PLUGINS.md).
+export const v3Env = (
+  extra: Record<string, string> = {},
+): NodeJS.ProcessEnv => ({
+  ...process.env,
+  ...(bundledPluginBridge() && !process.env.NGPCRAFT_PLUGIN_HOST
+    ? { NGPCRAFT_PLUGIN_HOST: process.execPath }
+    : {}),
+  PYTHONIOENCODING: "utf-8",
+  ...extra,
+});

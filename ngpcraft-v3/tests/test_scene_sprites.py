@@ -11,7 +11,8 @@ from ngpcraft.background import compile_background
 from ngpcraft.background_rom import write_export
 from ngpcraft.background_stream import clamp_path, stream_source
 from ngpcraft.compiler import CompileError
-from ngpcraft.scene_sprites import export_scene_rom, frame_ids, sprites_source
+from ngpcraft.scene_sprites import (export_scene_rom, frame_ids, single_instance_sheets, sprite_tile_budget,
+                                    sprites_source)
 from ngpcraft.sprites import HardwareSprite, NgpcSheet, ngpc_sheet
 from ngpcraft.toolchain import build_rom
 from tools.reference import REFERENCE
@@ -51,6 +52,30 @@ class SceneSpritesTests(unittest.TestCase):
         wide = (HardwareSprite(0, 0, 0, False, False, 0), HardwareSprite(88, 0, 0, False, False, 0))
         with self.assertRaisesRegex(CompileError, "t frame 0 spans 96x8 px"):
             sprites_source([sheet([wide])], 0, PALETTES)
+
+    def test_sheets_one_actor_shows_are_streamed_when_the_tiles_do_not_fit(self):
+        from dataclasses import replace
+        # 40 frames of 4 tiles of their own: 160 tiles each, 320 from 300 do not fit.
+        frames = [tuple(HardwareSprite(8 * i, 0, 4 * f + i, False, False, 0) for i in range(4)) for f in range(40)]
+        other = sheet(frames, 320)
+        sheets = [sheet(frames, 160), replace(other, name="u", tiles=other.tiles[160:])]
+        alone = sprites_source(sheets[1:], 300, PALETTES)
+        with self.assertRaisesRegex(CompileError, "exceed the 512 shared tiles"):
+            sprites_source(sheets, 300, PALETTES)
+        source = sprites_source(sheets, 300, PALETTES, single=frozenset({0}))
+        self.assertIn("/* Streamed sheets (ngpcraft/scene_sprites.py): t. */", source)
+        # Sheet 1 resident from 300; sheet 0's window: 4 tiles, halves at 460 and 464.
+        self.assertIn("0xBCC0u", source)                                  # spr_sbase: tile 460
+        self.assertIn("0x19CCu, 0x0000u, 0x1FCDu, 0x0008u", source)      # frame 0, half 0: 460, 461 chained
+        self.assertIn("0x19D0u, 0x0000u, 0x1FD1u, 0x0008u", source)      # the same, half 1: 464, 465
+        self.assertEqual(sprite_tile_budget(sheets, 300, single=frozenset({0})), 160 + 8)
+        # A scene that fits keeps its renderer as it was, eligible sheets or not.
+        self.assertEqual(sprites_source(sheets[1:], 300, PALETTES, single=frozenset({0})), alone)
+        with self.assertRaisesRegex(CompileError, r"streamed \(t\): 20 over the 512"):
+            sprites_source(sheets, 364, PALETTES, single=frozenset({0}))
+
+    def test_eligible_sheets_are_shown_by_one_actor_only(self):
+        self.assertEqual(single_instance_sheets([0, 1, 1, 2, 3], {3}), frozenset({0, 2}))
 
     def test_frame_ids_follow_gb_studio_animation_offsets(self):
         loaded = load_sheets(GBS2)

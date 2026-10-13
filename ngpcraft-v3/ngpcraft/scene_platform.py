@@ -15,6 +15,7 @@ import re
 from pathlib import Path
 
 from .background_rom import c_array
+from .gbvm.script_refs import entry_params, ref_tables, table_args
 from .compiler import CompileError
 from .world import at_pos_width as boxes, wide
 
@@ -352,12 +353,12 @@ def platform_source(project, scene, width_tiles, height_tiles, interactions=None
         lines.append("#define NGC_PLATFORM_TRIGGERS(force) ((void)0)")
     if interactions:
         n = len(collision_groups(project, scene))
-        c_array(lines, "act_interact_addr", [interactions[i] if i in interactions else 0 for i in range(n)],
-                "unsigned short")
-        lines += ["void ngc_vm_interact(unsigned short addr);"] + boxes(FRONT) + [
+        ref_tables(lines, "act_interact", [interactions.get(i) for i in range(n)],
+                   f"scene {scene['name']}: actor interactions")
+        lines += [f"void ngc_vm_interact({entry_params()});"] + boxes(FRONT) + [
                   "#define NGC_ACTOR_IN_FRONT(grid) plat_front_script()",
                   "#define NGC_ACTOR_HAS_SCRIPT(i) (act_interact_addr[i] != 0u)",
-                  "#define NGC_ACTOR_INTERACT(i) ngc_vm_interact(act_interact_addr[i])"]
+                  f"#define NGC_ACTOR_INTERACT(i) ngc_vm_interact({table_args('act_interact', 'i')})"]
     else:
         lines += ["#define NGC_ACTOR_IN_FRONT(grid) 255u", "#define NGC_ACTOR_HAS_SCRIPT(i) 0",
                   "#define NGC_ACTOR_INTERACT(i) ((void)(i))"]

@@ -109,8 +109,71 @@ def sprite_tile_count(sheets):
     return len(pool_tiles(sheets)[0])
 
 
+# Streamed sheets (docs/ETUDE_RECYCLAGE_TUILES.md). Every frame of every sheet
+# is resident for the whole scene; a sheet only one actor can show (the player,
+# a boss) needs only the frame it shows. Such a sheet gets a double window of
+# its largest frame's tiles: when its frame changes, the frame's tiles are
+# copied in one block from ROM into the half the screen does not show, during
+# the vertical blank, and the OAM words of both halves are precomputed in ROM
+# (no work per sprite, nothing when OAM slots shift). Used only when the
+# scene's sprite tiles do not fit; a scene that fits keeps its C unchanged.
+# Tests and labs only (tools/lab_sprite_stream.py): stream every eligible
+# sheet (True) or those of the scenes named ("scene <name>").
+FORCE_STREAM = False
+
+
+def sheet_window(sheet):
+    """Tiles of the sheet's largest frame (distinct patterns, flips merged)."""
+    _, (found,) = pool_tiles([sheet])
+    return max((len({found[spr.tile][0] for spr in frame}) for frame in sheet.frames), default=0)
+
+
+def single_instance_sheets(actor_sheets, excluded=()):
+    """Sheets one actor at most can show: actor_sheets = the sheet of each actor
+    (player first); excluded = sheets a script can give to any actor, projectiles,
+    emotes."""
+    from collections import Counter
+    counts = Counter(actor_sheets)
+    return frozenset(i for i, n in counts.items() if n == 1 and i not in set(excluded))
+
+
+def _forced(where):
+    return FORCE_STREAM is True or (bool(FORCE_STREAM) and where in FORCE_STREAM)
+
+
+def _resident_count(sheets, streamed):
+    return sprite_tile_count([sh for i, sh in enumerate(sheets) if i not in streamed])
+
+
+def stream_plan(sheets, tile_base, tile_limit=512, single=frozenset(), where=None):
+    """Sheets to stream, largest gain first, until the scene fits (all eligible
+    ones when forced). () when the scene fits as it is."""
+    forced = _forced(where)
+    if tile_base + sprite_tile_count(sheets) <= tile_limit and not forced:
+        return ()
+    gains = []
+    for i in sorted(single):
+        window = sheet_window(sheets[i])
+        own = sprite_tile_count([sheets[i]])
+        if own > 2 * window:
+            gains.append((own - 2 * window, i))
+    chosen = []
+    for _, i in sorted(gains, reverse=True):
+        chosen.append(i)
+        if not forced and (tile_base + _resident_count(sheets, chosen)
+                           + sum(2 * sheet_window(sheets[k]) for k in chosen) <= tile_limit):
+            break
+    return tuple(sorted(chosen))
+
+
+def sprite_tile_budget(sheets, tile_base, tile_limit=512, single=frozenset(), where=None):
+    """Characters the scene's sprites take: resident sheets pooled, plus the windows."""
+    streamed = stream_plan(sheets, tile_base, tile_limit, single, where)
+    return _resident_count(sheets, streamed) + sum(2 * sheet_window(sheets[i]) for i in streamed)
+
+
 def sprites_source(sheets, tile_base, palettes, where="scene sprites", top=0, shadow=False, priority=PRIORITY_FRONT, *, shared_text=False,
-                   behind_level=PRIORITY_BEHIND, recycle=None, patch=False):
+                   behind_level=PRIORITY_BEHIND, recycle=None, patch=False, tile_limit=512, single=frozenset()):
     """sheets: NgpcSheet list; palettes: 8 slots of (c0, c1, c3) RGB444 (GB Studio
     getSpritePalette keeps colors 0, 1 and 3; color index 0 is transparent).
     shadow: the scene's colours go to the fade manager's palette shadow
@@ -121,12 +184,50 @@ def sprites_source(sheets, tile_base, palettes, where="scene sprites", top=0, sh
     patch: the GBVM runtime's ngc_palette_patch writes them (fade shadow, fades)."""
     if len(palettes) not in (8, 16) or any(len(p) != 3 for p in palettes):
         raise CompileError(f"{where}: 8 sprite palettes of 3 colors expected (16 with native sheets)")
-    tiles, maps = pool_tiles(sheets)
-    if tile_base + len(tiles) > 512:
-        raise CompileError(f"{where}: {len(tiles)} sprite tiles from {tile_base} exceed the 512 shared tiles")
+    streamed = stream_plan(sheets, tile_base, tile_limit, single, where)
+    resident = [i for i in range(len(sheets)) if i not in streamed]
+    tiles, resident_maps = pool_tiles([sheets[i] for i in resident])
+    maps = [None] * len(sheets)
+    for i, found in zip(resident, resident_maps):
+        maps[i] = found
+    windows = {}
+    at = tile_base + len(tiles)
+    for i in streamed:
+        windows[i] = (at, sheet_window(sheets[i]), pool_tiles([sheets[i]]))
+        at += 2 * windows[i][1]
+    if at > tile_limit:
+        if streamed:
+            raise CompileError(f"{where}: sprite tiles from {tile_base} reach {at - 1} with the sheets one actor "
+                               f"shows streamed ({', '.join(sheets[i].name for i in streamed)}): {at - tile_limit} "
+                               f"over the {tile_limit} tiles (docs/ETUDE_RECYCLAGE_TUILES.md)")
+        raise CompileError(f"{where}: {len(tiles)} sprite tiles from {tile_base} exceed the {tile_limit} shared tiles"
+                           if tile_limit != 512 else
+                           f"{where}: {len(tiles)} sprite tiles from {tile_base} exceed the 512 shared tiles")
     words, pals, starts, counts, ox, oy, boxes = [], [], [], [], [], [], []
-    for sheet, found in zip(sheets, maps):
+    alt_words, alt_start, stream_of, tile_at, tile_n, stream_tiles = [], [], [], [], [], []
+    blocks = {}                            # (sheet, patterns) -> first word in spr_stile
+    for index, (sheet, found) in enumerate(zip(sheets, maps)):
+        window = windows.get(index)
         for n, frame in enumerate(sheet.frames):
+            if window is not None:
+                # The frame's distinct patterns, sorted: its tiles in either half. Frames
+                # with the same patterns (a frame and its mirror, say) share one block.
+                own = window[2][1][0]
+                local = sorted({own[spr.tile][0] for spr in frame})
+                stream_of.append(list(windows).index(index))
+                key = (index, tuple(local))
+                if key not in blocks:
+                    blocks[key] = len(stream_tiles)
+                    for c in local:
+                        data = encode_tile(list(window[2][0][c]))
+                        stream_tiles.extend(int.from_bytes(data[k:k + 2], "little") for k in range(0, 16, 2))
+                tile_at.append(blocks[key])
+                tile_n.append(len(local))
+            else:
+                stream_of.append(0xFF)
+                tile_at.append(0)
+                tile_n.append(0)
+            alt_start.append(len(alt_words))
             starts.append(len(words))
             counts.append(len(frame))
             if not frame:
@@ -139,19 +240,32 @@ def sprites_source(sheets, tile_base, palettes, where="scene sprites", top=0, sh
             boxes.extend((x0, x1, y0, y1))
             ox.append(frame[0].x); oy.append(frame[0].y)
             for i, spr in enumerate(frame):
-                pooled, hflip, vflip = found[spr.tile]
-                tile = tile_base + pooled
+                if window is not None:
+                    pooled, hflip, vflip = own[spr.tile]
+                    tile = window[0] + local.index(pooled)
+                else:
+                    pooled, hflip, vflip = found[spr.tile]
+                    tile = tile_base + pooled
                 chain = 0 if i == 0 else 0x06
                 level = behind_level if spr.behind else priority
                 attr = (0x80 if spr.hflip != hflip else 0) | (0x40 if spr.vflip != vflip else 0) | level | chain | (tile >> 8)
                 words.append((tile & 255) | attr << 8)
+                if window is not None:
+                    other = tile + window[1]           # the same tile in the second half
+                    alt_words.append((other & 255) | ((attr & 0xFE) | (other >> 8)) << 8)
                 if i == 0:
                     words.append(0)
                 else:
                     prev = frame[i - 1]
                     words.append(((spr.x - prev.x) & 255) | ((spr.y - prev.y) & 255) << 8)
+                if window is not None:
+                    alt_words.append(words[-1])
                 pals.append(spr.palette)
+    alt_base = len(words)                 # second-half words follow the others
+    words.extend(alt_words)
     frames = len(counts)
+    if streamed and frames >= 0x8000:
+        raise CompileError(f"{where}: {frames} sprite frames, at most 32767 with streamed sheets")
     lines = ["/* Original V3 actor renderer; SNK K2GETechRef 4-3 (sprite VRAM, chain, CP.C).",
              " * Semantics: GBVM actors_render; metasprites: GB Studio compileSprite. */"]
     tile_data = b"".join(encode_tile(list(t)) for t in tiles)
@@ -164,10 +278,12 @@ def sprites_source(sheets, tile_base, palettes, where="scene sprites", top=0, sh
     c_array(lines, "spr_start", starts)
     # One 8-byte record per frame, read through a single pointer (cc900 then
     # addresses every field by displacement): count, first sprite offset x/y,
-    # extent x0, x1, y0, y1 relative to the actor (inclusive), padding.
-    lines.append("/* Frame records: count, ox, oy, x0, x1, y0, y1, 0. */")
+    # extent x0, x1, y0, y1 relative to the actor (inclusive), padding (with
+    # streamed sheets: 1 + the frame's streamed sheet, 0 = resident).
+    lines.append("/* Frame records: count, ox, oy, x0, x1, y0, y1, 0. */" if not streamed else
+                 "/* Frame records: count, ox, oy, x0, x1, y0, y1, streamed sheet + 1 (0 = resident). */")
     c_array(lines, "spr_rec", [v for f in range(frames) for v in
-                               (counts[f], ox[f], oy[f], *boxes[4*f:4*f+4], 0)], "signed char")
+                               (counts[f], ox[f], oy[f], *boxes[4*f:4*f+4], (stream_of[f] + 1) & 255)], "signed char")
     if recycle:
         lines += _recycle_tables(sheets, recycle, where, patch)
     lines += ["/* Shadow OAM (GBVM draws into a shadow OAM too): 4 bytes per sprite, then",
@@ -279,6 +395,10 @@ def sprites_source(sheets, tile_base, palettes, where="scene sprites", top=0, sh
               "    if (ngc_soam_count != 0u) ngc_soam_copy();",
               *(["    if (ngc_spal_dirty != 0u) ngc_spal_publish();"] if recycle else []), "}"]
     source = "\n".join(lines) + "\n"
+    if streamed:
+        source = _stream_source(source, [windows[i] for i in streamed], [sheets[i].name for i in streamed],
+                                stream_of, [alt_base + a for a in alt_start], tile_at, tile_n, stream_tiles,
+                                alt_words, where)
     if shared_text:
         source = "unsigned char ngc_ui_sprite_cut(void);\n" + source
         source = source.replace("    unsigned char n;\n    unsigned char k;",
@@ -299,6 +419,116 @@ def sprites_source(sheets, tile_base, palettes, where="scene sprites", top=0, sh
     ngc_oam_used = (unsigned char)(ngc_oam_used + n);""" % {"top": top})
     return source
 
+
+
+def _sub(source, old, new, where):
+    if source.count(old) != 1:
+        raise CompileError(f"{where}: streamed sheet hook missing (internal): {old.strip()[:60]!r}")
+    return source.replace(old, new)
+
+
+def _stream_source(source, windows, names, stream_of, alt, tile_at, tile_n, stream_tiles, alt_words, where):
+    """The renderer with sheets streamed (FORCE_STREAM / stream_plan above).
+
+    Per streamed sheet j: halves 0 and 1 of its window, ngc_st_in[2j + h] = the
+    frame whose tiles are in half h, ngc_st_pub[j] = the half the screen shows,
+    ngc_st_cur[j] = the half the drawing in progress uses. Drawing a frame of
+    sheet j uses the half already holding it, else the half the screen does not
+    show (its copy is then wanted). One actor shows the sheet, so the screen and
+    the drawing never need the same half for two frames, and a half on screen is
+    never written. The commit copies the wanted frames (one block each) while
+    enough of the vertical blank is left (K2GE RAS.V, 0x8009: 515 cycles a line,
+    a tile about 150 cycles with LDIRW, three a line kept), then publishes the
+    OAM; a copy that cannot start keeps the previous OAM on screen and waits for
+    the next blank. Words of both halves are in ROM (spr_words, second half at
+    spr_alt[frame]); the frame cache key is the frame | half << 15."""
+    count = len(windows)
+    lines = [f"/* Streamed sheets (ngpcraft/scene_sprites.py): {', '.join(names)}. */"]
+    c_array(lines, "spr_alt", alt)
+    c_array(lines, "spr_tat", tile_at)
+    c_array(lines, "spr_tn", tile_n, "unsigned char")
+    c_array(lines, "spr_stile", stream_tiles or [0])
+    c_array(lines, "spr_swin", [w for _, w, _ in windows])
+    c_array(lines, "spr_sbase", [0xA000 + b * 16 for b, _, _ in windows])
+    lines += [f"static unsigned short ngc_st_in[{2 * count}];   /* frame in each half, 0xFFFF = none */",
+              f"static unsigned char ngc_st_pub[{count}];    /* half on screen, 0xFF = none */",
+              f"static unsigned char ngc_st_cur[{count}];    /* half of the drawing in progress */",
+              f"static unsigned char ngc_st_want[{count}];   /* half waiting for its copy, 0xFF = none */",
+              "static unsigned long ngc_st_src;", "static unsigned short ngc_st_dst;", "static unsigned short ngc_st_words;",
+              "static unsigned char ngc_st_hold;   /* slots to copy at least: a drawing not published */",
+              "", "static void ngc_st_reset(void)", "{", "    unsigned char j;",
+              f"    for (j = 0u; j < {count}u; ++j) {{",
+              "        ngc_st_in[j << 1] = 0xFFFFu;", "        ngc_st_in[(j << 1) + 1u] = 0xFFFFu;",
+              "        ngc_st_pub[j] = 0xFFu;", "        ngc_st_cur[j] = 0u;", "        ngc_st_want[j] = 0xFFu;",
+              "    }", "    ngc_st_hold = 0u;", "}", "",
+              "/* ROM -> character RAM, one block; same idiom as ngc_frame_copy. */",
+              "static void ngc_st_block(void)", "{",
+              '    __asm("ld xhl, (_ngc_st_src)");', '    __asm("ld xde, 0");', '    __asm("ld de, (_ngc_st_dst)");',
+              '    __asm("ld bc, (_ngc_st_words)");', '    __asm("ldirw");', "}", "",
+              "/* Copy sheet j's wanted frame if the vertical blank has room. 1 = copied. */",
+              "static unsigned char ngc_st_copy(unsigned char j)", "{",
+              "    unsigned char h;", "    unsigned char line;", "    unsigned short f;", "    unsigned char n;",
+              "    h = ngc_st_want[j];", "    f = ngc_st_in[(j << 1) + h];", "    n = spr_tn[f];",
+              "    line = *(volatile unsigned char *)0x8009;   /* RAS.V: 152..198 = vertical blank */",
+              "    if (line < 152u || line > 197u || (unsigned short)(197u - line) * 3u < (unsigned short)n) return 0u;",
+              "    ngc_st_src = (unsigned long)(spr_stile + spr_tat[f]);",
+              "    ngc_st_dst = (unsigned short)(spr_sbase[j] + (h ? (unsigned short)(spr_swin[j] << 4) : 0u));",
+              "    ngc_st_words = (unsigned short)((unsigned short)n << 3);",
+              "    if (ngc_st_words != 0u) ngc_st_block();",
+              "    ngc_st_want[j] = 0xFFu;", "    return 1u;", "}", ""]
+    source = _sub(source, "void ngc_sprites_load(void)\n", "\n".join(lines) + "\nvoid ngc_sprites_load(void)\n", where)
+    source = _sub(source, "    ngc_oam_used = 0u;\n    ngc_oam_prev = 0u;\n    ngc_soam_count = 0u;\n",
+                  "    ngc_oam_used = 0u;\n    ngc_oam_prev = 0u;\n    ngc_soam_count = 0u;\n    ngc_st_reset();\n",
+                  where)
+    source = _sub(source, "    unsigned char n;\n    unsigned char k;\n",
+                  "    unsigned char n;\n    unsigned char k;\n    unsigned char sj;\n    unsigned char sh;\n"
+                  "    unsigned short kf;\n", where)
+    if len(windows) > 127:
+        raise CompileError(f"{where}: {len(windows)} streamed sheets, at most 127")
+    source = _sub(source, "    /* d: position word of the first sprite in the shadow. */\n",
+                  "    /* A streamed sheet: the half holding the frame, else the one off screen. */\n"
+                  "    sh = 0u;\n"
+                  "    kf = frame;\n"
+                  "    sj = (unsigned char)r[7];\n"
+                  "    if (sj != 0u) {\n"
+                  "        --sj;\n"
+                  "        sh = ngc_st_pub[sj];\n"
+                  "        if (sh == 0xFFu || ngc_st_in[(sj << 1) + sh] != frame) {\n"
+                  "            sh = (unsigned char)(sh == 0u ? 1u : 0u);\n"
+                  "            if (ngc_st_in[(sj << 1) + sh] != frame) {\n"
+                  "                ngc_st_in[(sj << 1) + sh] = frame;\n"
+                  "                ngc_st_want[sj] = sh;\n"
+                  "            }\n"
+                  "        }\n"
+                  "        ngc_st_cur[sj] = sh;\n"
+                  "        if (sh) kf |= 0x8000u;\n"
+                  "    }\n"
+                  "    /* d: position word of the first sprite in the shadow. */\n", where)
+    source = _sub(source, "    if (*key != frame) {\n", "    if (*key != kf) {\n", where)
+    source = _sub(source, "        ngc_frame_words = (unsigned long)(spr_words + start);\n",
+                  "        ngc_frame_words = (unsigned long)(spr_words + (sh ? spr_alt[frame] : start));\n", where)
+    source = _sub(source, "        *key++ = frame;\n", "        *key++ = kf;\n", where)
+    restore = "        a = spr_words + spr_start[frame];\n"
+    if restore in source:
+        source = _sub(source, restore, "        a = spr_words + (sh ? spr_alt[frame] : spr_start[frame]);\n", where)
+    source = _sub(source, "void ngc_sprites_commit(void)\n{\n",
+                  "void ngc_sprites_commit(void)\n{\n    unsigned char j;\n"
+                  f"    for (j = 0u; j < {count}u; ++j)\n"
+                  "        if (ngc_st_want[j] != 0xFFu && !ngc_st_copy(j)) {\n"
+                  "            /* Keep the published OAM. The next copy covers this drawing's\n"
+                  "             * slots too: its count includes the ones on screen (ngc_sprites_end),\n"
+                  "             * the next drawing's count only its own and this one's. */\n"
+                  "            if (ngc_soam_count > ngc_st_hold) ngc_st_hold = ngc_soam_count;\n"
+                  "            return;\n"
+                  "        }\n"
+                  "    if (ngc_st_hold > ngc_soam_count) ngc_soam_count = ngc_st_hold;\n"
+                  "    ngc_st_hold = 0u;\n",
+                  where)
+    source = _sub(source, "    if (ngc_soam_count != 0u) ngc_soam_copy();\n",
+                  "    if (ngc_soam_count != 0u) ngc_soam_copy();\n"
+                  f"    for (j = 0u; j < {count}u; ++j) ngc_st_pub[j] = ngc_st_cur[j];   /* the halves now on screen */\n",
+                  where)
+    return source
 
 
 def restore_cached_attributes(source):

@@ -6,6 +6,9 @@
  *
  *   ngpcraft-v3/v3/ngpcraft/                 V3 Python package
  *   ngpcraft-v3/v3/docs/ECARTS_GBSTUDIO.md   gap titles (event catalogue)
+ *   ngpcraft-v3/plugin-bridge/gbstudio_bridge.cjs   GB Studio 4.3.2 modules
+ *       of the event plugin bridge, run by the editor itself
+ *       (bundle-plugin-bridge.js, lib/ngpcraft/pluginBridgeHost.ts)
  *   ngpcraft-v3/python/                      Windows only: the official
  *       embeddable Python (the V3 needs only the standard library), with
  *       ../v3 on its path, so a new Windows machine needs no Python install
@@ -16,6 +19,7 @@ const fs = require("fs-extra");
 const Path = require("path");
 const crypto = require("crypto");
 const AdmZip = require("adm-zip");
+const { buildPluginBridge } = require("./bundle-plugin-bridge");
 
 const editorRoot = Path.join(__dirname, "../../../..");
 const bundleRoot = Path.join(editorRoot, ".bundle", "ngpcraft-v3");
@@ -69,6 +73,9 @@ module.exports = async (_forgeConfig, platform) => {
   if (await fs.pathExists(gaps)) {
     await fs.copy(gaps, Path.join(bundleRoot, "v3", "docs", "ECARTS_GBSTUDIO.md"));
   }
+  await buildPluginBridge(
+    Path.join(bundleRoot, "plugin-bridge", "gbstudio_bridge.cjs"),
+  );
   if ((platform || process.platform) === "win32") {
     await embeddedPython();
   }

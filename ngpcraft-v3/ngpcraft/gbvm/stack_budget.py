@@ -3,13 +3,14 @@
 Every opcode must be explicitly classified before it can shrink storage.
 The decoder uses C locals, so its argument bytes need no VM stack scratch.
 
-Far calls are followed into the called script of bank 0 (vm.c vm_call_far
-pushes PC and bank: two words; vm_ret_far pops them, then N arguments).
+Far calls are followed into the called script, in any bank (vm.c
+vm_call_far pushes PC and bank: two words; vm_ret_far pops them, then N
+arguments): a script is named by (bank, address), docs/PLAN_MULTI_BANQUES.md.
 Indirect references read or write slots that already exist (vm.c
 vm_set_indirect, vm_get_indirect, vm_push_value_ind, vm_rpn REF_IND...).
 Text (vm_ui.c vm_load_text) only reads its arguments; its inline data is
 NARGS words then a zero-terminated string (load_text stops at the first 0).
-Recursion, other banks and unbalanced returns keep the vendored capacity.
+Recursion and unbalanced returns keep the vendored capacity.
 """
 from ..compiler import CompileError
 
@@ -19,6 +20,8 @@ from ..compiler import CompileError
 NEUTRAL = frozenset((
     "VM_SFX_PLAY", "VM_MUSIC_PLAY", "VM_MUSIC_STOP", "VM_PROJECTILE_LAUNCH", "VM_ACTOR_GET_ANGLE",
     # vm_sio.c (gbvm/link.py): references only; the exchange rewinds onto itself.
+    # vm_rtc.c (gbvm/ngpc_system.py): references only.
+    "VM_RTC_LATCH", "VM_RTC_GET", "VM_RTC_SET", "VM_RTC_START",
     "VM_SIO_SET_MODE", "VM_SIO_EXCHANGE", "VM_MUSIC_MUTE", "VM_MUSIC_ROUTINE", "VM_SET_TEXT_SOUND",
     "VM_LOCK", "VM_UNLOCK", "VM_IDLE", "VM_SET_CONST", "VM_MEMSET", "VM_RAND", "VM_INIT_RNG", "VM_SET", "VM_GET_TLOCAL",
     "VM_SET_SPRITE_MODE", "VM_FADE", "VM_ACTOR_ACTIVATE", "VM_ACTOR_DEACTIVATE", "VM_ACTOR_BEGIN_UPDATE", "VM_SET_SPRITE_VISIBLE", "VM_ACTOR_SET_BOUNDS", "VM_PROJECTILE_LOAD_TYPE",
@@ -114,17 +117,17 @@ adds the return frame and the called script's own bound at the call height.
 
 class _Analysis:
     def __init__(self, scripts, specs, rpn_ops):
-        self.by_address = {s.address: s for s in scripts}
+        self.by_address = {(s.bank, s.address): s for s in scripts}
         self.specs, self.rpn_ops = specs, rpn_ops
         self.functions = {}       # symbol -> (peak, arguments popped or None: never returns)
         self.active = []
         self.calls = {}           # symbol -> symbols called directly or not
 
-    def function(self, address):
+    def function(self, bank, address):
         """Bound of a called script, relative to the height after its return frame."""
-        callee = self.by_address.get(address)
+        callee = self.by_address.get((bank, address))
         if callee is None:
-            raise _Fallback(f"far call to {address:#06x} is not the start of a bank script")
+            raise _Fallback(f"far call to bank {bank} {address:#06x} is not the start of a bank script")
         if callee.symbol in self.active:
             raise _Fallback(f"recursive far call to {callee.symbol}")
         if callee.symbol not in self.functions:
@@ -181,9 +184,11 @@ class _Analysis:
             elif name == "VM_RESERVE":
                 height += args["N"] if args["N"] < 128 else args["N"] - 256
             elif name == "VM_CALL_NATIVE":
-                if args["BANK"] != 0 or args["PTR"] not in (3, 4):
+                # 3/4: platform callbacks; 8: ngc_clock_get (rewrites its one argument),
+                # 9: ngc_shutdown (none), gbvm/ngpc_system.py.
+                if args["BANK"] != 0 or args["PTR"] not in (3, 4, 8, 9):
                     raise _Fallback("unclassified synchronous native")
-                if height < (3 if args["PTR"] == 3 else 1):
+                if height < {3: 3, 9: 0}.get(args["PTR"], 1):
                     raise _Fallback("synchronous native argument underflow")
             elif name == "VM_INVOKE":
                 # wait_frames stores its persistent countdown at *stack_ptr,
@@ -244,9 +249,7 @@ class _Analysis:
                     raise _Fallback("unterminated text data")
                 pc = data.index(0, text) + 1
             elif name == "VM_CALL_FAR":
-                if args["BANK"] != 0:
-                    raise _Fallback("far call to another bank")
-                _, (callee_peak, callee_pops) = self.function(args["ADDR"])
+                _, (callee_peak, callee_pops) = self.function(args["BANK"], args["ADDR"])
                 peak = max(peak, height + CALL_FRAME + callee_peak)
                 if callee_pops is None:
                     destinations = []
