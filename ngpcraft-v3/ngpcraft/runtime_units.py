@@ -431,6 +431,11 @@ UNITS += (
                      "without fades in ngpcraft/gbvm/emit.py c_scenes",),
          license="MIT; GBVM_LICENSE.txt; Copyright (c) 2020 Toxa",
          tests=("tests/test_scene_switch.py", "tests/test_scene_cuts.py", "tests/test_second_stream.py"), backend="gbvm"),
+    Unit("gbvm_scene_fade_cuts", ("_ngc_palette_hidden",), feature="scene_fade_cuts",
+         dependencies=("gbvm_scene_changes", "gbvm_fades"), object="gbvm.rel",
+         provenance=("Original V3: a scene change without fade, in a project with fades, publishes in VBlank "
+                     "(ngpcraft/gbvm/emit.py FADE_CUT_SOURCE); GBVM fade_manager.c fade_timer semantics",),
+         tests=("tests/test_scene_switch.py",), backend="gbvm"),
     Unit("gbvm_text", ("_ngc_ui_start", "_ngc_ui_scene_load", "_ngc_ui_update", "_ngc_ui_commit"),
          feature="text", dependencies=("gbvm_scene", "scene_input", "gbvm_frame_wait"), object="gbvm.rel",
          provenance=("GBVM src/core/ui.c and src/core/vm_ui.c at commit bd6f41c (ui_init, ui_update, "

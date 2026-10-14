@@ -54,7 +54,7 @@ AFTER_SCRIPTS = [
 
 def engine_files(scene, moves=None, updates=None, cancel=False, topdown=None, interactions=None, triggers=None, hits=None,
                  shadow=False, text=False, track_front=False, stop_update=False, start_update=False, actor_states=None, read_positions=False, camera_shake=False, read_directions=False, push=False, split_moves=True, sprite_states=None, projectile_groups=None, projectile_scripts=None, projectile_modal=False, resume=False, camera_control=False, set_bounds=False, camera_properties=False, scroll_bounds=False,
-                 parallax_export=False, patch=False):
+                 parallax_export=False, patch=False, speedups=False):
     """scene: scene_build.EngineScene -> {path: C source}, report.
     patch: recycled palettes go through the GBVM runtime's ngc_palette_patch
     (fade shadow and fades; emit.palette_patch_source).
@@ -263,4 +263,12 @@ def engine_files(scene, moves=None, updates=None, cancel=False, topdown=None, in
         # native_variants.py (PLAN_MEGAMAN L5): what ngc_bg_variant writes.
         plane, sets = scene.color_variants
         report["color_variants"] = {"plane": plane, "sets": [[list(words), backdrop] for words, backdrop in sets]}
+    if speedups:
+        # docs/ETUDE_CADENCE.md §6.2: last, once every renderer variant is in the C.
+        from .sprite_fast import fast_draw
+        files["src/scene_sprites.c"], files["src/scene_actors.c"], fast = fast_draw(
+            files["src/scene_sprites.c"], files["src/scene_actors.c"])
+        report["sprite_fast_draw"] = {k: v for k, v in fast.items() if k != "extra_publics"}
+        if fast.get("extra_publics"):
+            report["extra_publics"] = fast["extra_publics"]
     return files, report

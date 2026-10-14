@@ -84,7 +84,9 @@ def compare(reference, other, frames, inputs, out, emulator, bios, keep=6):
     the rendering alone; the ticks where the clocks had drifted are counted
     (the cost made visible, not hidden). The buttons likewise (below)."""
     a, b = Run(reference, emulator, bios), Run(other, emulator, bios)
-    clock_a, clock_b = a.sym["_ngc_sys_time"]["address"], b.sym["_ngc_sys_time"]["address"]
+    # sys_time exists only when a script reads it: without it there is no clock to keep in step.
+    clock_a = a.sym.get("_ngc_sys_time", {}).get("address")
+    clock_b = b.sym.get("_ngc_sys_time", {}).get("address")
     differing, first, scenes, drift = 0, [], set(), 0
     run, longest = 0, 0
     for frame in range(frames):
@@ -94,8 +96,8 @@ def compare(reference, other, frames, inputs, out, emulator, bios, keep=6):
             raise SystemExit(f"reference: frame {frame} not reached")
         if y is None:
             return {"identical": False, "frame": frame, "reason": "frame not reached", "differing_ticks": differing}
-        clock = bytes(a.m.read(clock_a, 2))
-        if bytes(b.m.read(clock_b, 2)) != clock:
+        clock = bytes(a.m.read(clock_a, 2)) if clock_a is not None else None
+        if clock is not None and clock_b is not None and bytes(b.m.read(clock_b, 2)) != clock:
             drift += 1
             b.m.write(clock_b, clock)
         # The buttons: Run writes the port (0xB0), the BIOS copies it to 0x6F82 at

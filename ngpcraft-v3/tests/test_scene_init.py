@@ -123,6 +123,16 @@ class ThreadTests(unittest.TestCase):
         self.assertEqual(init.sources[2], "project/scenes/room/actors/a.gbsres:startScript[2]")
         self.assertEqual(init.auto_fade, "end")
 
+    def test_ngpc_events_nested_in_the_init(self):
+        # The editor's NGPC events inside a loop or an If of a scene init: they wait for
+        # nothing (neither flag declared, false in GB Studio), so the fade goes at the end.
+        loop = ev("loop", "EVENT_LOOP", children={"true": [
+            ev("bat", "EVENT_NGPC_BATTERY_GET", variable="1"),
+            ev("lang", "EVENT_NGPC_IF_LANGUAGE", children={"true": [ev("inc", "EVENT_INC_VALUE")]},
+               language="english")]})
+        init = build_inits(fake([scene(script=[loop])])).scenes[0]
+        self.assertEqual(init.auto_fade, "end")
+
     def test_actor_wait_places_the_fade_before_the_actor_event(self):
         s = scene(actors=[actor("a", [ev("w", "EVENT_WAIT")])])
         init = build_inits(fake([s])).scenes[0]

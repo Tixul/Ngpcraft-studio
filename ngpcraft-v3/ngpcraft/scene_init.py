@@ -126,9 +126,15 @@ def auto_fade_event_id(thread, thread_where, custom, flag, custom_where):
 class _Builder:
     def __init__(self, project, model):
         self.project = project
-        self.flags = {**model["events"], **{command: {"waitUntilAfterInitFade": e["waitUntilAfterInitFade"],
-                                                      "allowChildrenBeforeInitFade": e["allowChildrenBeforeInitFade"]}
-                                            for command, e in project.plugin_events.items()}}
+        # The editor's NGPC events (parity.NGPC_EVENTS) declare neither flag:
+        # GB Studio reads an absent one as false (src/lib/events/eventNgpc*.js).
+        from .parity import NGPC_EVENTS
+        self.flags = {**model["events"],
+                      **{command: {"waitUntilAfterInitFade": False, "allowChildrenBeforeInitFade": False}
+                         for command in NGPC_EVENTS},
+                      **{command: {"waitUntilAfterInitFade": e["waitUntilAfterInitFade"],
+                                   "allowChildrenBeforeInitFade": e["allowChildrenBeforeInitFade"]}
+                         for command, e in project.plugin_events.items()}}
         self.scene_types = model["sceneTypes"]
         self.errors = []
         self.path_of = {data["id"]: rel for rel, data in project.files.items() if isinstance(data.get("id"), str)}

@@ -46,8 +46,11 @@ RESOURCE_DIRS = ("project", "assets", "plugins")
 #   once, 5 (GB Studio) to 64; 29 bytes of RAM each, in the scene budget.
 # - default_color (core, docs/M7_NATIVE_COLOR.md): "native" = every background
 #   and sprite sheet in its PNG colours unless its own ngpc_color says "gbs".
+# - engine_speedups (core, docs/ETUDE_CADENCE.md): true (default) or false; false
+#   exports the engine as it was before the frame-rate work, byte for byte (the
+#   way back if one of its steps ever misbehaves).
 NGPC_PROJECT_KEYS = frozenset({"option_long_press", "actor_capacity", "frame_rate", "native_sfx", "vm_context_policy",
-                               "projectile_capacity", "default_color"})
+                               "projectile_capacity", "default_color", "engine_speedups"})
 FRAME_RATES = (60, 30)
 NGPC_RESOURCE_KEYS = frozenset({"second_background", "native_music", "ngpc_color", "ngpc_color_variants",
                                 "ngpc_backdrop"})
@@ -223,6 +226,11 @@ def frame_rate(project):
     return ext["frame_rate"] if "frame_rate" in ext else 60
 
 
+def engine_speedups(project):
+    """ngpcraft.json ngpc.engine_speedups: true when absent (docs/ETUDE_CADENCE.md)."""
+    return project.ngpc["ngpc"].get("engine_speedups", True)
+
+
 def option_long_press(project):
     """ngpcraft.json ngpc.option_long_press (ECARTS §2): "select" when absent."""
     ext = project.ngpc["ngpc"]
@@ -390,6 +398,9 @@ def _load_sidecar(root, ids, errors, files):
                                         or project_ext["frame_rate"] not in FRAME_RATES):
         errors.append(f"{SIDECAR}.ngpc.frame_rate: {project_ext['frame_rate']!r}, expected 60 or 30 "
                       "(images per second, fixed)")
+    if "engine_speedups" in project_ext and type(project_ext["engine_speedups"]) is not bool:
+        errors.append(f"{SIDECAR}.ngpc.engine_speedups: {project_ext['engine_speedups']!r}, expected true "
+                      "(default) or false (the engine as before docs/ETUDE_CADENCE.md)")
     if "vm_context_policy" in project_ext and project_ext["vm_context_policy"] != "gbvm-16":
         errors.append(f"{SIDECAR}.ngpc.vm_context_policy: expected explicit gbvm-16; omit for automatic NGPC capacities")
     if "native_sfx" in project_ext:

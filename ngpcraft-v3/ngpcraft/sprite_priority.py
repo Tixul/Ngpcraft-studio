@@ -256,7 +256,10 @@ def masked_sprites_source(renderer,sheets,source,cache_base,slots, *, top=0):
 
 /* One interior tile: 8 rows, source/mask in ROM and result in RAM.
  * Preserve the callee-saved index registers. Shift is always 1..8, never
- * zero. Absolute transfer state, no stack-relative assembly. */
+ * zero. Absolute transfer state, no stack-relative assembly. The unaligned
+ * rows shift HL one bit at a time (srl 1 + djnz on WA): the shift by A form
+ * (srl a, hl = DB FF) was never cleared on NGPC silicon and cc900 never emits
+ * it (docs/ETUDE_CADENCE.md 6.3); same result for a count of 1..7. */
 static unsigned long ngc_mask_row_source;
 static unsigned long ngc_mask_row_plane;
 static unsigned short ngc_mask_row_target;
@@ -302,7 +305,10 @@ static void ngc_mask_rows_draw(void)
     __asm("ld h, (xiy)");
     __asm("ld l, (xiy+1)");
     __asm("ld a, (_ngc_mask_row_shift)");
-    __asm("srl a, hl");
+    __asm("extz wa");
+    __asm("ngc_mask_rows_shift1:");
+    __asm("srl 1, hl");
+    __asm("djnz wa, ngc_mask_rows_shift1");
     __asm("ld h, 0");
     __asm("add hl, hl");
     __asm("ld wa, (xbc+hl)");
@@ -315,7 +321,10 @@ static void ngc_mask_rows_draw(void)
     __asm("ld h, (xiy)");
     __asm("ld l, (xiy+1)");
     __asm("ld a, (_ngc_mask_row_shift)");
-    __asm("srl a, hl");
+    __asm("extz wa");
+    __asm("ngc_mask_rows_shift2:");
+    __asm("srl 1, hl");
+    __asm("djnz wa, ngc_mask_rows_shift2");
     __asm("ld h, 0");
     __asm("add hl, hl");
     __asm("ld wa, (xbc+hl)");

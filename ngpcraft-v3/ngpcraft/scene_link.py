@@ -366,9 +366,11 @@ def link_file(path, texts, publish=None, extra=""):
     return "\n".join(out) + "\n", {"dispatched": sorted(public), "variables": len(variables), "ram_bytes": ram}
 
 
-def link_scenes(scenes, publish=None, extra=None):
+def link_scenes(scenes, publish=None, extra=None, direct=False):
     """scenes: [{path: C source}] per scene index, the same paths for every scene.
-    publish / extra: per path, see link_file. -> ({path: C source}, report)."""
+    publish / extra: per path, see link_file.
+    direct: calls across engine files go straight to the scene's function (direct_calls).
+    -> ({path: C source}, report)."""
     paths = sorted(scenes[0])
     if any(sorted(s) != paths for s in scenes):
         raise CompileError("scenes do not have the same engine files")
@@ -377,4 +379,71 @@ def link_scenes(scenes, publish=None, extra=None):
         files[path], report[path] = link_file(path, [s[path] for s in scenes],
                                               publish[path] if publish and path in publish else None,
                                               extra[path] if extra and path in extra else "")
+    if direct:
+        direct_calls(files, report)
     return files, report
+
+
+_SCENE_MARK = re.compile(r"^/\* ---- scene (\d+) ---- \*/$", re.M)
+_DISPATCHER = re.compile(rf"^(void|{_TYPE}) (ngc_\w+)\(([^()]*)\)\n\{{\n    switch \(ngc_scene\) \{{\n((?:    case \d+u: [^\n]*\n)+)",
+                         re.M)
+
+
+def direct_calls(files, report):
+    """docs/ETUDE_CADENCE.md (ngpc.engine_speedups): scene k's code in one engine file
+    calls a function another engine file dispatches on ngc_scene (ngc_sprite_draw from
+    scene_actors.c, for every actor every frame): the call goes straight to
+    s<k>_<name> while ngc_scene is still k (else through the dispatcher, as before),
+    and that file makes s<k>_<name> public (the link audit reads the list:
+    report[path]["direct_publics"]). Same function, same arguments: only the
+    dispatcher's switch and the re-pushed arguments are skipped. A call outside the
+    scene sections (game.c, the dispatchers themselves) is left as it is."""
+    owners = {}                                   # name -> (path, ret, args, scenes)
+    for path, text in files.items():
+        for m in _DISPATCHER.finditer(text):
+            scenes = {int(k) for k in re.findall(r"case (\d+)u:", m[4])}
+            owners[m[2]] = (path, m[1], m[3], scenes)
+    made_public = {path: set() for path in files}
+    for path, text in list(files.items()):
+        marks = list(_SCENE_MARK.finditer(text))
+        if not marks:
+            continue
+        # The dispatchers follow the last scene: its section ends at the first of them.
+        tail = min((m.start() for m in _DISPATCHER.finditer(text) if m.start() > marks[-1].start()),
+                   default=len(text))
+        pieces, at, used = [text[:marks[0].start()]], marks[0].start(), set()
+        for i, mark in enumerate(marks):
+            k = int(mark[1])
+            end = marks[i + 1].start() if i + 1 < len(marks) else tail
+            section = text[mark.start():end]
+            for name, (home, ret, args, scenes) in owners.items():
+                if home == path or k not in scenes:
+                    continue
+                # A scene can change while one of its functions still runs (a load
+                # without fade inside the tick): the dispatcher then served the NEW
+                # scene. The scene is checked at the call, so that the target stays
+                # the dispatcher's in every case.
+                section, count = re.subn(rf"\b{name}\(", f"(ngc_scene == {k}u ? s{k}_{name} : {name})(", section)
+                if count:
+                    used.add((home, k, name, ret, args))
+            pieces.append(section)
+            at = end
+        pieces.append(text[at:])
+        if not used:
+            continue
+        prototypes = "".join(f"{ret} s{k}_{name}({args});   /* {home}, direct call */\n"
+                             for home, k, name, ret, args in sorted(used))
+        files[path] = pieces[0] + prototypes + "".join(pieces[1:])
+        for home, k, name, ret, args in used:
+            made_public[home].add(f"s{k}_{name}")
+    for home, names in made_public.items():
+        for public in sorted(names):
+            text = files[home]
+            for suffix in (";", "\n{"):
+                old = re.compile(rf"^static ((?:void|{_TYPE}) {public}\([^()]*\)){re.escape(suffix)}", re.M)
+                text, count = old.subn(lambda m: m[1] + suffix, text)
+                if count != 1:
+                    raise CompileError(f"{home}: {public} declaration not found once for a direct call")
+            files[home] = text
+        if names:
+            report[home]["direct_publics"] = sorted(names)

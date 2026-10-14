@@ -20,7 +20,7 @@ from pathlib import Path, PurePosixPath
 import re
 
 from ..compiler import CompileError
-from ..project import load_model as load_gbstudio_model, option_long_press, frame_rate
+from ..project import load_model as load_gbstudio_model, option_long_press, frame_rate, engine_speedups
 from ..runtime_units import describe_unit, emit_unit_files, select_units
 from .assembler import (BANK_BYTES, CAMERA_PROPERTIES, ENGINE_MEMORY, NATIVES, SCROLL_BOUNDS, TEXT_MEMORY, UNREAD_MEMORY,
                         assemble_banks,
@@ -1306,6 +1306,44 @@ INLINE_FUNCTIONS = {fn: macro for macro, (fn, _) in INLINE_DECODERS.items()}
 INLINE_NOTE = "Written in VM_STEP's decoder (same statements, no call); no separate function emitted"
 
 
+# engine_speedups (docs/ETUDE_CADENCE.md §6.4): VM_INVOKE of wait_frames, the commonest
+# wait of every genre, measured ~1 700 cycles a frame and a script through vm_invoke (five
+# arguments), ngc_native, ngc_native_call and wait_frames. The same statements, on the
+# operands still in the bytecode: same update_fn / update_fn_bank / counter / waitable /
+# stack_ptr writes, and PC left on the opcode while waiting (vm_invoke's PC -= 7u).
+INVOKE_WAIT_FRAMES = """/* engine_speedups: vm_invoke + wait_frames for VM_INVOKE of wait_frames (same writes). */
+static void ngc_invoke_wait_frames(SCRIPT_CTX * THIS, const UBYTE * ngc_pc)
+{
+    INT16 idx = (INT16)(((UWORD)ngc_pc[0] << 8) | (UWORD)ngc_pc[1]);
+    UWORD * stack_frame = (idx < 0) ? THIS->stack_ptr + idx : script_memory + idx;
+    if ((THIS->update_fn != (UBYTE *)wait_frames) || (THIS->update_fn_bank != ngc_pc[5])) {
+        THIS->update_fn = (UBYTE *)wait_frames, THIS->update_fn_bank = ngc_pc[5];
+        *THIS->stack_ptr = stack_frame[0] + 1;
+    }
+    if (--*THIS->stack_ptr) {
+        THIS->waitable = TRUE;
+        return;
+    }
+    THIS->PC = (UBYTE *)ngc_pc + 6;
+    if (ngc_pc[2]) THIS->stack_ptr -= ngc_pc[2];
+    THIS->update_fn = 0, THIS->update_fn_bank = 0;
+}"""
+
+
+# A scene change publishes the new scroll, sprites and palette when the load ends, anywhere
+# in a picture. Behind a fade-out the screen is one colour and nothing shows; a cut (a
+# change without fade, in a project that fades elsewhere) would show one torn picture:
+# old colours above the line the palette was written on, new ones below (seen in
+# tests/test_scene_switch.py when the load ended a picture earlier). Such a load ends at
+# the next blank, as in a project without fades (ngc_scene_load in c_scenes).
+FADE_CUT_SOURCE = """/* ngc_scene_load: the screen is faded out (one colour): publishing needs no blank. */
+unsigned char ngc_palette_hidden(void)
+{
+    return (unsigned char)(fade_timer == FADED_OUT_FRAME);
+}
+"""
+
+
 def decoder_code(macro):
     """C actually emitted for a macro: inline statements or the handler call."""
     return INLINE_DECODERS[macro][1] if macro in INLINE_DECODERS else DECODERS[macro][2]
@@ -1346,7 +1384,7 @@ def gbvm_source(runtime, macros, rpn, natives, memory, model, fade_style=0, scen
                 input_contexts=None, ui=None, heap_words=None, stack_words=None, tick_frames=1, platform_callbacks=(), callback_attach=False, callback_detach=False, callback_contexts=None,
                 adventure_callbacks=(), adventure_attach=False, adventure_detach=False, constant_pairs=0, timer_contexts=None, projectile_actors=None, save=None, thread_contexts=None,
                 projectile_slots=False,
-                palette_maps=None, text_sound=(False, False), color_variants=None, system_natives=()):
+                palette_maps=None, text_sound=(False, False), color_variants=None, system_natives=(), speedups=False):
     """save: None, or (saves, loads) when the scripts save or load data
     (docs/M5_SAVE.md): EXCEPTION_SAVE / EXCEPTION_LOAD on the flash journal.
     scene_palettes: the scene engine is linked: it has loaded the palettes before
@@ -1355,7 +1393,9 @@ def gbvm_source(runtime, macros, rpn, natives, memory, model, fade_style=0, scen
     scenes: several scenes (scene changes): the game drives the VM through
     ngc_vm_start / ngc_vm_run / ngc_vm_kill / ngc_vm_exception, and the scenes
     write their colours into ngc_palette_shadow, shown by ngc_palette_show.
-    ui: (support, api) C of emit_ui.ui_support when the scripts print text."""
+    ui: (support, api) C of emit_ui.ui_support when the scripts print text.
+    speedups: project key engine_speedups (docs/ETUDE_CADENCE.md §6.4): VM_INVOKE of
+    wait_frames runs ngc_invoke_wait_frames; off, the source is unchanged."""
     functions = dict(runtime["functions"])
     from ..world import pos_t, wide
     if wide():
@@ -1366,6 +1406,7 @@ def gbvm_source(runtime, macros, rpn, natives, memory, model, fade_style=0, scen
                     raise CompileError(f"{fn}: camera_position_t use changed (wide world)")
                 functions[fn] = functions[fn].replace(f"params->{field}", f"NGC_VM_POS(params->{field})")
     shake = "camera_shake_frames" in natives
+    wait_fast = speedups and "wait_frames" in natives and "VM_INVOKE" in macros
     rpn = rpn_cases(runtime, rpn)
     # Real instructions only (composite macros expand into them); VM_STOP
     # (opcode 0) is the terminator VM_STEP tests before dispatching.
@@ -1616,6 +1657,8 @@ void ngc_actors_scroll(short cx, short cy);
         c += [f"    if (fn == (UBYTE *){name}) return {name}(THIS, start, stack_frame);" for name in natives]
         c += ["    return TRUE;", "}",
               "#define FAR_CALL_EX(addr, seg, typ, ctx, start, frame) ngc_native_call((addr), (ctx), (start), (frame))"]
+        if wait_fast:
+            c.append(INVOKE_WAIT_FRAMES)
     if platform_callbacks:
         c.append(callback_support(platform_callbacks, callback_attach, callback_detach))
     if adventure_callbacks:
@@ -1720,6 +1763,10 @@ void ngc_actors_scroll(short cx, short cy);
     # only here for zero-sized or custom indexed decoders; never twice.
     decoded = {m: (size, code if size else "ctx->PC = ngc_pc; " + code)
                for m, (size, code) in decoded.items()}
+    if wait_fast:
+        size, code = decoded["VM_INVOKE"]
+        decoded["VM_INVOKE"] = (size, f"if (!ngc_pc[3] && ngc_pc[4] == {NATIVES['wait_frames']}u) "
+                                      f"ngc_invoke_wait_frames(ctx, ngc_pc); else {{ {code} }}")
     c += ["static UBYTE VM_STEP(SCRIPT_CTX * ctx)", "{", "    UBYTE op;"]
     c.append("    const UBYTE * ngc_pc;")
     code = [DECODERS[m][2] for m in instructions]
@@ -2494,6 +2541,7 @@ def generate_project(project, inits, variables_lookup):
                                         projectiles=projectiles[0] if projectiles else (),
                                         **scene_movers(texts, model)), moves, actor_updates, cancel, topdown,
                      actor_interactions, trigger_data, hit_data, text=prints, patch=True,
+                     speedups=engine_speedups(project),
                      projectile_groups=projectiles[1] if projectiles else None,
                      projectile_scripts=projectiles[2] if projectiles and projectiles[2] else None,
                      projectile_modal=bool(projectiles) and prints,
@@ -2543,7 +2591,7 @@ def generate_project(project, inits, variables_lookup):
         contexts = capacity if active_updates else None
         stacks = stack_budget(bank_scripts, model, runtime, capacity, entry_arguments)
         engine_report["context_budget"] = context_budget
-    gbvm_c, handlers = gbvm_source(runtime, macros, rpn, natives, memory, model, fade_style,
+    gbvm_c, handlers = gbvm_source(runtime, macros, rpn, natives, memory, model, fade_style, speedups=engine_speedups(project),
                                    scene_palettes=not blocker, update_contexts=contexts,
                                    interaction_contexts=capacity if active_interactions else None,
                                    trigger_contexts=capacity if active_triggers else None,
@@ -2969,7 +3017,7 @@ def generate_scenes(project, inits, graph, resources, variables, model, shared, 
                                                         projectiles=projectiles[0] if projectiles else (),
                                                         **scene_movers(scene_texts, model)), moves, actor_updates, cancel, topdown,
                                      actor_interactions, trigger_data, hit_data, shadow=True, text=scene_ui_on, track_front=second,
-                                     patch=True,
+                                     patch=True, speedups=engine_speedups(project),
                                      parallax_export=parallax_export,
                                      projectile_groups=projectiles[1] if projectiles else None,
                                      projectile_scripts=projectiles[2] if projectiles and projectiles[2] else None,
@@ -3042,7 +3090,7 @@ def generate_scenes(project, inits, graph, resources, variables, model, shared, 
                                                 heap_words=len(variables), saves=bool(save))
         if context_budget:
             stacks = stack_budget(bank_scripts, model, runtime, capacity, entry_arguments)
-    gbvm_c, handlers = gbvm_source(runtime, macros, rpn, natives, memory, model, fade_style,
+    gbvm_c, handlers = gbvm_source(runtime, macros, rpn, natives, memory, model, fade_style, speedups=engine_speedups(project),
                                    update_contexts=capacity if used["updates"] else None,
                                    interaction_contexts=capacity if used["interactions"] else None,
                                    trigger_contexts=capacity if used["triggers"] else None,
@@ -3067,7 +3115,8 @@ def generate_scenes(project, inits, graph, resources, variables, model, shared, 
     engine_c, link = link_scenes(engines, publish={"src/scene_actors.c": {} if set(macros) & {"VM_CAMERA_MOVE_TO", "VM_CAMERA_SET_POS"}
                                                 else {"cam_settings": "ngc_camera_settings"}},
                                  extra={"src/scene_actors.c": keep_source(used["hits"])
-                                        + (stack_source() if stack else "")})
+                                        + (stack_source() if stack else "")},
+                                 direct=engine_speedups(project))
     fades = "vm_fade" in handlers
     if input_c is None and (used["inputs"] or text or used["timers"]):
         input_c = input_source(option_long_press(project))
@@ -3078,6 +3127,9 @@ def generate_scenes(project, inits, graph, resources, variables, model, shared, 
     if uses_palette_patch(engine_c):
         gbvm_c += palette_patch_source(fades, True)
         features.append("palette_recycle")
+    if fades and not second:
+        gbvm_c += FADE_CUT_SOURCE
+        features.append("scene_fade_cuts")
     if save:
         features += ["save_state", "save_journal"] + (["save_load"] if loads else [])
     if second:
@@ -3162,6 +3214,7 @@ def generate_scenes(project, inits, graph, resources, variables, model, shared, 
             "unsigned short ngc_vm_exception(void);", "void ngc_palette_show(void);",
             "void ngc_scene_keep(unsigned char step);", "extern unsigned char ngc_scene;",
             "void ngc_vm_frame_end(void);",
+            *(["unsigned char ngc_palette_hidden(void);"] if fades and not second else []),
             *(["void ngc_scene_stack_reset(void);"] if stack else []),
             *(["void ngc_vm_load(unsigned char slot);", "void ngc_actors_resume(void);"] if loads else []),
             *bank_arrays(banks, ["/* Bank 0: the scripts of every reachable scene (assembler.py: a script",
@@ -3190,7 +3243,7 @@ def generate_scenes(project, inits, graph, resources, variables, model, shared, 
              "    ngc_actors_repaint((short)(ngc_camera_x >> 5), (short)(ngc_camera_y >> 5));",
              *(["    if (keep) ngc_vm_frame_end();  /* second decor: publish the new palette in VBlank */"]
                if second else ["    if (keep) ngc_vm_frame_end();  /* cut: publish the new palette in VBlank */"]
-               if not fades else []),
+               if not fades else ["    if (keep && !ngc_palette_hidden()) ngc_vm_frame_end();  /* a cut: in VBlank too */"]),
              "    ngc_scroll_commit();",
              *(["    ngc_ui_commit();  /* cut: close the previous scene's window before showing colours */"]
                if text and not fades else []),

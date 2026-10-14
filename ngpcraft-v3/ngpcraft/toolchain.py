@@ -141,7 +141,17 @@ def check_stack_reserve(sections, reserve=STACK_RESERVE_BYTES):
             "stack_available_bytes": available, "stack_reserved_bytes": reserve}
 
 
-def audit_link_map(text, features, objects):
+def extra_publics(manifest):
+    """Public symbols the export declares itself (docs/ETUDE_CADENCE.md §6): scene functions
+    called directly from another engine file, and each scene's fast paths."""
+    engine = manifest.get("scene_engine") or {}
+    names = [name for path in (engine.get("link") or {}).values() for name in path.get("direct_publics", ())]
+    for scene in [engine] + list(engine.get("scenes") or []):
+        names += scene.get("extra_publics", ())
+    return sorted(set(names))
+
+
+def audit_link_map(text, features, objects, extra_publics=()):
     """Fail closed on unexpected linked objects/sections/public symbols.
 
     Static functions are not listed by tulink: this is an additional boundary
@@ -171,7 +181,9 @@ def audit_link_map(text, features, objects):
         symbols[match[1]] = {"address": int(match[2], 16), "section": match[3]}
     if set(objects) != linked_objects(features):
         raise CompileError("object list does not match selected runtime units")
-    expected = public_symbols(features)
+    # Scene functions called directly from another engine file (scene_link.direct_calls),
+    # listed by the export itself: the set stays exact.
+    expected = public_symbols(features) | {"_" + name for name in extra_publics}
     if set(symbols) != expected:
         raise CompileError(f"unexpected/missing public symbols: extra={sorted(set(symbols)-expected)}, missing={sorted(expected-set(symbols))}")
     stack = check_stack_reserve(sections)
@@ -229,7 +241,8 @@ def build_rom(export_dir, toolchain_root=None):
     objects = [str(root / "objects" / obj) for obj in compiled["objects"]]
     run("tulink", ["-la", "-o", "game.abs", str(root / "ngpc.lcf"), *objects])
     link_audit = audit_link_map((dest / "game.map").read_text(encoding="utf-8", errors="replace"),
-                               manifest["features"], compiled["objects"])
+                               manifest["features"], compiled["objects"],
+                               extra_publics(manifest))
     run("tuconv", ["-Fs24", "game.abs"])
     run("s242ngp", ["game.s24"])
     raw = dest / "game.ngp"

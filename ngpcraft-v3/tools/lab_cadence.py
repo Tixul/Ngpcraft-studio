@@ -47,6 +47,9 @@ class _AnyPublic(set):
     def __ne__(self, other):
         return False
 
+    def __or__(self, other):          # the audit adds the export's own publics (toolchain.extra_publics)
+        return self
+
 
 def expose_statics(export_dir):
     """Every static function of the export made public (scene_link already prefixes
