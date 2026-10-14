@@ -127,8 +127,15 @@ def blit(canvas, image, ox, oy):
 
 
 def is_equal(a, b):
-    return (a.width == b.width and a.height == b.height and
-            all(p == q or p == UNKNOWN or q == UNKNOWN for p, q in zip(a.data, b.data)))
+    """readSpriteData.isEqual (UNKNOWN = a pixel hidden by a tile in front: matches anything). One NGPC
+    addition: two native-colour tiles whose merge would show more than 3 opaque colours are not equal
+    (a stacked layer's hidden pixels are UNKNOWN; merged with another frame's tile they would take its
+    colours: 4+ colours, refused by native_palettes). Indexed GB tiles never reach 4 colours: unchanged."""
+    if not (a.width == b.width and a.height == b.height and
+            all(p == q or p == UNKNOWN or q == UNKNOWN for p, q in zip(a.data, b.data))):
+        return False
+    merged = {q if p == UNKNOWN else p for p, q in zip(a.data, b.data)}
+    return len({c for c in merged if c >= NATIVE_BASE}) <= 3
 
 
 def is_blank(image):

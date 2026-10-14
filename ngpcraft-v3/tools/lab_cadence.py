@@ -112,8 +112,12 @@ def measure(export_dir, emulator, bios, inputs, ticks, skip, profile):
         Returns the cycles run (stop.total_cycles counts one call)."""
         cycles = 0
         while True:
-            stop, records = m.run(5_000_000, record=spent is not None)
-            if spent is not None:
+            # A tick holding modal frames is counted apart: not traced (its frames
+            # would only grow the trace), and A pressed one frame in eight so that a
+            # dialogue or a menu waiting for it closes (the schedule only reaches the
+            # game at tick entries).
+            stop, records = m.run(5_000_000, record=spent is not None and not modal[0])
+            if spent is not None and not modal[0]:
                 for rec in records:
                     spent[owner(rec.pc)] += rec.cycles
             cycles += stop.total_cycles
@@ -121,6 +125,11 @@ def measure(export_dir, emulator, bios, inputs, ticks, skip, profile):
                 raise RuntimeError("breakpoint not reached")
             if stop.stop_pc == modal_pc:
                 modal[0] += 1                # a modal frame (dialogue, menu) inside the tick
+                press = bytes([0x10 if modal[0] % 8 == 4 else 0])
+                m.write(0x00B0, press)
+                m.write(0x6F82, press)
+                if modal[0] > 20_000:
+                    raise RuntimeError("modal frames never end")
             if stop.stop_pc == pc:
                 return cycles
 
