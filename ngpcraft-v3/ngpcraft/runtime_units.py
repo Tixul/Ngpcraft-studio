@@ -422,6 +422,11 @@ UNITS += (
                      "commit bd6f41c (what is reloaded, what is kept); scenes linked by ngpcraft/scene_link.py, "
                      "kept state ngpcraft/gbvm/emit.py keep_source",),
          tests=("tests/test_scene_switch.py", "tests/test_scene_cuts.py"), backend="background"),
+    Unit("scene_keep_iframes", ("_ngc_scene_keep_boot",), feature="scene_keep_iframes",
+         dependencies=("scene_changes",), object="scene_actors.rel",
+         provenance=("GBVM src/core/actor.c actors_init (player_iframes = 0, once at boot) at commit bd6f41c; "
+                     "kept across load_scene by ngpcraft/gbvm/emit.py keep_source",),
+         tests=("tests/test_scene_keep_boot.py",), backend="background"),
     Unit("gbvm_scene_changes", ("_ngc_vm_run", "_ngc_vm_kill", "_ngc_vm_exception", "_ngc_palette_show",
                                 "_ngc_palette_shadow"), feature="scene_changes", dependencies=("gbvm_scene",),
          object="gbvm.rel",

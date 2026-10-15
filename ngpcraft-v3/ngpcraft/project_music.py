@@ -108,6 +108,14 @@ def attach_music(files,project,shared):
             manifest['warnings'].append('Set Music Routine: no reachable song calls a routine (hUGE 6xy, '
                                         'held-score "routine"); the attached scripts never run '
                                         '(docs/M5_MUSIC_ROUTINE.md)')
+    from .project import engine_speedups
+    if tracks and engine_speedups(project):
+        # music_z80.py (docs/PLAN_MUSIQUE_Z80.md): the music on the Z80 when the driver allows it.
+        from .music_z80 import fast_music
+        audio['audio.c'],z80=fast_music(audio['audio.c'])
+        manifest['music_z80']=z80
+        if z80['music_z80']:
+            manifest['features'].append('music_z80')
     files['src/audio.c']=audio.pop('audio.c');files['src/audio.h']=audio.pop('audio.h')
     files.update(audio)
     game=files['src/game.c']

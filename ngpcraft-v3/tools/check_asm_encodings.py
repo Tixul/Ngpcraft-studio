@@ -40,7 +40,9 @@ def _unproven(raw):
     """Register-prefixed forms never cleared on silicon, which the emulator's database does not
     list (its d8_df entry names them as "a separate quirk"): the shift by A (second byte
     0xF8..0xFF) and the 0xB8..0xBF hole, after a byte, word or long register prefix
-    (0xC8..0xCF, 0xD8..0xDF, 0xE8..0xEF). cc900 emits none of them."""
+    (0xC8..0xCF, 0xD8..0xDF, 0xE8..0xEF). Hand-written assembly avoids them; cc900 itself
+    emits the shift by A for a variable count (vm_rpn's VM_OP_SHL / VM_OP_SHR: `sll A, DE`,
+    found 2026-10-15, docs/ETUDE_CADENCE.md §6.6), so the C runtime is not free of it."""
     if raw and len(raw) >= 2 and (0xC8 <= raw[0] <= 0xCF or 0xD8 <= raw[0] <= 0xDF or 0xE8 <= raw[0] <= 0xEF):
         if raw[1] >= 0xF8:
             return "shift by A (never cleared on NGPC silicon)"

@@ -129,7 +129,6 @@ class RpnBuilderTests(unittest.TestCase):
             # Position/direction reads are delivered (docs/M4_EXPRESSIONS.md); the frame is not.
             "actorFrame": {"type": "property", "target": "player", "property": "frame"},
             "engineField": {"type": "engineField", "value": "fade_style"},
-            "'abs'": {"type": "abs", "value": variable("3")},
             "camera_x": {"type": "property", "target": "camera", "property": "xpos"},
         }
         for name, value in cases.items():

@@ -1157,13 +1157,40 @@ RUNNER_RESET_NOTE = ("Continue the same non-waitable quantum after the reset poi
                      "waitable and exception are already zero, so do not store them again")
 
 
-def runner_source(source):
+# engine_speedups (docs/ETUDE_CADENCE.md §6.5): a context counting down a wait_frames
+# went through VM_STEP, its decoder and ngc_invoke_wait_frames every frame to subtract 1
+# (≈ 900 cycles). The runner now does it at the start of the context's quantum (a running
+# wait is always there: the previous frame's quantum ended on it), only where VM_STEP
+# would do nothing else: the context waits in wait_frames (update_fn), its PC is that
+# VM_INVOKE of wait_frames in the same bank (start would be FALSE) and the counter is not
+# 1 (the wait does not end). Same writes: counter - 1, waitable TRUE, PC unchanged; then
+# what follows a waitable instruction (no exception was raised): the lock test, next
+# context. Tested once per context and frame, not per instruction (measured: per
+# instruction, scenes without waits paid it, Music House +300 cycles a tick).
+WAIT_SKIP = """/* engine_speedups: a frame of a running wait_frames, written in the runner (same writes). */
+#define NGC_WAITING(ctx) ((ctx)->update_fn == (UBYTE *)wait_frames && (ctx)->PC[0] == {opcode}u && \\
+    !(ctx)->PC[4] && (ctx)->PC[5] == {native}u && (ctx)->update_fn_bank == (ctx)->PC[6] && \\
+    *(ctx)->stack_ptr != 1u && (--*(ctx)->stack_ptr, (ctx)->waitable = TRUE))
+"""
+
+
+def runner_source(source, wait_skip=None):
+    """wait_skip: None, or the VM_INVOKE opcode (engine_speedups, WAIT_SKIP)."""
     reset = "        ctx->waitable = FALSE;\n"
     repeat = "            if (!(ctx->waitable) && (counter--)) continue;"
-    if source.count(reset) != 1 or source.count(repeat) != 1:
-        raise CompileError("script_runner_update: reset or quantum continuation changed")
-    return source.replace(reset, reset + "ngc_runner_instruction:\n").replace(
+    lock = "            if (vm_lock_state) break;\n"
+    if source.count(reset) != 1 or source.count(repeat) != 1 or source.count(lock) != 1:
+        raise CompileError("script_runner_update: reset, lock test or quantum continuation changed")
+    if repeat not in source.split(lock, 1)[0] or reset not in source.split(repeat, 1)[0]:
+        raise CompileError("script_runner_update: reset, quantum continuation and lock test out of order")
+    skip = ("        if ((ctx->terminated == FALSE) && NGC_WAITING(ctx)) goto ngc_runner_waiting;\n"
+            if wait_skip is not None else "")
+    source = source.replace(reset, reset + skip + "ngc_runner_instruction:\n").replace(
         repeat, "            if (!(ctx->waitable) && (counter--)) goto ngc_runner_instruction;")
+    if wait_skip is None:
+        return source
+    return (WAIT_SKIP.format(opcode=f"0x{wait_skip:02X}", native=NATIVES["wait_frames"]) +
+            source.replace(lock, "ngc_runner_waiting:\n" + lock))
 
 
 def runtime_adaptations(runtime, handlers, natives, rpn, constant_pairs=0):
@@ -1748,6 +1775,10 @@ void ngc_actors_scroll(short cx, short cy);
                 if rpn_c.count(original) != 1:
                     raise CompileError(f"selected original {case} call changed")
                 rpn_c = rpn_c.replace(original, ngpc)
+            if speedups and not constant_pairs:
+                # rpn_fast.py (docs/ETUDE_CADENCE.md §6.6): the common cases in assembly.
+                from .rpn_fast import fast_rpn
+                rpn_c, _ = fast_rpn(rpn_c, rpn, runtime["c_defines"], runtime["context"])
             c.append(rpn_c)
         elif "VM_REF_TO_PTR" in functions[fn]:
             # vm.h's macro, whatever else the export emits (a scene may move
@@ -1813,7 +1844,8 @@ void ngc_actors_scroll(short cx, short cy);
     starts = [functions["script_runner_init"], functions["script_execute"]]
     if fade:
         starts.append(functions["fade_init"])
-    c += starts + [runner_source(functions["script_runner_update"])]
+    c += starts + [runner_source(functions["script_runner_update"],
+                                 macro_opcode(model, "VM_INVOKE") if wait_fast else None)]
     if platform_callbacks:
         c.append(callback_bodies(platform_callbacks, callback_attach, callback_detach))
     if adventure_callbacks:
@@ -2846,7 +2878,12 @@ def keep_source(hits):
         "        ngc_actor_set_dir(0u, keep_dir, 0u);",
         "        return;", "    }",
         *(["    collision_iframes = keep_iframes;"] if hits else []),
-        "}", ""])
+        "}",
+        *(["/* actor.c actors_init, once at boot: player_iframes = 0. The RAM starts random on a",
+           " * console and ngc_scene_keep carries the value from scene to scene (as GBVM does): a",
+           " * first scene without collisions would hand the next one a random invincibility. */",
+           "void ngc_scene_keep_boot(void)", "{", "    collision_iframes = 0u;", "}"] if hits else []),
+        ""])
 
 
 def stack_source():
@@ -3196,7 +3233,8 @@ def generate_scenes(project, inits, graph, resources, variables, model, shared, 
     for flag, feature in (("moves", "actor_moves"), ("inputs", "input_events"), ("timers", "timer_events"),
                           ("routines", "music_routines"),
                           *((s, s) for s in SCENE_STATES),
-                          ("hits", "collision_update"), ("hit_scripts", "player_collisions"), ("triggers", "triggers"),
+                          ("hits", "collision_update"), ("hits", "scene_keep_iframes"),
+                          ("hit_scripts", "player_collisions"), ("triggers", "triggers"),
                           ("interactions", "actor_interactions"), ("cancel", "actor_move_cancel"),
                           ("updates", "actor_updates")):
         if used[flag]:
@@ -3213,6 +3251,7 @@ def generate_scenes(project, inits, graph, resources, variables, model, shared, 
             f"void ngc_vm_run({entry_params()});", "void ngc_vm_kill(void);",
             "unsigned short ngc_vm_exception(void);", "void ngc_palette_show(void);",
             "void ngc_scene_keep(unsigned char step);", "extern unsigned char ngc_scene;",
+            *(["void ngc_scene_keep_boot(void);"] if used["hits"] else []),
             "void ngc_vm_frame_end(void);",
             *(["unsigned char ngc_palette_hidden(void);"] if fades and not second else []),
             *(["void ngc_scene_stack_reset(void);"] if stack else []),
@@ -3276,6 +3315,7 @@ def generate_scenes(project, inits, graph, resources, variables, model, shared, 
              # start scene, loaded next, sets ngc_scene again).
              *[line for s, k in boot_scenes.items()
                for line in (f"    ngc_scene = {k}u;", f"    ngc_{s}_boot();             /* engine fields, BSS */")],
+             *(["    ngc_scene_keep_boot();            /* actors_init: player_iframes = 0 */"] if used["hits"] else []),
              *([f"    ngc_ui_start({start}u);              /* core_reset: ui_init */"] if text else []),
              f"    ngc_scene_load({start}u, 0u);  /* {resources[table[start]]['symbol']} */", "}",
              *(modal_frame(COMMIT, after_scripts(tick_frames), "VM_PROJECTILE_LAUNCH" in macros) if text else []),

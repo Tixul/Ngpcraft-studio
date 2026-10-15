@@ -20,6 +20,7 @@ class InvokeWaitFastTests(unittest.TestCase):
         self.assertEqual(source, gbvm_source(json.loads(RUNTIME.read_text(encoding="utf-8")), {"VM_INVOKE"}, set(),
                                              ["wait_frames"], [], load_model())[0])
         self.assertNotIn("ngc_invoke_wait_frames", source)
+        self.assertNotIn("NGC_WAITING", source)
 
     def test_on_branches_wait_frames_only(self):
         source = self.source(["wait_frames", "camera_shake_frames"], True)
@@ -32,6 +33,15 @@ class InvokeWaitFastTests(unittest.TestCase):
         # Defined after wait_frames (its address is update_fn), before VM_STEP.
         self.assertLess(source.index("static UBYTE wait_frames("), source.index(INVOKE_WAIT_FRAMES))
         self.assertLess(source.index(INVOKE_WAIT_FRAMES), source.index("static UBYTE VM_STEP("))
+        # The runner counts a running wait down before VM_STEP (WAIT_SKIP).
+        self.assertIn("#define NGC_WAITING(ctx)", source)
+        # Once per context and frame, at the start of its quantum: before the instruction loop.
+        skip = "if ((ctx->terminated == FALSE) && NGC_WAITING(ctx)) goto ngc_runner_waiting;"
+        self.assertEqual(source.count(skip), 1)
+        self.assertLess(source.index(skip), source.index("ngc_runner_instruction:"))
+        self.assertLess(source.index("ngc_runner_instruction:"), source.index("ngc_runner_waiting:"))
+        self.assertLess(source.index("ngc_runner_waiting:"), source.index("if (vm_lock_state) break;"))
+        self.assertLess(source.index("static UBYTE wait_frames("), source.index("#define NGC_WAITING(ctx)"))
 
     def test_on_without_wait_frames_is_unchanged(self):
         self.assertEqual(self.source(["camera_shake_frames"], True), self.source(["camera_shake_frames"], False))
