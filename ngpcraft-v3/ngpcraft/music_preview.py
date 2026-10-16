@@ -16,7 +16,7 @@ from pathlib import Path
 import zlib
 
 from .compiler import CompileError
-from .project import SIDECAR, encode_resource, load_project
+from .project import SIDECAR, _atomic_write, encode_resource, load_project
 
 SCENE_ID = "ngpcraft-music-preview-scene"
 BACKGROUND_ID = "ngpcraft-music-preview-background"
@@ -59,6 +59,13 @@ def preview_project(root, music_id, dest):
         return {n for n in names if n in ("build", ".git", "node_modules")}
 
     shutil.copytree(root, dest, dirs_exist_ok=True, ignore=ignore)
+    # ngpcraft.json entries of the scenes left out (a second background, ...) name resources
+    # the copy no longer has, which the project check refuses.
+    dropped = {json.loads(p.read_text(encoding="utf-8")).get("id") for p in scenes.rglob("*.gbsres")}
+    if dropped & project.ngpc["resources"].keys():
+        sidecar = json.loads((root / SIDECAR).read_text(encoding="utf-8"))
+        sidecar["resources"] = {k: v for k, v in sidecar["resources"].items() if k not in dropped}
+        _atomic_write(dest / SIDECAR, json.dumps(sidecar, indent=2, ensure_ascii=False, sort_keys=True) + "\n")
     _png(dest / "assets/backgrounds/ngpcraft_music_preview.png", 160, 152, BACKDROP)
     _write(dest / "assets/backgrounds/ngpcraft_music_preview.png.gbsres",
            {"_resourceType": "background", "id": BACKGROUND_ID, "name": "ngpcraft_music_preview",

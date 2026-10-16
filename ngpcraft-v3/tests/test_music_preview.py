@@ -39,6 +39,21 @@ class MusicPreviewTests(unittest.TestCase):
             self.assertEqual([s["id"] for s in project.scenes], [SCENE_ID])
         self.assertEqual(tree(TEMPLATE), before)
 
+    def test_scene_extensions_of_left_out_scenes_dropped(self):
+        # MegaX: a second background (an ngpcraft.json entry of a scene) stopped every preview.
+        import shutil
+        with tempfile.TemporaryDirectory() as tmp:
+            source = Path(tmp) / "src"
+            shutil.copytree(TEMPLATE, source)
+            scene_id = load_project(source).scenes[0]["id"]
+            data = json.loads((source / "ngpcraft.json").read_text(encoding="utf-8"))
+            data["resources"][scene_id] = {}
+            (source / "ngpcraft.json").write_text(json.dumps(data), encoding="utf-8")
+            load_project(source)
+            project = load_project(preview_project(source, bound_song(), Path(tmp) / "p"))
+            self.assertNotIn(scene_id, project.ngpc["resources"])
+            self.assertIn(bound_song(), project.ngpc["resources"])
+
     def test_refusals(self):
         with tempfile.TemporaryDirectory() as tmp:
             with self.assertRaisesRegex(CompileError, "no music resource"):

@@ -8,7 +8,8 @@
  *   cleared just before and just after;
  * - a block is erased by the StarGunner AMD stub (validated on hardware)
  *   run from RAM 0x6E00: VECT_FLASHERS cannot erase blocks 32 to 34
- *   (SysCall.txt);
+ *   (SysCall.txt); the watchdog is never switched off: the stub clears it
+ *   at each turn of its wait (see ngc_erase_stub);
  * - interrupts are disabled for the whole flash operation (a chip being
  *   programmed answers status, not code: an interrupt handler fetched from
  *   the cartridge would crash a console, never an emulator).
@@ -20,16 +21,30 @@
 #define NGC_CART_BASE 0x200000ul
 #define NGC_BLOCK_BYTES 0x2000ul
 
-/* Erase stub, 98 bytes (StarGunner main.ngp file offset 0x13733, as in Over
- * Rev ngpc_flash_asm.asm): AMD unlock, sector erase, DQ7 poll, reset.
- * Interface: XIX = 0x200000, XDE = absolute block address, XIY = 0, A = 0. */
-static const unsigned char ngc_erase_stub[98] = {
+/* Erase stub, 101 bytes: the StarGunner one (main.ngp file offset 0x13733,
+ * as in Over Rev ngpc_flash_asm.asm: AMD unlock, sector erase, DQ7 poll,
+ * reset) with `ldb (0x6F),0x4E` added at the top of its wait loop (the two
+ * jumps around it re-aimed, disassembled and checked).
+ * Why: the original stub runs with the watchdog switched off (WDMOD = 0x14,
+ * then WDCR = 0xB1) and turned back on with a fixed WDMOD = 0xF0. On a
+ * console (Retro HQ GameDrive, MegaX, 2026-10-16) the erasing saves switched
+ * the console off, one in two, the erase not even started; NgpCraft's own
+ * rules (STORAGE.md, addendum of 2026-09-28, rule 3) had described that race.
+ * Never touching WDMOD and clearing the watchdog at each turn removes the mode
+ * change altogether, however long the erase lasts (57 ms measured on a
+ * cartridge, against a ~100 ms watchdog; a flash cart may be slower).
+ * Interface: XIX = 0x200000, XDE = absolute block address, XIY = 0, A = 0
+ * (0xFF after a time-out: the journal then finds the block not blank). */
+static const unsigned char ngc_erase_stub[101] = {
     0xF3u, 0xF1u, 0x55u, 0x55u, 0x00u, 0xAAu, 0xF3u, 0xF1u, 0xAAu, 0x2Au, 0x00u, 0x55u,
     0xF3u, 0xF1u, 0x55u, 0x55u, 0x00u, 0xF0u, 0x00u, 0x00u, 0xF3u, 0xF1u, 0x55u, 0x55u,
     0x00u, 0xAAu, 0xF3u, 0xF1u, 0xAAu, 0x2Au, 0x00u, 0x55u, 0xF3u, 0xF1u, 0x55u, 0x55u,
     0x00u, 0x80u, 0xF3u, 0xF1u, 0x55u, 0x55u, 0x00u, 0xAAu, 0xF3u, 0xF1u, 0xAAu, 0x2Au,
-    0x00u, 0x55u, 0xB2u, 0x00u, 0x30u, 0x82u, 0x3Fu, 0xFFu, 0x66u, 0x15u, 0xEDu, 0x61u,
-    0xEDu, 0xCFu, 0xFFu, 0xFFu, 0x1Fu, 0x00u, 0x66u, 0x09u, 0xB2u, 0xCDu, 0x66u, 0xEDu,
+    0x00u, 0x55u, 0xB2u, 0x00u, 0x30u,
+    0x08u, 0x6Fu, 0x4Eu,                    /* loop: ldb (0x6F),0x4E (watchdog cleared) */
+    0x82u, 0x3Fu, 0xFFu, 0x66u, 0x15u, 0xEDu, 0x61u,
+    0xEDu, 0xCFu, 0xFFu, 0xFFu, 0x1Fu, 0x00u, 0x66u, 0x09u, 0xB2u, 0xCDu,
+    0x66u, 0xEAu,                           /* jr z,loop (was 0xED, 3 bytes nearer) */
     0x82u, 0x3Fu, 0xFFu, 0x66u, 0x02u, 0x21u, 0xFFu, 0xF3u, 0xF1u, 0x55u, 0x55u, 0x00u,
     0xAAu, 0xF3u, 0xF1u, 0xAAu, 0x2Au, 0x00u, 0x55u, 0xF3u, 0xF1u, 0x55u, 0x55u, 0x00u,
     0xF0u, 0x0Eu
@@ -114,14 +129,12 @@ void ngc_flash_erase(unsigned char block)
     __asm("push xix");
     __asm("push xiy");
     __asm("push xiz");
-    __asm("ldb (0x6e),0x14");
-    __asm("ldb (0x6f),0xb1");
     __asm("ld xix,0x200000");
     __asm("ld xiy,0");
     __asm("ld a,0");
     __asm("ld xde,(_ngc_flash_dst)");
+    __asm("ldb (0x6f),0x4e");
     __asm("call 0x6e00");
-    __asm("ldb (0x6e),0xf0");
     __asm("ldb (0x6f),0x4e");
     __asm("pop xiz");
     __asm("pop xiy");

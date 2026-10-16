@@ -46,6 +46,7 @@ def frame_rows(log, noise_setting, transpose):
     regs.update({int(k, 16): v for k, v in log.get("initial", {}).items()
                  if int(k, 16) in (0xFF24, 0xFF25, 0xFF1A, 0xFF12, 0xFF17, 0xFF1C, 0xFF21)})
     started = [False] * 4
+    wave_prev = None
     rows = []
     first, last = log["from"], log["to"]
     for f in range(first, last):
@@ -56,6 +57,16 @@ def frame_rows(log, noise_setting, transpose):
                 if addr == high and value & 0x80:
                     started[ch] = attacks[ch] = True
         vols = log["volumes"].get(str(f), [0, 0, 0, 0])
+        # A wave channel started before the log (no trigger inside it) and played by rewriting its frequency
+        # and NR32 (Mega Man Xtreme 2's driver): playing = the emulator's channel volume; a note starts when
+        # the frequency changes or NR32 leaves mute.
+        if vols[2] and not started[2]:
+            started[2] = attacks[2] = True
+        wave_key = (period(regs, 2), regs[0xFF1C] & 0x60)
+        if wave_prev is not None and wave_key != wave_prev and wave_key[1] and (
+                wave_key[0] != wave_prev[0] or not wave_prev[1]):
+            attacks[2] = True
+        wave_prev = wave_key
         row = []
         for ch in range(4):
             routed = regs[0xFF25] & ((1 << ch) | (16 << ch))

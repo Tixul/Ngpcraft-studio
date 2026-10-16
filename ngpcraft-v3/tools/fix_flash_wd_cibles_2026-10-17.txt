@@ -1,0 +1,36 @@
+Desktop/NGPC_RAG/04_MY_PROJECTS/Doc de dev/NgpCraft_base_template/NgpCraft_base_template/src/core/ngpc_flash_asm.asm
+Desktop/NGPC_RAG/04_MY_PROJECTS/Drift_game/src/core/ngpc_flash_asm.asm
+Desktop/NGPC_RAG/04_MY_PROJECTS/Fini/neogeo_windcup_ngpcraft/src/core/ngpc_flash_asm.asm
+Desktop/NGPC_RAG/04_MY_PROJECTS/Fini/NgpCraft_base_template/src/core/ngpc_flash_asm.asm
+Desktop/NGPC_RAG/04_MY_PROJECTS/Fini/NgpCraft_Tetris/src/core/ngpc_flash_asm.asm
+Desktop/NGPC_RAG/04_MY_PROJECTS/Fini/StarGunner/src/core/ngpc_flash_asm.asm
+Desktop/NGPC_RAG/04_MY_PROJECTS/kuroi_dokutsu/src/core/ngpc_flash_asm.asm
+Desktop/NGPC_RAG/04_MY_PROJECTS/Magician lord/NgpCraft_base_template/NgpCraft_base_template/src/core/ngpc_flash_asm.asm
+Desktop/NGPC_RAG/04_MY_PROJECTS/NgpCraft_MCP/vendor/examples/stargunner/src/core/ngpc_flash_asm.asm
+Desktop/NGPC_RAG/04_MY_PROJECTS/NgpCraft_MCP/vendor/templates/base/src/core/ngpc_flash_asm.asm
+Desktop/NGPC_RAG/04_MY_PROJECTS/NgpCraft_MCP/vendor/templates/cavegen/src/core/ngpc_flash_asm.asm
+Desktop/NGPC_RAG/04_MY_PROJECTS/NgpCraft_MCP/vendor/templates/platformer/src/core/ngpc_flash_asm.asm
+Desktop/NGPC_RAG/04_MY_PROJECTS/NgpCraft_MCP/vendor/templates/racer/src/core/ngpc_flash_asm.asm
+Desktop/NGPC_RAG/04_MY_PROJECTS/NgpCraft_NinjaGaiden/src/core/ngpc_flash_asm.asm
+Desktop/NGPC_RAG/04_MY_PROJECTS/NgpCraft_toolchain/NgpCraft_base_template/src/core/ngpc_flash_asm.asm
+Desktop/NGPC_RAG/04_MY_PROJECTS/NgpCraft_toolchain/NGPC_Template__2026/src/core/ngpc_flash_asm.asm
+Desktop/NGPC_RAG/04_MY_PROJECTS/NGPC_FidelitySuite/src/core/ngpc_flash_asm.asm
+Desktop/NGPC_RAG/04_MY_PROJECTS/psg_calibration_rom/src/core/ngpc_flash_asm.asm
+Desktop/NGPC_RAG/04_MY_PROJECTS/Racer_test-project/NgpCraft_base_template/NgpCraft_base_template/src/core/ngpc_flash_asm.asm
+Desktop/NGPC_RAG/04_MY_PROJECTS/Racer_test-project/NgpCraft_InitialD/src/core/ngpc_flash_asm.asm
+Desktop/NGPC_RAG/04_MY_PROJECTS/Racer_test-project/NgpCraft_RoadRacer/src/core/ngpc_flash_asm.asm
+Desktop/NGPC_RAG/04_MY_PROJECTS/Racer_test-project/NgpCraft_StreetRacer/src/core/ngpc_flash_asm.asm
+Desktop/NGPC_RAG/04_MY_PROJECTS/Racer_test-project/overrev/src/core/ngpc_flash_asm.asm
+Desktop/NGPC_RAG/04_MY_PROJECTS/Racer_test-project/Over_rev/src/core/ngpc_flash_asm.asm
+Desktop/NGPC_RAG/04_MY_PROJECTS/Racer_test-project/Slipstream_LCD/src/core/ngpc_flash_asm.asm
+Desktop/NGPC_RAG/_work/ngpc_qr_template/src/core/ngpc_flash_asm.asm
+Documents/GitHub/kuroi_dokutsu/src/core/ngpc_flash_asm.asm
+Documents/GitHub/NgpCraft_base_template/NgpCraft_base_template/src/core/ngpc_flash_asm.asm
+Documents/GitHub/Ngpcraft_Engine/templates/NgpCraft_base_template/src/core/ngpc_flash_asm.asm
+Documents/GitHub/NgpCraft_engine_v2/python_sidecar/templates/NgpCraft_base_template/src/core/ngpc_flash_asm.asm
+Documents/GitHub/NgpCraft_MCP/vendor/examples/stargunner/src/core/ngpc_flash_asm.asm
+Documents/GitHub/NgpCraft_MCP/vendor/templates/base/src/core/ngpc_flash_asm.asm
+Documents/GitHub/NgpCraft_MCP/vendor/templates/cavegen/src/core/ngpc_flash_asm.asm
+Documents/GitHub/NgpCraft_MCP/vendor/templates/platformer/src/core/ngpc_flash_asm.asm
+Documents/GitHub/NgpCraft_MCP/vendor/templates/racer/src/core/ngpc_flash_asm.asm
+Documents/GitHub/NgpCraft_StarGunner/Stargunner/src/core/ngpc_flash_asm.asm

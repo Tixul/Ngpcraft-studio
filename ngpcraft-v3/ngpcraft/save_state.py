@@ -111,7 +111,9 @@ _DISPLAY = {n: (SKIP, "display, streaming or input of the frame: rebuilt after l
     "ngc_scroll_base_next", "ngc_scroll_next", "ngc_stream_tx", "ngc_stream_ty", "ngc_frame", "ngc_sys_time",
     "ngc_joy", "ngc_joy_pressed", "ngc_last_joy", "ngc_option_ticks", "ngc_recent_joy",
     # Streamed sprite sheets (scene_sprites._stream_source): emptied by ngc_sprites_load.
-    "ngc_st_in", "ngc_st_pub", "ngc_st_cur", "ngc_st_want", "ngc_st_src", "ngc_st_dst", "ngc_st_words", "ngc_st_hold")}
+    "ngc_st_in", "ngc_st_pub", "ngc_st_cur", "ngc_st_want", "ngc_st_src", "ngc_st_dst", "ngc_st_words", "ngc_st_hold",
+    # The asm actor draw loop (sprite_fast): its loop index and frame, the sprite table set by ngc_sprites_load.
+    "ngc_ra_i", "ngc_ra_frame", "ngc_spr_rec_tab")}
 # Function statics: the state of one call (script_runner_update's quantum,
 # ui_draw_text_buffer_char's saved settings, scratch pointers).
 _FUNCTION = {
@@ -144,7 +146,8 @@ s_sfx_tone_sw_end s_sfx_tone_sw_on s_sfx_tone_sw_ping
 s_sfx_tone_sw_speed s_sfx_tone_sw_step s_sound_drops s_sound_fault
 s_sound_last_sfx ngc_music_pending ngc_audio_last_frame
 ngc_audio_loading_flag g_vb_counter ngc_sfx_id ngc_sfx_row ngc_sfx_remaining ngc_sfx_priority
-ngc_music_mute_mask ngc_routine_queue ngc_routine_head ngc_routine_tail""".split()
+ngc_music_mute_mask ngc_routine_queue ngc_routine_head ngc_routine_tail
+ngc_z80_cur ngc_z80_end ngc_z80_idle ngc_z80_loop ngc_z80_present ngc_z80_w ngc_z80_table""".split()
 CLASSIFICATION.update({name: (SKIP, 'audio driver/transport/clock: not a GBVM save point; track restarts')
                        for name in _AUDIO_TRANSIENT})
 CLASSIFICATION['ngc_music_current'] = (SAVE, 'music_current_track_bank + music_current_track: native ID, 65535 means stopped')

@@ -150,7 +150,9 @@ def merge_plans(named_plans):
             for section in ('first_events', 'repeat_events'):
                 if section in channel:
                     for event in channel[section]:
-                        if event['instrument'] is not None:
+                        # A note-off cell may carry an instrument (0 in Sound Creator files)
+                        # that the stream never encodes (FF dur): nothing to renumber.
+                        if event['instrument'] is not None and event['note'] != 255:
                             event['instrument'] = remap[source_ids[event['instrument']]]
         plan['instruments'] = copy.deepcopy(instruments)
         plan['tables'] = copy.deepcopy(tables)
