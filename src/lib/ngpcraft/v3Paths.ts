@@ -9,30 +9,18 @@
  *   4. default (development checkout, usual install folder).
  *
  * Off Windows, the Toshiba tools (Windows programs) run through Wine: the V3
- * calls <toolchain>/BIN/<tool>.exe, so a folder of small scripts with the
- * same names forwards each call to Wine (toolchainHomeForV3).
+ * starts them with the Wine it receives as NGPCRAFT_WINE (v3Env), on the
+ * real toolchain, since cc900 itself starts thc1/thc2/asm900 inside Wine.
  */
 import Path from "path";
 import { existsSync } from "fs";
-import os from "os";
-import { chmod, ensureDir, pathExists, writeFile } from "fs-extra";
+import { pathExists } from "fs-extra";
 import settings from "electron-settings";
 import { ngpcraftDefaultV3Root } from "consts";
 import { NGPCRAFT_SETTINGS } from "shared/lib/ngpcraft/settingsKeys";
 import { bundledPluginBridge } from "lib/ngpcraft/pluginBridgeHost";
 
 export { NGPCRAFT_SETTINGS };
-
-// Toshiba tools the V3 calls (V3 ngpcraft/toolchain.py TOOLS).
-const TOSHIBA_TOOLS = [
-  "cc900",
-  "thc1",
-  "thc2",
-  "asm900",
-  "tulink",
-  "tuconv",
-  "s242ngp",
-];
 
 export const isWindows = process.platform === "win32";
 
@@ -94,33 +82,6 @@ export const getWine = (): string =>
   process.env.NGPCRAFT_WINE ||
   "wine";
 
-// The folder the V3 receives as NGPC_TOSHIBA_HOME. Windows: the toolchain
-// itself. Elsewhere: scripts named like the tools, each one running the real
-// tool with Wine.
-export const toolchainHomeForV3 = async (): Promise<string> => {
-  const home = getToolchainPath();
-  if (isWindows || !home) {
-    return home;
-  }
-  const realBin = (await pathExists(Path.join(home, "BIN")))
-    ? Path.join(home, "BIN")
-    : home;
-  const shimRoot = Path.join(os.tmpdir(), "ngpcraft-toolchain-wine");
-  const shimBin = Path.join(shimRoot, "BIN");
-  await ensureDir(shimBin);
-  const wine = getWine();
-  for (const tool of TOSHIBA_TOOLS) {
-    const shim = Path.join(shimBin, `${tool}.exe`);
-    const real = Path.join(realBin, `${tool}.exe`);
-    await writeFile(
-      shim,
-      `#!/bin/sh\n# NgpCraft Studio: run the Toshiba tool with Wine.\nexec "${wine}" "${real}" "$@"\n`,
-    );
-    await chmod(shim, 0o755);
-  }
-  return shimRoot;
-};
-
 // NGPCraft Sound Creator, launched to edit .ngps songs. Candidates, first
 // existing wins: NGPCRAFT_SOUND_CREATOR, then the sibling GitHub checkout
 // (GitHub/Ngpcraft-studio/ngpcraft-v3 -> GitHub/): its packaged copy (Qt bundled),
@@ -159,6 +120,7 @@ export const v3Env = (
   ...(bundledPluginBridge() && !process.env.NGPCRAFT_PLUGIN_HOST
     ? { NGPCRAFT_PLUGIN_HOST: process.execPath }
     : {}),
+  ...(isWindows ? {} : { NGPCRAFT_WINE: getWine() }),
   PYTHONIOENCODING: "utf-8",
   ...extra,
 });

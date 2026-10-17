@@ -40,7 +40,6 @@ import {
   getPython,
   getToolchainPath,
   getV3Root,
-  toolchainHomeForV3,
   v3Env,
 } from "lib/ngpcraft/v3Paths";
 
@@ -296,7 +295,7 @@ export const buildWithV3 = async (
   const tools: V3Tools = {
     v3Root,
     python: getPython(),
-    toolchainHome: await toolchainHomeForV3(),
+    toolchainHome: getToolchainPath(),
   };
   const snapshotRoot = Path.join(outputRoot, "project");
   let exportRoot = Path.join(outputRoot, "v3");

@@ -12,7 +12,7 @@ import {
   getV3Root,
   getWine,
   isWindows,
-  toolchainHomeForV3,
+  v3Env,
 } from "lib/ngpcraft/v3Paths";
 
 export interface NgpcToolsReport {
@@ -72,9 +72,9 @@ export const checkNgpcTools = async (): Promise<NgpcToolsReport> => {
         "ngpcraft",
         "check-toolchain",
         "--toolchain",
-        await toolchainHomeForV3(),
+        toolchain,
       ],
-      { cwd: v3Root, encoding: "utf8" },
+      { cwd: v3Root, encoding: "utf8", env: v3Env() },
     );
     try {
       const report = JSON.parse(check.stdout);

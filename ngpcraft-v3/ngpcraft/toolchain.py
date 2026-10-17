@@ -4,13 +4,27 @@ from contextlib import contextmanager
 import json
 import os
 from pathlib import Path
+import shutil
 import subprocess
 import re
+import tempfile
+import time
 
 from .compiler import CompileError
 from .runtime_units import public_symbols, linked_objects, validate_export_selection
 
 TOOLS = ("cc900.exe", "thc1.exe", "thc2.exe", "asm900.exe", "tulink.exe", "tuconv.exe", "s242ngp.exe")
+NATIVE = os.name == "nt"
+# Off Windows the tools (32-bit Windows console programs) run through Wine; the
+# first call may also create the Wine prefix.
+TOOL_TIMEOUT = 120 if NATIVE else 300
+
+
+def find_wine():
+    """Wine program used off Windows: NGPCRAFT_WINE, else wine / wine64 on PATH."""
+    if NATIVE:
+        return None
+    return os.environ.get("NGPCRAFT_WINE") or shutil.which("wine") or shutil.which("wine64")
 
 
 def locate(root=None):
@@ -18,16 +32,59 @@ def locate(root=None):
                 Path(__file__).resolve().parent.parent / "toolchains" / "toshiba").resolve()
     bins = root / "BIN" if (root / "BIN").is_dir() else root
     missing = [name for name in TOOLS if not (bins / name).is_file()]
-    return {"root": str(root), "bin": str(bins), "missing": missing, "ready": not missing}
+    wine = find_wine()
+    if not NATIVE and not wine:
+        missing.append("wine")
+    return {"root": str(root), "bin": str(bins), "wine": wine, "missing": missing, "ready": not missing}
+
+
+def _win_path(path):
+    """Path as a Toshiba tool sees it: Wine's default Z: drive is the Unix root."""
+    path = str(path)
+    return path if NATIVE else "Z:" + path.replace("/", "\\")
+
+
+def _tool_command(info, tool, args):
+    exe = str(Path(info["bin"]) / (tool + ".exe"))
+    return [exe, *args] if NATIVE else [info["wine"], exe, *args]
+
+
+def _tool_env(info):
+    env = os.environ.copy()
+    env["THOME"] = _win_path(info["root"])
+    env["PATH"] = info["bin"] + os.pathsep + env.get("PATH", "")
+    if not NATIVE:
+        # cc900 starts thc1/thc2/asm900 itself, inside Wine: they are found
+        # through the Windows PATH, which Wine extends with WINEPATH.
+        env["WINEPATH"] = _win_path(info["bin"])
+        env.setdefault("WINEDEBUG", "-all")
+    return env
 
 
 @contextmanager
 def _compiler_lock():
     """The vendor compiler also collides across isolated working directories.
 
-    A Windows mutex protects its invocation across threads and processes,
-    without copying or modifying the user's toolchain.
+    A Windows mutex (a lock file off Windows) protects its invocation across
+    threads and processes, without copying or modifying the user's toolchain.
     """
+    if not NATIVE:
+        import fcntl
+        with open(Path(tempfile.gettempdir()) / "ngpcraft-toshiba-compiler.lock", "a+b") as lock:
+            deadline = time.monotonic() + 125
+            while True:
+                try:
+                    fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                    break
+                except BlockingIOError:
+                    if time.monotonic() > deadline:
+                        raise CompileError("timeout waiting for Toshiba compiler lock")
+                    time.sleep(0.05)
+            try:
+                yield
+            finally:
+                fcntl.flock(lock, fcntl.LOCK_UN)
+        return
     import ctypes
     from ctypes import wintypes
     kernel = ctypes.WinDLL("kernel32", use_last_error=True)
@@ -56,9 +113,10 @@ def _compiler_lock():
 def compile_objects(export_dir, toolchain_root=None):
     info = locate(toolchain_root)
     if not info["ready"]:
+        if "wine" in info["missing"]:
+            raise CompileError("Wine is needed to run the Toshiba toolchain off Windows: "
+                               "install it (wine or wine64 on PATH) or set NGPCRAFT_WINE")
         raise CompileError("Toshiba toolchain incomplete: " + ", ".join(info["missing"]))
-    if os.name != "nt":
-        raise CompileError("Native Toshiba invocation currently supports Windows only")
     root = Path(export_dir).resolve()
     manifest = json.loads((root / "export.json").read_text(encoding="utf-8"))
     if manifest.get("format") != "ngpcraft-export/0.1":
@@ -82,19 +140,17 @@ def compile_objects(export_dir, toolchain_root=None):
     if dest.exists() and any(dest.iterdir()):
         raise CompileError("object directory is not empty; use a fresh export")
     dest.mkdir(exist_ok=True)
-    env = os.environ.copy()
-    env["THOME"] = info["root"]
-    env["PATH"] = info["bin"] + os.pathsep + env.get("PATH", "")
+    env = _tool_env(info)
     results = []
     for source in paths:
         obj = dest / (source.stem + ".rel")
-        command = [str(Path(info["bin"]) / "cc900.exe"), "-c", "-O3", "-Nb2",
-                   "-I" + str(root / "src"), str(source), "-o", str(obj)]
+        command = _tool_command(info, "cc900", ["-c", "-O3", "-Nb2", "-I" + _win_path(root / "src"),
+                                                _win_path(source), "-o", _win_path(obj)])
         # cc900 names intermediate assembly files after the source stem.
         # Keep each export's intermediates isolated, including concurrent builds.
         with _compiler_lock():
             completed = subprocess.run(command, cwd=dest, env=env, capture_output=True,
-                                       text=True, errors="replace", timeout=120, check=False)
+                                       text=True, errors="replace", timeout=TOOL_TIMEOUT, check=False)
         results.append({"source": source.name, "returncode": completed.returncode,
                         "output": completed.stdout + completed.stderr})
         if completed.returncode or not obj.exists():
@@ -229,17 +285,16 @@ def build_rom(export_dir, toolchain_root=None):
     logs = []
 
     def run(tool, args):
-        cmd = [str(Path(info["bin"]) / (tool + ".exe")), *args]
-        result = subprocess.run(cmd, cwd=dest, capture_output=True, text=True,
-                                errors="replace", check=False, timeout=120)
+        result = subprocess.run(_tool_command(info, tool, args), cwd=dest, capture_output=True, text=True,
+                                env=_tool_env(info), errors="replace", check=False, timeout=TOOL_TIMEOUT)
         logs.append({"tool": tool, "returncode": result.returncode,
                      "output": result.stdout + result.stderr})
         (dest / "tool-output.json").write_text(json.dumps(logs, indent=2), encoding="utf-8")
         if result.returncode:
             raise CompileError(f"{tool} failed: {logs[-1]['output']}")
 
-    objects = [str(root / "objects" / obj) for obj in compiled["objects"]]
-    run("tulink", ["-la", "-o", "game.abs", str(root / "ngpc.lcf"), *objects])
+    objects = [_win_path(root / "objects" / obj) for obj in compiled["objects"]]
+    run("tulink", ["-la", "-o", "game.abs", _win_path(root / "ngpc.lcf"), *objects])
     link_audit = audit_link_map((dest / "game.map").read_text(encoding="utf-8", errors="replace"),
                                manifest["features"], compiled["objects"],
                                extra_publics(manifest))
