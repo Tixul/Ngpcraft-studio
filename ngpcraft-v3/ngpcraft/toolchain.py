@@ -27,15 +27,58 @@ def find_wine():
     return os.environ.get("NGPCRAFT_WINE") or shutil.which("wine") or shutil.which("wine64")
 
 
+def _entry(folder, name):
+    """`folder`/`name`, ignoring case: Linux and macOS file systems are case
+    sensitive (BIN or bin, CC900.EXE or cc900.exe), Windows and Wine are not."""
+    exact = folder / name
+    if exact.exists():
+        return exact
+    try:
+        return next((p for p in folder.iterdir() if p.name.lower() == name.lower()), None)
+    except OSError:
+        return None
+
+
 def locate(root=None):
     root = Path(root or os.environ.get("NGPC_TOSHIBA_HOME") or
                 Path(__file__).resolve().parent.parent / "toolchains" / "toshiba").resolve()
-    bins = root / "BIN" if (root / "BIN").is_dir() else root
-    missing = [name for name in TOOLS if not (bins / name).is_file()]
+    bins = _entry(root, "BIN")
+    if bins is None or not bins.is_dir():
+        bins = root
+    tools = {name: _entry(bins, name) for name in TOOLS}
+    missing = [name for name, path in tools.items() if path is None or not path.is_file()]
+    # cc900 starts thc1/thc2/asm900 from THOME\BIN only ("cc900-Fatal-116 :
+    # Can't execute ".\thc1"" otherwise): THOME is the folder holding BIN. The
+    # BIN folder itself may be selected; a flat folder gets a BIN link at build.
+    if bins != root:
+        home = root
+    elif root.name.lower() == "bin":
+        home = root.parent
+    else:
+        home = None
     wine = find_wine()
     if not NATIVE and not wine:
         missing.append("wine")
-    return {"root": str(root), "bin": str(bins), "wine": wine, "missing": missing, "ready": not missing}
+    return {"root": str(root), "bin": str(bins), "home": str(home) if home else None,
+            "tools": {name: str(path) for name, path in tools.items() if path},
+            "wine": wine, "missing": missing, "ready": not missing}
+
+
+def _toshiba_home(info, export_root):
+    """THOME for this build: the toolchain folder, or for a flat toolchain (tools
+    without a BIN folder) a folder of the export whose BIN links to the tools."""
+    if info["home"]:
+        return info["home"]
+    home = Path(export_root) / "toshiba-home"
+    link = home / "BIN"
+    if not link.exists():
+        home.mkdir(exist_ok=True)
+        if NATIVE:
+            import _winapi
+            _winapi.CreateJunction(info["bin"], str(link))
+        else:
+            link.symlink_to(info["bin"], target_is_directory=True)
+    return str(home)
 
 
 def _win_path(path):
@@ -45,18 +88,16 @@ def _win_path(path):
 
 
 def _tool_command(info, tool, args):
-    exe = str(Path(info["bin"]) / (tool + ".exe"))
+    exe = info["tools"][tool + ".exe"]
     return [exe, *args] if NATIVE else [info["wine"], exe, *args]
 
 
-def _tool_env(info):
+def _tool_env(info, home):
     env = os.environ.copy()
-    env["THOME"] = _win_path(info["root"])
+    env["THOME"] = _win_path(home)
+    env.pop("THOME900", None)  # also read by cc900: only THOME decides
     env["PATH"] = info["bin"] + os.pathsep + env.get("PATH", "")
     if not NATIVE:
-        # cc900 starts thc1/thc2/asm900 itself, inside Wine: they are found
-        # through the Windows PATH, which Wine extends with WINEPATH.
-        env["WINEPATH"] = _win_path(info["bin"])
         env.setdefault("WINEDEBUG", "-all")
     return env
 
@@ -140,7 +181,7 @@ def compile_objects(export_dir, toolchain_root=None):
     if dest.exists() and any(dest.iterdir()):
         raise CompileError("object directory is not empty; use a fresh export")
     dest.mkdir(exist_ok=True)
-    env = _tool_env(info)
+    env = _tool_env(info, _toshiba_home(info, root))
     results = []
     for source in paths:
         obj = dest / (source.stem + ".rel")
@@ -157,7 +198,7 @@ def compile_objects(export_dir, toolchain_root=None):
             raise CompileError(f"cc900 failed for {source.name}: {results[-1]['output']}")
     report = {"stage": "objects-only", "complete_rom": False, "results": results,
               "objects": [p.stem + ".rel" for p in paths],
-              "compiler_sha256": hashlib.sha256((Path(info["bin"]) / "cc900.exe").read_bytes()).hexdigest()}
+              "compiler_sha256": hashlib.sha256(Path(info["tools"]["cc900.exe"]).read_bytes()).hexdigest()}
     (dest / "compile-report.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
     return report
 
@@ -286,7 +327,8 @@ def build_rom(export_dir, toolchain_root=None):
 
     def run(tool, args):
         result = subprocess.run(_tool_command(info, tool, args), cwd=dest, capture_output=True, text=True,
-                                env=_tool_env(info), errors="replace", check=False, timeout=TOOL_TIMEOUT)
+                                env=_tool_env(info, _toshiba_home(info, root)), errors="replace",
+                                check=False, timeout=TOOL_TIMEOUT)
         logs.append({"tool": tool, "returncode": result.returncode,
                      "output": result.stdout + result.stderr})
         (dest / "tool-output.json").write_text(json.dumps(logs, indent=2), encoding="utf-8")

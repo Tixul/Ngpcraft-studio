@@ -5,15 +5,36 @@
  */
 import Path from "path";
 import { BrowserWindow, dialog } from "electron";
-import { pathExists } from "fs-extra";
+import { readdir } from "fs-extra";
 import settings from "electron-settings";
 import l10n from "shared/lib/lang/l10n";
 import { NGPCRAFT_SETTINGS } from "shared/lib/ngpcraft/settingsKeys";
 import { getToolchainPath } from "lib/ngpcraft/v3Paths";
 
-const hasCompiler = async (folder: string) =>
-  (await pathExists(Path.join(folder, "BIN", "cc900.exe"))) ||
-  (await pathExists(Path.join(folder, "cc900.exe")));
+// Entry of `folder` named `name`, ignoring case like the V3 (ngpcraft/
+// toolchain.py _entry): Linux and macOS file systems are case sensitive.
+const entry = async (
+  folder: string,
+  name: string,
+): Promise<string | undefined> => {
+  try {
+    const found = (await readdir(folder)).find(
+      (item) => item.toLowerCase() === name.toLowerCase(),
+    );
+    return found ? Path.join(folder, found) : undefined;
+  } catch (e) {
+    return undefined;
+  }
+};
+
+// cc900 in the folder itself or in its BIN folder (V3 locate).
+const hasCompiler = async (folder: string) => {
+  if (await entry(folder, "cc900.exe")) {
+    return true;
+  }
+  const bin = await entry(folder, "BIN");
+  return Boolean(bin && (await entry(bin, "cc900.exe")));
+};
 
 export const askToolchainOnFirstRun = async (
   parent: BrowserWindow | null,

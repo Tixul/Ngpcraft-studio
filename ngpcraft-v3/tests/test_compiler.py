@@ -140,6 +140,33 @@ class CompilerTests(unittest.TestCase):
             self.assertFalse(locate(d)["ready"])
             self.assertEqual(list(Path(d).iterdir()), [])
 
+    def test_toolchain_layouts_give_cc900_a_home_with_bin(self):
+        # cc900 starts thc1/thc2/asm900 from THOME\BIN only (cc900-Fatal-116
+        # "Can't execute .\thc1" otherwise, reported on Linux 2026-10-18).
+        from ngpcraft.toolchain import TOOLS, _toshiba_home
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            def make(folder, upper=False):
+                folder.mkdir(parents=True)
+                for name in TOOLS:
+                    (folder / (name.upper() if upper else name)).write_bytes(b"")
+            make(root / "normal" / "BIN")
+            make(root / "lower" / "bin", upper=True)
+            make(root / "flat")
+            for case, selected, home in (("normal", root / "normal", root / "normal"),
+                                         ("bin folder selected", root / "normal" / "BIN", root / "normal"),
+                                         ("lower case", root / "lower", root / "lower"),
+                                         ("flat", root / "flat", None)):
+                with self.subTest(case):
+                    info = locate(selected)
+                    self.assertEqual([m for m in info["missing"] if m != "wine"], [])
+                    self.assertEqual(info["home"], str(home.resolve()) if home else None)
+                    self.assertEqual(set(info["tools"]), set(TOOLS))
+            export_root = root / "export"
+            export_root.mkdir()
+            home = Path(_toshiba_home(locate(root / "flat"), export_root))
+            self.assertTrue((home / "BIN" / "thc1.exe").is_file())
+
 
 if __name__ == "__main__":
     unittest.main()
