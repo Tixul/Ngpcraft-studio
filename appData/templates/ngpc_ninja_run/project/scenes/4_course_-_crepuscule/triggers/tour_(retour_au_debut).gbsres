@@ -1,0 +1,236 @@
+{
+  "_resourceType": "trigger",
+  "id": "de3c0600-bf26-5938-8b44-acc6b959c6f8",
+  "_index": 0,
+  "symbol": "trigger_course_crepuscule_0",
+  "prefabId": "",
+  "name": "Tour (retour au debut)",
+  "x": 332,
+  "y": 0,
+  "width": 1,
+  "height": 19,
+  "prefabScriptOverrides": {},
+  "script": [
+    {
+      "command": "EVENT_ACTOR_SET_POSITION_RELATIVE",
+      "args": {
+        "actorId": "player",
+        "x": {
+          "type": "number",
+          "value": -2560
+        },
+        "y": {
+          "type": "number",
+          "value": 0
+        },
+        "units": "pixels"
+      },
+      "id": "872dd076-420f-5ef9-9040-a0aecbe205ab"
+    },
+    {
+      "command": "EVENT_SET_VALUE",
+      "args": {
+        "variable": "1",
+        "value": {
+          "type": "add",
+          "valueA": {
+            "type": "variable",
+            "value": "1"
+          },
+          "valueB": {
+            "type": "number",
+            "value": 1
+          }
+        }
+      },
+      "id": "1000927a-091e-52bb-83f2-5e919238e66e"
+    },
+    {
+      "command": "EVENT_SET_VALUE",
+      "args": {
+        "variable": "0",
+        "value": {
+          "type": "add",
+          "valueA": {
+            "type": "variable",
+            "value": "0"
+          },
+          "valueB": {
+            "type": "number",
+            "value": 100
+          }
+        }
+      },
+      "id": "dee3c213-c65b-5ca5-a074-e79230532313"
+    },
+    {
+      "command": "EVENT_IF",
+      "args": {
+        "condition": {
+          "type": "eq",
+          "valueA": {
+            "type": "variable",
+            "value": "1"
+          },
+          "valueB": {
+            "type": "number",
+            "value": 2
+          }
+        },
+        "__collapseElse": true,
+        "__disableElse": true
+      },
+      "id": "54ae3cce-b042-5c22-b8a6-92607ddbae99",
+      "children": {
+        "true": [
+          {
+            "command": "EVENT_ENGINE_FIELD_SET",
+            "args": {
+              "engineFieldKey": "plat_walk_vel",
+              "value": {
+                "type": "number",
+                "value": 7168
+              }
+            },
+            "id": "b57ca884-ef88-5cfe-a4cb-00316e29c67f"
+          },
+          {
+            "command": "EVENT_ENGINE_FIELD_SET",
+            "args": {
+              "engineFieldKey": "plat_run_vel",
+              "value": {
+                "type": "number",
+                "value": 7168
+              }
+            },
+            "id": "17538bff-5554-5243-ad6e-8b46b3a6e47f"
+          }
+        ],
+        "false": []
+      }
+    },
+    {
+      "command": "EVENT_IF",
+      "args": {
+        "condition": {
+          "type": "eq",
+          "valueA": {
+            "type": "variable",
+            "value": "1"
+          },
+          "valueB": {
+            "type": "number",
+            "value": 3
+          }
+        },
+        "__collapseElse": true,
+        "__disableElse": true
+      },
+      "id": "0c92b843-9cf8-5e24-8599-3aeaa4af2ec0",
+      "children": {
+        "true": [
+          {
+            "command": "EVENT_ENGINE_FIELD_SET",
+            "args": {
+              "engineFieldKey": "plat_walk_vel",
+              "value": {
+                "type": "number",
+                "value": 8192
+              }
+            },
+            "id": "3689f8bf-4779-58b5-94a6-f08e583ebb84"
+          },
+          {
+            "command": "EVENT_ENGINE_FIELD_SET",
+            "args": {
+              "engineFieldKey": "plat_run_vel",
+              "value": {
+                "type": "number",
+                "value": 8192
+              }
+            },
+            "id": "5f97cd41-7261-56e3-bf8e-09a7484d0bba"
+          }
+        ],
+        "false": []
+      }
+    },
+    {
+      "command": "EVENT_IF",
+      "args": {
+        "condition": {
+          "type": "eq",
+          "valueA": {
+            "type": "variable",
+            "value": "1"
+          },
+          "valueB": {
+            "type": "number",
+            "value": 4
+          }
+        },
+        "__collapseElse": true,
+        "__disableElse": true
+      },
+      "id": "3fd9ea3a-8d8b-528a-944f-d1d45920db10",
+      "children": {
+        "true": [
+          {
+            "command": "EVENT_ENGINE_FIELD_SET",
+            "args": {
+              "engineFieldKey": "plat_walk_vel",
+              "value": {
+                "type": "number",
+                "value": 9216
+              }
+            },
+            "id": "6a97566e-416e-52f7-8890-9617b1904407"
+          },
+          {
+            "command": "EVENT_ENGINE_FIELD_SET",
+            "args": {
+              "engineFieldKey": "plat_run_vel",
+              "value": {
+                "type": "number",
+                "value": 9216
+              }
+            },
+            "id": "4af26900-9c6c-5ddb-b52e-92cede7133b7"
+          }
+        ],
+        "false": []
+      }
+    },
+    {
+      "command": "EVENT_SET_VALUE",
+      "args": {
+        "variable": "12",
+        "value": {
+          "type": "number",
+          "value": 1
+        }
+      },
+      "id": "45f1b12e-2fb6-50d5-a98a-f078f5d9d28a"
+    },
+    {
+      "command": "EVENT_CALL_CUSTOM_EVENT",
+      "args": {
+        "customEventId": "66c00fd3-d11e-5f35-b5a6-462b6d5322c6",
+        "__name": "Course/HUD"
+      },
+      "id": "d1cdffe3-ef37-52d1-b436-94bbb754623e"
+    },
+    {
+      "command": "EVENT_SOUND_PLAY_EFFECT",
+      "args": {
+        "type": "beep",
+        "pitch": 7,
+        "frequency": 200,
+        "duration": 0.3,
+        "wait": false
+      },
+      "id": "5a08a4a2-2c8e-541b-98b2-dc182e3a8a3a"
+    }
+  ],
+  "leaveScript": []
+}

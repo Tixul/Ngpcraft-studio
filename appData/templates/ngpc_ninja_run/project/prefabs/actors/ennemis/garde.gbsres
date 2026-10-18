@@ -1,0 +1,97 @@
+{
+  "_resourceType": "actorPrefab",
+  "id": "fd23b4f1-64bc-4793-ad38-e8afc8147378",
+  "name": "Ennemis/Garde",
+  "frame": 0,
+  "animate": true,
+  "spriteSheetId": "1acb902d-07e3-5005-b047-e5b86dfafeef",
+  "paletteId": "",
+  "moveSpeed": 1,
+  "animSpeed": 7,
+  "persistent": false,
+  "collisionGroup": "1",
+  "collisionExtraFlags": [],
+  "script": [],
+  "startScript": [],
+  "updateScript": [
+    {
+      "command": "EVENT_ACTOR_MOVE_RELATIVE",
+      "args": {
+        "actorId": "$self$",
+        "x": {
+          "type": "number",
+          "value": -2
+        },
+        "y": {
+          "type": "number",
+          "value": 0
+        },
+        "moveType": "horizontal",
+        "useCollisions": false,
+        "verticalFirst": false,
+        "collideWith": []
+      },
+      "id": "c9c44698-fd58-48b2-9b53-75d398a66832"
+    },
+    {
+      "command": "EVENT_WAIT",
+      "args": {
+        "time": {
+          "type": "number",
+          "value": 0.3
+        },
+        "frames": {
+          "type": "number",
+          "value": 18
+        }
+      },
+      "id": "cc8c404c-da3d-4c50-8fb7-9c2f020c422e"
+    },
+    {
+      "command": "EVENT_ACTOR_MOVE_RELATIVE",
+      "args": {
+        "actorId": "$self$",
+        "x": {
+          "type": "number",
+          "value": 2
+        },
+        "y": {
+          "type": "number",
+          "value": 0
+        },
+        "moveType": "horizontal",
+        "useCollisions": false,
+        "verticalFirst": false,
+        "collideWith": []
+      },
+      "id": "1e06f6b0-f8c2-498e-b9a7-494e100a90db"
+    },
+    {
+      "command": "EVENT_WAIT",
+      "args": {
+        "time": {
+          "type": "number",
+          "value": 0.3
+        },
+        "frames": {
+          "type": "number",
+          "value": 18
+        }
+      },
+      "id": "0c9d4f88-a435-4a6a-93b4-a521fe359d19"
+    }
+  ],
+  "hit1Script": [],
+  "hit2Script": [
+    {
+      "command": "EVENT_CALL_CUSTOM_EVENT",
+      "args": {
+        "customEventId": "07379b05-80a0-5391-bead-ae342d12181c",
+        "__name": "Course/Ennemi touche",
+        "$actor[0]$": "$self$"
+      },
+      "id": "57676a46-11c4-4656-989c-f71e2a798b7f"
+    }
+  ],
+  "hit3Script": []
+}

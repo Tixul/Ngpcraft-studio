@@ -1,0 +1,13 @@
+{
+  "_resourceType": "background",
+  "id": "f2acfbb8-5c92-58ff-a185-a4e2d6ceabeb",
+  "name": "loin_nuit",
+  "symbol": "bg_loin_nuit",
+  "tileColors": "",
+  "filename": "loin_nuit.png",
+  "width": 40,
+  "height": 19,
+  "imageWidth": 320,
+  "imageHeight": 152,
+  "autoColor": false
+}

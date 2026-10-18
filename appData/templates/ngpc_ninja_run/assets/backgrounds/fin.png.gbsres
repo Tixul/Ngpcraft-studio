@@ -1,0 +1,13 @@
+{
+  "_resourceType": "background",
+  "id": "b251d7fa-bac2-5645-b515-56e61534c3b4",
+  "name": "fin",
+  "symbol": "bg_fin",
+  "tileColors": "",
+  "filename": "fin.png",
+  "width": 20,
+  "height": 19,
+  "imageWidth": 160,
+  "imageHeight": 152,
+  "autoColor": false
+}

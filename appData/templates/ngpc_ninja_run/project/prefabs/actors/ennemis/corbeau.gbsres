@@ -1,0 +1,71 @@
+{
+  "_resourceType": "actorPrefab",
+  "id": "0f311edd-c178-42bc-a366-cd2cf8d89496",
+  "name": "Ennemis/Corbeau",
+  "frame": 0,
+  "animate": true,
+  "spriteSheetId": "348b6dcd-0dce-5000-8557-e3cdf2eb1e88",
+  "paletteId": "",
+  "moveSpeed": 1,
+  "animSpeed": 7,
+  "persistent": false,
+  "collisionGroup": "1",
+  "collisionExtraFlags": [],
+  "script": [],
+  "startScript": [],
+  "updateScript": [
+    {
+      "command": "EVENT_ACTOR_MOVE_RELATIVE",
+      "args": {
+        "actorId": "$self$",
+        "x": {
+          "type": "number",
+          "value": -16
+        },
+        "y": {
+          "type": "number",
+          "value": -4
+        },
+        "moveType": "diagonal",
+        "useCollisions": false,
+        "verticalFirst": false,
+        "collideWith": [],
+        "units": "pixels"
+      },
+      "id": "cd5cce94-9df5-43cf-8bd2-7b32c422d497"
+    },
+    {
+      "command": "EVENT_ACTOR_MOVE_RELATIVE",
+      "args": {
+        "actorId": "$self$",
+        "x": {
+          "type": "number",
+          "value": -16
+        },
+        "y": {
+          "type": "number",
+          "value": 4
+        },
+        "moveType": "diagonal",
+        "useCollisions": false,
+        "verticalFirst": false,
+        "collideWith": [],
+        "units": "pixels"
+      },
+      "id": "37424b35-fc0b-4fca-b9c1-83b443848db8"
+    }
+  ],
+  "hit1Script": [],
+  "hit2Script": [
+    {
+      "command": "EVENT_CALL_CUSTOM_EVENT",
+      "args": {
+        "customEventId": "07379b05-80a0-5391-bead-ae342d12181c",
+        "__name": "Course/Ennemi touche",
+        "$actor[0]$": "$self$"
+      },
+      "id": "52bac0e6-74a8-484e-991f-f2549aded5f9"
+    }
+  ],
+  "hit3Script": []
+}

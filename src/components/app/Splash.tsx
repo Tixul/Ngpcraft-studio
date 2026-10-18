@@ -33,6 +33,7 @@ import gbs2Preview from "assets/templatePreview/gbs2.png";
 import gbhtmlPreview from "assets/templatePreview/gbhtml.png";
 import blankPreview from "assets/templatePreview/blank.png";
 import ngpcPreview from "assets/templatePreview/ngpc.png";
+import ngpcNinjaRunPreview from "assets/templatePreview/ngpc_ninja_run.png";
 import useWindowFocus from "ui/hooks/use-window-focus";
 import l10n from "shared/lib/lang/l10n";
 import API from "renderer/lib/api";
@@ -170,6 +171,14 @@ const Splash = () => {
         preview: ngpcPreview,
         videoPreview: false,
         description: l10n("SPLASH_NGPC_PROJECT_DESCRIPTION"),
+      },
+      {
+        // NgpCraft: a complete game made for the NGPC (gbs2 stays the 1:1 port).
+        id: "ngpc_ninja_run",
+        name: l10n("SPLASH_NGPC_DEMO_PROJECT"),
+        preview: ngpcNinjaRunPreview,
+        videoPreview: false,
+        description: l10n("SPLASH_NGPC_DEMO_PROJECT_DESCRIPTION"),
       },
       {
         id: "blank",

@@ -2050,6 +2050,8 @@
   "SPLASH_SAMPLE_PROJECT": "Exemple de projet",
   "SPLASH_NGPC_PROJECT": "Départ NGPC",
   "SPLASH_NGPC_PROJECT_DESCRIPTION": "Le projet vide avec une première scène déjà prête en 160×152 (l'écran NGPC) et le joueur dedans : appuyez sur Jouer pour la voir tourner",
+  "SPLASH_NGPC_DEMO_PROJECT": "Démo NGPC : Ninja Run",
+  "SPLASH_NGPC_DEMO_PROJECT_DESCRIPTION": "Un jeu de course sur les toits complet, fait pour la NGPC : couleurs natives, second décor qui défile derrière, horloge de la console qui choisit jour, crépuscule ou nuit, musique native Z80, record sauvegardé en flash, ennemis en préfabriqués",
   "SPLASH_BLANK_PROJECT": "Projet vide",
   "SPLASH_SAMPLE_PROJECT_DESCRIPTION": "L'exemple de GB Studio : scènes top down, plateforme, point and click et shooter. Musique et effets sonores déjà convertis pour la NGPC ; décors passés à 152 px, plein écran",
   "SPLASH_SAMPLE_PROJECT_ORIGINAL_DESCRIPTION": "Le modèle original de GB Studio, un petit jeu top down. Musique déjà convertie pour la NGPC ; décors passés à 152 px, plein écran",

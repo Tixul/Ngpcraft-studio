@@ -1,0 +1,103 @@
+{
+  "_resourceType": "sprite",
+  "id": "415894f4-048e-529d-90df-63614b50285c",
+  "name": "vide",
+  "symbol": "sprite_vide",
+  "states": [
+    {
+      "id": "9d16525e-02ab-5913-9767-e3438d16bc1a",
+      "name": "",
+      "animationType": "fixed",
+      "flipLeft": false,
+      "animations": [
+        {
+          "id": "b740d42b-cb31-5a91-b5e8-2cd2bc67096c",
+          "frames": [
+            {
+              "id": "077b862b-590f-5304-a930-23dc3a4e262f",
+              "tiles": []
+            }
+          ]
+        },
+        {
+          "id": "f83111a4-1514-54be-9b8b-8aa7d17d38e8",
+          "frames": [
+            {
+              "id": "2df0ab4c-b1f6-540a-b840-51244aa271b4",
+              "tiles": []
+            }
+          ]
+        },
+        {
+          "id": "e11ef8f9-ce4e-5e82-beae-65ea95980b39",
+          "frames": [
+            {
+              "id": "cad81142-f176-544c-8f9f-e6dab78762ae",
+              "tiles": []
+            }
+          ]
+        },
+        {
+          "id": "2511d885-9b27-5868-90b3-0df5d06ece54",
+          "frames": [
+            {
+              "id": "05b5ab9c-04dc-58b6-a3b2-dd23ce68066d",
+              "tiles": []
+            }
+          ]
+        },
+        {
+          "id": "017e2dce-1e30-5353-84d7-6bc5ed7bda65",
+          "frames": [
+            {
+              "id": "a746d7a2-e73f-53d8-ac9f-ff40126b2e36",
+              "tiles": []
+            }
+          ]
+        },
+        {
+          "id": "33a65f84-efd2-578f-a40c-0ef13d4cec53",
+          "frames": [
+            {
+              "id": "e5f96d9b-3239-52df-8501-c15945fdf794",
+              "tiles": []
+            }
+          ]
+        },
+        {
+          "id": "092ad478-ea4c-5c3e-bc94-01780f28f0db",
+          "frames": [
+            {
+              "id": "12d9e46a-6569-5b52-ae80-a793628aafa9",
+              "tiles": []
+            }
+          ]
+        },
+        {
+          "id": "9789d83a-4a76-5fb0-bc76-9bca393ee199",
+          "frames": [
+            {
+              "id": "58aedde9-55f9-5497-b5ff-21f3acb1cd0f",
+              "tiles": []
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "numTiles": 0,
+  "canvasOriginX": 0,
+  "canvasOriginY": 0,
+  "canvasWidth": 8,
+  "canvasHeight": 8,
+  "boundsX": 0,
+  "boundsY": 0,
+  "boundsWidth": 8,
+  "boundsHeight": 8,
+  "animSpeed": 15,
+  "spriteMode": "8x8",
+  "filename": "vide.png",
+  "width": 8,
+  "height": 8,
+  "checksum": "1bf9abf0a94ea6d42aed7460b9de3acb51f05b1d"
+}

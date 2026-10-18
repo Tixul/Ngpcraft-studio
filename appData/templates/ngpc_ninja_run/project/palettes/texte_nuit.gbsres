@@ -1,0 +1,18 @@
+{
+  "_resourceType": "palette",
+  "id": "ui-nuit",
+  "name": "Texte nuit",
+  "colors": [
+    "000011",
+    "AAAAAA",
+    "555555",
+    "FFDD55"
+  ],
+  "defaultName": "Texte nuit",
+  "defaultColors": [
+    "000011",
+    "AAAAAA",
+    "555555",
+    "FFDD55"
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "_resourceType": "trigger",
+  "id": "b002c8a6-823e-590e-ae0d-ee05d2a988d3",
+  "_index": 1,
+  "symbol": "trigger_course_nuit_1",
+  "prefabId": "",
+  "name": "Chute (gauche)",
+  "x": 0,
+  "y": 18,
+  "width": 171,
+  "height": 1,
+  "prefabScriptOverrides": {},
+  "script": [
+    {
+      "command": "EVENT_CALL_CUSTOM_EVENT",
+      "args": {
+        "customEventId": "a1dc3a48-7cab-5611-9193-bf98cb43b988",
+        "__name": "Course/Mort"
+      },
+      "id": "e0fa316b-115c-5d11-95fe-af01b8ec741b"
+    }
+  ],
+  "leaveScript": []
+}

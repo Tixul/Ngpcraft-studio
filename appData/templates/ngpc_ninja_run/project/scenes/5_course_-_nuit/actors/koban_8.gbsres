@@ -1,0 +1,81 @@
+{
+  "_resourceType": "actor",
+  "id": "8b14fc4a-6ccc-50c7-ae97-a42aff39e2e8",
+  "_index": 8,
+  "symbol": "actor_course_nuit_8",
+  "prefabId": "3f0849e2-77a2-4bbf-8845-b48d9eb8c563",
+  "name": "Koban 8",
+  "coordinateType": "tiles",
+  "x": 162,
+  "y": 4,
+  "frame": 0,
+  "animate": true,
+  "spriteSheetId": "6fb0f251-b297-582e-8d6d-2065fec9bf84",
+  "paletteId": "",
+  "direction": "down",
+  "moveSpeed": 1,
+  "animSpeed": 15,
+  "isPinned": false,
+  "persistent": false,
+  "collisionGroup": "3",
+  "collisionExtraFlags": [],
+  "prefabScriptOverrides": {},
+  "script": [
+    {
+      "command": "EVENT_ACTOR_HIDE",
+      "args": {
+        "actorId": "$self$"
+      },
+      "id": "3d7785c5-433a-53dd-831b-1eb8a8bfa3b7"
+    },
+    {
+      "command": "EVENT_ACTOR_COLLISIONS_DISABLE",
+      "args": {
+        "actorId": "$self$"
+      },
+      "id": "8c350d7e-cbab-55f6-917f-a6ee4c99baaa"
+    },
+    {
+      "command": "EVENT_SET_VALUE",
+      "args": {
+        "variable": "0",
+        "value": {
+          "type": "add",
+          "valueA": {
+            "type": "variable",
+            "value": "0"
+          },
+          "valueB": {
+            "type": "number",
+            "value": 10
+          }
+        }
+      },
+      "id": "946455da-cca3-55a5-9a07-9a1c5e05ff6d"
+    },
+    {
+      "command": "EVENT_SOUND_PLAY_EFFECT",
+      "args": {
+        "type": "beep",
+        "pitch": 7,
+        "frequency": 200,
+        "duration": 0.05,
+        "wait": false
+      },
+      "id": "5cdc33dc-23b2-58b8-9920-33a1409bb399"
+    },
+    {
+      "command": "EVENT_CALL_CUSTOM_EVENT",
+      "args": {
+        "customEventId": "66c00fd3-d11e-5f35-b5a6-462b6d5322c6",
+        "__name": "Course/HUD"
+      },
+      "id": "de12e8b2-90dc-5b39-adda-35df0daf9138"
+    }
+  ],
+  "startScript": [],
+  "updateScript": [],
+  "hit1Script": [],
+  "hit2Script": [],
+  "hit3Script": []
+}

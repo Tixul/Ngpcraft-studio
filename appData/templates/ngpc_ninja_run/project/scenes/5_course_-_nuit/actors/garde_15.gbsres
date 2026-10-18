@@ -1,0 +1,106 @@
+{
+  "_resourceType": "actor",
+  "id": "4636d689-5829-56e0-9af4-29f9e238cdb1",
+  "_index": 15,
+  "symbol": "actor_course_nuit_15",
+  "prefabId": "fd23b4f1-64bc-4793-ad38-e8afc8147378",
+  "name": "Garde 15",
+  "coordinateType": "tiles",
+  "x": 146,
+  "y": 9,
+  "frame": 0,
+  "animate": true,
+  "spriteSheetId": "1acb902d-07e3-5005-b047-e5b86dfafeef",
+  "paletteId": "",
+  "direction": "left",
+  "moveSpeed": 1,
+  "animSpeed": 7,
+  "isPinned": false,
+  "persistent": false,
+  "collisionGroup": "1",
+  "collisionExtraFlags": [],
+  "prefabScriptOverrides": {},
+  "script": [],
+  "startScript": [],
+  "updateScript": [
+    {
+      "command": "EVENT_ACTOR_MOVE_RELATIVE",
+      "args": {
+        "actorId": "$self$",
+        "x": {
+          "type": "number",
+          "value": -2
+        },
+        "y": {
+          "type": "number",
+          "value": 0
+        },
+        "moveType": "horizontal",
+        "useCollisions": false,
+        "verticalFirst": false,
+        "collideWith": []
+      },
+      "id": "f87b9f10-9559-58b8-8dcc-5750b5b18974"
+    },
+    {
+      "command": "EVENT_WAIT",
+      "args": {
+        "time": {
+          "type": "number",
+          "value": 0.3
+        },
+        "frames": {
+          "type": "number",
+          "value": 18
+        }
+      },
+      "id": "23b57a3b-13fb-531e-9d6a-6d2ae0d399a7"
+    },
+    {
+      "command": "EVENT_ACTOR_MOVE_RELATIVE",
+      "args": {
+        "actorId": "$self$",
+        "x": {
+          "type": "number",
+          "value": 2
+        },
+        "y": {
+          "type": "number",
+          "value": 0
+        },
+        "moveType": "horizontal",
+        "useCollisions": false,
+        "verticalFirst": false,
+        "collideWith": []
+      },
+      "id": "bbd06f62-5eeb-5169-a37f-f1efe28f71a2"
+    },
+    {
+      "command": "EVENT_WAIT",
+      "args": {
+        "time": {
+          "type": "number",
+          "value": 0.3
+        },
+        "frames": {
+          "type": "number",
+          "value": 18
+        }
+      },
+      "id": "3da7e7f6-2e2e-5cc2-a222-1a16ed55e553"
+    }
+  ],
+  "hit1Script": [],
+  "hit2Script": [
+    {
+      "command": "EVENT_CALL_CUSTOM_EVENT",
+      "args": {
+        "customEventId": "07379b05-80a0-5391-bead-ae342d12181c",
+        "__name": "Course/Ennemi touche",
+        "$actor[0]$": "$self$"
+      },
+      "id": "731d1572-2f7b-59c2-bbd3-c55f47a08130"
+    }
+  ],
+  "hit3Script": []
+}

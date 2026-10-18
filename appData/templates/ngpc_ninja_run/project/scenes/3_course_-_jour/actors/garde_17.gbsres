@@ -1,0 +1,106 @@
+{
+  "_resourceType": "actor",
+  "id": "c120a0f3-7045-5a92-bfb1-6fc421c8b116",
+  "_index": 17,
+  "symbol": "actor_course_jour_17",
+  "prefabId": "fd23b4f1-64bc-4793-ad38-e8afc8147378",
+  "name": "Garde 17",
+  "coordinateType": "tiles",
+  "x": 244,
+  "y": 14,
+  "frame": 0,
+  "animate": true,
+  "spriteSheetId": "1acb902d-07e3-5005-b047-e5b86dfafeef",
+  "paletteId": "",
+  "direction": "left",
+  "moveSpeed": 1,
+  "animSpeed": 7,
+  "isPinned": false,
+  "persistent": false,
+  "collisionGroup": "1",
+  "collisionExtraFlags": [],
+  "prefabScriptOverrides": {},
+  "script": [],
+  "startScript": [],
+  "updateScript": [
+    {
+      "command": "EVENT_ACTOR_MOVE_RELATIVE",
+      "args": {
+        "actorId": "$self$",
+        "x": {
+          "type": "number",
+          "value": -2
+        },
+        "y": {
+          "type": "number",
+          "value": 0
+        },
+        "moveType": "horizontal",
+        "useCollisions": false,
+        "verticalFirst": false,
+        "collideWith": []
+      },
+      "id": "940b8c81-d5ef-55f3-8f1d-f21ab6981353"
+    },
+    {
+      "command": "EVENT_WAIT",
+      "args": {
+        "time": {
+          "type": "number",
+          "value": 0.3
+        },
+        "frames": {
+          "type": "number",
+          "value": 18
+        }
+      },
+      "id": "bc2ab709-f76e-5570-99fe-f9f1413df2fa"
+    },
+    {
+      "command": "EVENT_ACTOR_MOVE_RELATIVE",
+      "args": {
+        "actorId": "$self$",
+        "x": {
+          "type": "number",
+          "value": 2
+        },
+        "y": {
+          "type": "number",
+          "value": 0
+        },
+        "moveType": "horizontal",
+        "useCollisions": false,
+        "verticalFirst": false,
+        "collideWith": []
+      },
+      "id": "e922c438-d3ef-58d2-ad23-63f9e78e4994"
+    },
+    {
+      "command": "EVENT_WAIT",
+      "args": {
+        "time": {
+          "type": "number",
+          "value": 0.3
+        },
+        "frames": {
+          "type": "number",
+          "value": 18
+        }
+      },
+      "id": "f545677b-f9a7-5f68-8812-fb06b5ad308c"
+    }
+  ],
+  "hit1Script": [],
+  "hit2Script": [
+    {
+      "command": "EVENT_CALL_CUSTOM_EVENT",
+      "args": {
+        "customEventId": "07379b05-80a0-5391-bead-ae342d12181c",
+        "__name": "Course/Ennemi touche",
+        "$actor[0]$": "$self$"
+      },
+      "id": "fadac6ed-4db8-5a6c-81eb-4f28c56255b0"
+    }
+  ],
+  "hit3Script": []
+}

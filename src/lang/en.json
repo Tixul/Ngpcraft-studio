@@ -2289,6 +2289,8 @@
   "SPLASH_SAMPLE_PROJECT": "Sample Project",
   "SPLASH_NGPC_PROJECT": "NGPC Starter",
   "SPLASH_NGPC_PROJECT_DESCRIPTION": "The blank project with a first scene already set up at 160×152 (the NGPC screen) and the player in it: press Play to see it run",
+  "SPLASH_NGPC_DEMO_PROJECT": "NGPC Demo: Ninja Run",
+  "SPLASH_NGPC_DEMO_PROJECT_DESCRIPTION": "A complete rooftop runner made for the NGPC: native colours, a second background scrolling behind, the console clock picking day, dusk or night, native Z80 music, high score saved to flash, enemy prefabs",
   "SPLASH_BLANK_PROJECT": "Blank Project",
   "SPLASH_SAMPLE_PROJECT_DESCRIPTION": "The GB Studio sample: top down, platformer, point and click and shooter scenes. Music and sound effects already converted for the NGPC; backgrounds extended to 152 px, full screen",
   "SPLASH_SAMPLE_PROJECT_ORIGINAL_DESCRIPTION": "The original GB Studio template, a short top down game. Music already converted for the NGPC; backgrounds extended to 152 px, full screen",

@@ -1,0 +1,8 @@
+{
+  "_resourceType": "project",
+  "name": "___PROJECT_NAME___",
+  "author": "___AUTHOR___",
+  "notes": "Ninja Run: a rooftop runner made for the Neo Geo Pocket Color.\n\nShows what NgpCraft adds to GB Studio: native NGPC colours (backgrounds and sprites), a second background scrolling behind the rooftops, the NGPC clock read on the title screen (day, dusk or night), native Z80 music, the high score saved to flash, many actors per scene, 60 frames per second, and actor prefabs for the enemies and coins.\n\nRIGHT = run, A = jump, B = shuriken.",
+  "_version": "4.2.0",
+  "_release": "10"
+}

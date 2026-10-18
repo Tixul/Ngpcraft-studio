@@ -1,0 +1,13 @@
+{
+  "_resourceType": "background",
+  "id": "72d99fdd-8196-5fc9-911e-c101c3afe4c0",
+  "name": "toits_crepuscule",
+  "symbol": "bg_toits_crepuscule",
+  "tileColors": "",
+  "filename": "toits_crepuscule.png",
+  "width": 342,
+  "height": 19,
+  "imageWidth": 2736,
+  "imageHeight": 152,
+  "autoColor": false
+}

@@ -1,0 +1,21 @@
+{
+  "_resourceType": "script",
+  "id": "66c00fd3-d11e-5f35-b5a6-462b6d5322c6",
+  "name": "Course/HUD",
+  "symbol": "script_hud",
+  "description": "La bande du bas (overlay, 1 rangee visible) : score, tour.",
+  "variables": {},
+  "actors": {},
+  "script": [
+    {
+      "command": "EVENT_TEXT_DRAW",
+      "args": {
+        "text": " SCORE $00$   TOUR $01$ ",
+        "x": 0,
+        "y": 0,
+        "location": "overlay"
+      },
+      "id": "63ceee27-6342-5fe9-a353-f9fcacf56065"
+    }
+  ]
+}

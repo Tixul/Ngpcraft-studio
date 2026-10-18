@@ -1,0 +1,80 @@
+{
+  "_resourceType": "actor",
+  "id": "24e4b275-4900-5d21-b7a9-e02d7610423d",
+  "_index": 25,
+  "symbol": "actor_course_nuit_25",
+  "prefabId": "0f311edd-c178-42bc-a366-cd2cf8d89496",
+  "name": "Corbeau 25",
+  "coordinateType": "tiles",
+  "x": 270,
+  "y": 13,
+  "frame": 0,
+  "animate": true,
+  "spriteSheetId": "348b6dcd-0dce-5000-8557-e3cdf2eb1e88",
+  "paletteId": "",
+  "direction": "left",
+  "moveSpeed": 1,
+  "animSpeed": 7,
+  "isPinned": false,
+  "persistent": false,
+  "collisionGroup": "1",
+  "collisionExtraFlags": [],
+  "prefabScriptOverrides": {},
+  "script": [],
+  "startScript": [],
+  "updateScript": [
+    {
+      "command": "EVENT_ACTOR_MOVE_RELATIVE",
+      "args": {
+        "actorId": "$self$",
+        "x": {
+          "type": "number",
+          "value": -16
+        },
+        "y": {
+          "type": "number",
+          "value": -4
+        },
+        "moveType": "diagonal",
+        "useCollisions": false,
+        "verticalFirst": false,
+        "collideWith": [],
+        "units": "pixels"
+      },
+      "id": "746ac1cc-c33d-520d-ac4f-0c5476955273"
+    },
+    {
+      "command": "EVENT_ACTOR_MOVE_RELATIVE",
+      "args": {
+        "actorId": "$self$",
+        "x": {
+          "type": "number",
+          "value": -16
+        },
+        "y": {
+          "type": "number",
+          "value": 4
+        },
+        "moveType": "diagonal",
+        "useCollisions": false,
+        "verticalFirst": false,
+        "collideWith": [],
+        "units": "pixels"
+      },
+      "id": "5f552e89-4d29-5c9a-9aeb-231887370189"
+    }
+  ],
+  "hit1Script": [],
+  "hit2Script": [
+    {
+      "command": "EVENT_CALL_CUSTOM_EVENT",
+      "args": {
+        "customEventId": "07379b05-80a0-5391-bead-ae342d12181c",
+        "__name": "Course/Ennemi touche",
+        "$actor[0]$": "$self$"
+      },
+      "id": "731d1572-2f7b-59c2-bbd3-c55f47a08130"
+    }
+  ],
+  "hit3Script": []
+}

@@ -1,0 +1,24 @@
+{
+  "_resourceType": "trigger",
+  "id": "8f8f30ef-044b-5659-9545-36da894cf632",
+  "_index": 2,
+  "symbol": "trigger_course_crepuscule_2",
+  "prefabId": "",
+  "name": "Chute (droite)",
+  "x": 171,
+  "y": 18,
+  "width": 171,
+  "height": 1,
+  "prefabScriptOverrides": {},
+  "script": [
+    {
+      "command": "EVENT_CALL_CUSTOM_EVENT",
+      "args": {
+        "customEventId": "a1dc3a48-7cab-5611-9193-bf98cb43b988",
+        "__name": "Course/Mort"
+      },
+      "id": "997c76bb-8356-53bc-ad59-9893db533d8a"
+    }
+  ],
+  "leaveScript": []
+}

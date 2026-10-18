@@ -1,0 +1,211 @@
+{
+  "_resourceType": "scene",
+  "id": "73b7467e-fa2b-5955-9d8e-b90cbeafadf7",
+  "_index": 2,
+  "type": "TOPDOWN",
+  "name": "2 Fin (score, record)",
+  "symbol": "scene_fin",
+  "x": 680,
+  "y": 64,
+  "width": 20,
+  "height": 19,
+  "backgroundId": "b251d7fa-bac2-5645-b515-56e61534c3b4",
+  "tilesetId": "",
+  "colorModeOverride": "none",
+  "paletteIds": [
+    "default-bg-1",
+    "default-bg-1",
+    "default-bg-1",
+    "default-bg-1",
+    "default-bg-1",
+    "default-bg-1",
+    "dmg",
+    "ui-fin"
+  ],
+  "spritePaletteIds": [],
+  "autoFadeSpeed": 1,
+  "script": [
+    {
+      "command": "EVENT_OVERLAY_HIDE",
+      "args": {},
+      "id": "e030abe1-4c7e-5bb6-9822-35c47938b85e"
+    },
+    {
+      "command": "EVENT_OVERLAY_SET_SCANLINE_CUTOFF",
+      "args": {
+        "y": {
+          "type": "number",
+          "value": 150
+        },
+        "units": "pixels"
+      },
+      "id": "a783e350-a6b9-531d-954d-e3179538a332"
+    },
+    {
+      "command": "EVENT_ACTOR_HIDE",
+      "args": {
+        "actorId": "player"
+      },
+      "id": "60abe34d-36c1-5e08-b415-80699e158e75"
+    },
+    {
+      "command": "EVENT_MUSIC_PLAY",
+      "args": {
+        "musicId": "a48b4a96-9a5a-4511-b38a-98d56dd996ba",
+        "loop": true
+      },
+      "id": "c3e3addc-ec6c-5eb3-a2c1-7d3e39a6a6d9"
+    },
+    {
+      "command": "EVENT_TEXT_DRAW",
+      "args": {
+        "text": "     PERDU !",
+        "x": 2,
+        "y": 4,
+        "location": "background"
+      },
+      "id": "5f9c2cd4-b371-545f-b35e-6cfac228c582"
+    },
+    {
+      "command": "EVENT_TEXT_DRAW",
+      "args": {
+        "text": "SCORE  $00$",
+        "x": 4,
+        "y": 7,
+        "location": "background"
+      },
+      "id": "18ca0750-33a2-58f5-945f-7c96cf83293f"
+    },
+    {
+      "command": "EVENT_TEXT_DRAW",
+      "args": {
+        "text": "TOURS  $01$",
+        "x": 4,
+        "y": 9,
+        "location": "background"
+      },
+      "id": "64bfd699-bf9c-5eab-893a-a00702bbe569"
+    },
+    {
+      "command": "EVENT_TEXT_DRAW",
+      "args": {
+        "text": "RECORD $02$",
+        "x": 4,
+        "y": 11,
+        "location": "background"
+      },
+      "id": "0dab8df7-c102-5fea-b3ab-d7495c0a8ec0"
+    },
+    {
+      "command": "EVENT_IF",
+      "args": {
+        "condition": {
+          "type": "eq",
+          "valueA": {
+            "type": "variable",
+            "value": "8"
+          },
+          "valueB": {
+            "type": "number",
+            "value": 1
+          }
+        },
+        "__collapseElse": true,
+        "__disableElse": true
+      },
+      "id": "08213815-db45-5ab5-807b-3ddf9132e724",
+      "children": {
+        "true": [
+          {
+            "command": "EVENT_TEXT_DRAW",
+            "args": {
+              "text": "NOUVEAU RECORD !",
+              "x": 2,
+              "y": 13,
+              "location": "background"
+            },
+            "id": "c0b5fc1b-7382-5592-9352-6db4c69da085"
+          }
+        ],
+        "false": []
+      }
+    },
+    {
+      "command": "EVENT_WAIT",
+      "args": {
+        "time": {
+          "type": "number",
+          "value": 0.5
+        },
+        "frames": {
+          "type": "number",
+          "value": 30
+        }
+      },
+      "id": "d27ce423-d7aa-5419-8983-b8864b2c259f"
+    },
+    {
+      "command": "EVENT_TEXT_DRAW",
+      "args": {
+        "text": "  A : TITRE",
+        "x": 3,
+        "y": 17,
+        "location": "background"
+      },
+      "id": "cb1e479d-eb6a-526a-a8e7-e4e03e7e1f84"
+    },
+    {
+      "command": "EVENT_SET_INPUT_SCRIPT",
+      "args": {
+        "input": [
+          "a",
+          "start"
+        ],
+        "override": false,
+        "__collapse": false
+      },
+      "id": "56655d68-7bdf-56db-9a85-677432cdc78d",
+      "children": {
+        "true": [
+          {
+            "command": "EVENT_SOUND_PLAY_EFFECT",
+            "args": {
+              "type": "beep",
+              "pitch": 4,
+              "frequency": 200,
+              "duration": 0.1,
+              "wait": false
+            },
+            "id": "528a99ea-827b-5b19-aa7f-b15155daed66"
+          },
+          {
+            "command": "EVENT_MUSIC_STOP",
+            "args": {},
+            "id": "cc0fd59b-679e-5c2e-baef-757ae41e859e"
+          },
+          {
+            "command": "EVENT_SWITCH_SCENE",
+            "args": {
+              "sceneId": "d9c6f371-4892-57b9-be49-2709e3bea917",
+              "x": {
+                "type": "number",
+                "value": 10
+              },
+              "y": {
+                "type": "number",
+                "value": 9
+              },
+              "direction": "down",
+              "fadeSpeed": "2"
+            },
+            "id": "d5ac2c08-f02e-509f-8289-8b45ee74de26"
+          }
+        ]
+      }
+    }
+  ],
+  "playerHit1Script": [],
+  "playerHit2Script": [],
+  "playerHit3Script": [],
+  "collisions": ""
+}

@@ -1,0 +1,13 @@
+{
+  "_resourceType": "background",
+  "id": "c353a829-c4ef-5fef-8474-d877fafef64e",
+  "name": "loin_crepuscule",
+  "symbol": "bg_loin_crepuscule",
+  "tileColors": "",
+  "filename": "loin_crepuscule.png",
+  "width": 40,
+  "height": 19,
+  "imageWidth": 320,
+  "imageHeight": 152,
+  "autoColor": false
+}

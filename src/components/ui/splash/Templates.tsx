@@ -31,9 +31,12 @@ const SplashTemplateSelectWrapper = styled.div`
   width: 100%;
 `;
 
+// NgpCraft: the tiles wrap instead of being cut when the row is too narrow.
 const SplashTemplateSelectOptions = styled.div`
   display: flex;
   flex-direction: row;
+  flex-wrap: wrap;
+  row-gap: 10px;
   width: 100%;
   margin-bottom: 5px;
 

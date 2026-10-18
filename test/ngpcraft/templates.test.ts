@@ -38,7 +38,7 @@ const available =
   existsSync(Path.join(v3Root, "ngpcraft")) && existsSync(toshibaHome);
 
 const templates = (
-  process.env.NGPCRAFT_TEST_TEMPLATES || "gbhtml,gbs2,ngpc"
+  process.env.NGPCRAFT_TEST_TEMPLATES || "gbhtml,gbs2,ngpc,ngpc_ninja_run"
 ).split(",");
 
 (available ? describe : describe.skip)("NgpCraft project templates", () => {

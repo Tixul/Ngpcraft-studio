@@ -1,0 +1,121 @@
+{
+  "_resourceType": "scene",
+  "id": "acad828f-54d3-5ca6-a4cc-2f5e9b50b233",
+  "_index": 0,
+  "type": "TOPDOWN",
+  "name": "0 Logo NgpCraft",
+  "symbol": "scene_logo",
+  "x": 256,
+  "y": 64,
+  "width": 20,
+  "height": 19,
+  "backgroundId": "aa290a8e-5ac0-5c14-b5ed-ba3f9d871c22",
+  "tilesetId": "",
+  "colorModeOverride": "none",
+  "paletteIds": [
+    "default-bg-1",
+    "default-bg-1",
+    "default-bg-1",
+    "default-bg-1",
+    "default-bg-1",
+    "default-bg-1",
+    "dmg",
+    "ui-nuit"
+  ],
+  "spritePaletteIds": [],
+  "autoFadeSpeed": 1,
+  "script": [
+    {
+      "command": "EVENT_OVERLAY_HIDE",
+      "args": {},
+      "id": "e030abe1-4c7e-5bb6-9822-35c47938b85e"
+    },
+    {
+      "command": "EVENT_OVERLAY_SET_SCANLINE_CUTOFF",
+      "args": {
+        "y": {
+          "type": "number",
+          "value": 150
+        },
+        "units": "pixels"
+      },
+      "id": "a783e350-a6b9-531d-954d-e3179538a332"
+    },
+    {
+      "command": "EVENT_ACTOR_HIDE",
+      "args": {
+        "actorId": "player"
+      },
+      "id": "072a053a-cf23-5699-a70a-66c7d7cf123c"
+    },
+    {
+      "command": "EVENT_SET_INPUT_SCRIPT",
+      "args": {
+        "input": [
+          "a",
+          "b",
+          "start"
+        ],
+        "override": false,
+        "__collapse": false
+      },
+      "id": "2039e7e3-223a-5d31-9b49-c36a0fe6addc",
+      "children": {
+        "true": [
+          {
+            "command": "EVENT_SWITCH_SCENE",
+            "args": {
+              "sceneId": "d9c6f371-4892-57b9-be49-2709e3bea917",
+              "x": {
+                "type": "number",
+                "value": 10
+              },
+              "y": {
+                "type": "number",
+                "value": 9
+              },
+              "direction": "down",
+              "fadeSpeed": "2"
+            },
+            "id": "bdcc2cee-5f7c-5825-9623-e46f2a1db262"
+          }
+        ]
+      }
+    },
+    {
+      "command": "EVENT_WAIT",
+      "args": {
+        "time": {
+          "type": "number",
+          "value": 1.7
+        },
+        "frames": {
+          "type": "number",
+          "value": 102
+        }
+      },
+      "id": "ec94ba28-babf-5f22-9ae2-9b55e38af707"
+    },
+    {
+      "command": "EVENT_SWITCH_SCENE",
+      "args": {
+        "sceneId": "d9c6f371-4892-57b9-be49-2709e3bea917",
+        "x": {
+          "type": "number",
+          "value": 10
+        },
+        "y": {
+          "type": "number",
+          "value": 9
+        },
+        "direction": "down",
+        "fadeSpeed": "2"
+      },
+      "id": "bdcc2cee-5f7c-5825-9623-e46f2a1db262"
+    }
+  ],
+  "playerHit1Script": [],
+  "playerHit2Script": [],
+  "playerHit3Script": [],
+  "collisions": ""
+}

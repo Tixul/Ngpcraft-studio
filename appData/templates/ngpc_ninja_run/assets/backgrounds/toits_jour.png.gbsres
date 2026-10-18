@@ -1,0 +1,13 @@
+{
+  "_resourceType": "background",
+  "id": "554061cd-1ff8-5414-8fae-e8592990739a",
+  "name": "toits_jour",
+  "symbol": "bg_toits_jour",
+  "tileColors": "",
+  "filename": "toits_jour.png",
+  "width": 342,
+  "height": 19,
+  "imageWidth": 2736,
+  "imageHeight": 152,
+  "autoColor": false
+}

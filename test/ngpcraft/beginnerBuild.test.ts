@@ -52,7 +52,7 @@ const load = async (projectFile: string) => {
 
 // "blank" has no scene: GB Studio refuses it too ("No scenes are included
 // in your project"), and so does the V3.
-describe.each(["gbhtml", "gbs2", "ngpc"])("template %s", (template) => {
+describe.each(["gbhtml", "gbs2", "ngpc", "ngpc_ninja_run"])("template %s", (template) => {
   (available ? test : test.skip)(
     "builds with no NGPC step",
     async () => {

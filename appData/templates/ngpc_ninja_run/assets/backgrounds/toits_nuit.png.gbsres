@@ -1,0 +1,13 @@
+{
+  "_resourceType": "background",
+  "id": "6e23459b-8d8d-54b9-b8af-a88742602cce",
+  "name": "toits_nuit",
+  "symbol": "bg_toits_nuit",
+  "tileColors": "",
+  "filename": "toits_nuit.png",
+  "width": 342,
+  "height": 19,
+  "imageWidth": 2736,
+  "imageHeight": 152,
+  "autoColor": false
+}

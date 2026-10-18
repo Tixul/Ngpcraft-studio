@@ -1,0 +1,87 @@
+{
+  "schema": "ngpcraft-project/1",
+  "ngpc": {
+    "default_color": "native",
+    "frame_rate": 60,
+    "actor_capacity": 29,
+    "projectile_capacity": 5,
+    "vm_context_policy": "gbvm-16"
+  },
+  "resources": {
+    "554061cd-1ff8-5414-8fae-e8592990739a": {
+      "ngpc_backdrop": "66aaff"
+    },
+    "f477827f-df32-58a0-b542-3a90f27e9a08": {
+      "ngpc_backdrop": "66aaff"
+    },
+    "72d99fdd-8196-5fc9-911e-c101c3afe4c0": {
+      "ngpc_backdrop": "ee6644"
+    },
+    "c353a829-c4ef-5fef-8474-d877fafef64e": {
+      "ngpc_backdrop": "ee6644"
+    },
+    "6e23459b-8d8d-54b9-b8af-a88742602cce": {
+      "ngpc_backdrop": "111133"
+    },
+    "f2acfbb8-5c92-58ff-a185-a4e2d6ceabeb": {
+      "ngpc_backdrop": "111133"
+    },
+    "aa290a8e-5ac0-5c14-b5ed-ba3f9d871c22": {
+      "ngpc_backdrop": "000000"
+    },
+    "0e008106-82e1-502a-9ba3-3ee77d331b41": {
+      "ngpc_backdrop": "111133"
+    },
+    "b251d7fa-bac2-5645-b515-56e61534c3b4": {
+      "ngpc_backdrop": "000011"
+    },
+    "a7c68b7f-00bc-4872-9ce8-fe5e62f9b565": {
+      "native_music": {
+        "format": "held-score",
+        "score": "native-audio/Rulz_FastPaceSpeedRace/held-score.json",
+        "bank": "native-audio/Rulz_FastPaceSpeedRace/bank.json"
+      }
+    },
+    "4f144f63-6005-4e99-b570-92a526201bd3": {
+      "native_music": {
+        "format": "held-score",
+        "score": "native-audio/Rulz_Intro/held-score.json",
+        "bank": "native-audio/Rulz_Intro/bank.json"
+      }
+    },
+    "a48b4a96-9a5a-4511-b38a-98d56dd996ba": {
+      "native_music": {
+        "format": "held-score",
+        "score": "native-audio/Rulz_Pause_Underground/held-score.json",
+        "bank": "native-audio/Rulz_Pause_Underground/bank.json"
+      }
+    },
+    "a1803f35-b3c6-5485-995c-75115be9b1eb": {
+      "second_background": {
+        "background_id": "f477827f-df32-58a0-b542-3a90f27e9a08",
+        "scroll_x": "25%",
+        "scroll_y": "fixed",
+        "loop_x": true,
+        "behind": true
+      }
+    },
+    "36b4f11f-3a0b-5830-95f9-33318c1178a6": {
+      "second_background": {
+        "background_id": "c353a829-c4ef-5fef-8474-d877fafef64e",
+        "scroll_x": "25%",
+        "scroll_y": "fixed",
+        "loop_x": true,
+        "behind": true
+      }
+    },
+    "88aa9ef1-2d63-5e52-b5d7-a129de6628df": {
+      "second_background": {
+        "background_id": "f2acfbb8-5c92-58ff-a185-a4e2d6ceabeb",
+        "scroll_x": "25%",
+        "scroll_y": "fixed",
+        "loop_x": true,
+        "behind": true
+      }
+    }
+  }
+}

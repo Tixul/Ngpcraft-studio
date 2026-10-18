@@ -1,0 +1,61 @@
+{
+  "_resourceType": "variables",
+  "variables": [
+    {
+      "id": "0",
+      "name": "Score",
+      "symbol": "var_score"
+    },
+    {
+      "id": "1",
+      "name": "Tour",
+      "symbol": "var_tour"
+    },
+    {
+      "id": "2",
+      "name": "Record",
+      "symbol": "var_record"
+    },
+    {
+      "id": "3",
+      "name": "Heure",
+      "symbol": "var_heure"
+    },
+    {
+      "id": "4",
+      "name": "Minute",
+      "symbol": "var_minute"
+    },
+    {
+      "id": "5",
+      "name": "Seconde",
+      "symbol": "var_seconde"
+    },
+    {
+      "id": "6",
+      "name": "Ambiance",
+      "symbol": "var_ambiance"
+    },
+    {
+      "id": "7",
+      "name": "Mort",
+      "symbol": "var_mort"
+    },
+    {
+      "id": "8",
+      "name": "NouveauRecord",
+      "symbol": "var_nouveaurecord"
+    },
+    {
+      "id": "9",
+      "name": "CadenceShuriken",
+      "symbol": "var_cadenceshuriken"
+    },
+    {
+      "id": "12",
+      "name": "RemiseEnPlace",
+      "symbol": "var_remiseenplace"
+    }
+  ],
+  "constants": []
+}

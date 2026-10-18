@@ -1,0 +1,136 @@
+{
+  "_resourceType": "actor",
+  "id": "81f03c5b-d3fd-53d2-ad87-d8266e31082f",
+  "_index": 20,
+  "symbol": "actor_course_jour_20",
+  "prefabId": "65a14902-b5eb-425c-a181-884a311bb538",
+  "name": "Ninja ennemi 20",
+  "coordinateType": "tiles",
+  "x": 112,
+  "y": 9,
+  "frame": 0,
+  "animate": true,
+  "spriteSheetId": "d35ff00e-680e-55a1-aaea-5e7ebe3de085",
+  "paletteId": "",
+  "direction": "left",
+  "moveSpeed": 1,
+  "animSpeed": 7,
+  "isPinned": false,
+  "persistent": false,
+  "collisionGroup": "1",
+  "collisionExtraFlags": [],
+  "prefabScriptOverrides": {},
+  "script": [],
+  "startScript": [],
+  "updateScript": [
+    {
+      "command": "EVENT_WAIT",
+      "args": {
+        "time": {
+          "type": "number",
+          "value": 1
+        },
+        "frames": {
+          "type": "number",
+          "value": 60
+        }
+      },
+      "id": "232ea056-e567-5e54-a1fc-4789227ee81f"
+    },
+    {
+      "command": "EVENT_ACTOR_SET_STATE",
+      "args": {
+        "actorId": "$self$",
+        "spriteStateId": "Lance"
+      },
+      "id": "a0b1a4a9-e6eb-5d84-8295-eedc8333cebb"
+    },
+    {
+      "command": "EVENT_LAUNCH_PROJECTILE",
+      "args": {
+        "spriteSheetId": "de2559cb-4292-5037-83d5-d807336a0370",
+        "spriteStateId": "",
+        "actorId": "$self$",
+        "x": 0,
+        "y": 8,
+        "directionType": "direction",
+        "direction": "left",
+        "angle": 0,
+        "angleVariable": "0",
+        "otherActorId": "$self$",
+        "targetActorId": "player",
+        "speed": 3,
+        "animSpeed": 3,
+        "loopAnim": true,
+        "lifeTime": 1.6,
+        "initialOffset": 8,
+        "destroyOnHit": true,
+        "collisionGroup": "1",
+        "collisionMask": [
+          "player"
+        ]
+      },
+      "id": "b457d743-260d-567b-b13e-b1693e1ddda0"
+    },
+    {
+      "command": "EVENT_SOUND_PLAY_EFFECT",
+      "args": {
+        "type": "tone",
+        "pitch": 4,
+        "frequency": 1300,
+        "duration": 0.04,
+        "wait": false
+      },
+      "id": "f45e9a3d-554e-5e53-b84f-21bfb7101c48"
+    },
+    {
+      "command": "EVENT_WAIT",
+      "args": {
+        "time": {
+          "type": "number",
+          "value": 0.25
+        },
+        "frames": {
+          "type": "number",
+          "value": 15
+        }
+      },
+      "id": "4dae6424-5e2a-572b-859a-5890d7f35ad3"
+    },
+    {
+      "command": "EVENT_ACTOR_SET_STATE",
+      "args": {
+        "actorId": "$self$",
+        "spriteStateId": ""
+      },
+      "id": "aa0b67b5-db87-54c8-b911-dd276dc1dfdc"
+    },
+    {
+      "command": "EVENT_WAIT",
+      "args": {
+        "time": {
+          "type": "number",
+          "value": 0.35
+        },
+        "frames": {
+          "type": "number",
+          "value": 21
+        }
+      },
+      "id": "06c4cbe4-d9e0-5257-8059-efed58010810"
+    }
+  ],
+  "hit1Script": [],
+  "hit2Script": [
+    {
+      "command": "EVENT_CALL_CUSTOM_EVENT",
+      "args": {
+        "customEventId": "07379b05-80a0-5391-bead-ae342d12181c",
+        "__name": "Course/Ennemi touche",
+        "$actor[0]$": "$self$"
+      },
+      "id": "fadac6ed-4db8-5a6c-81eb-4f28c56255b0"
+    }
+  ],
+  "hit3Script": []
+}

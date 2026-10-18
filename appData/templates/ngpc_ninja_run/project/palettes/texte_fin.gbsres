@@ -1,0 +1,18 @@
+{
+  "_resourceType": "palette",
+  "id": "ui-fin",
+  "name": "Texte fin",
+  "colors": [
+    "000011",
+    "AAAAAA",
+    "555555",
+    "FFFFFF"
+  ],
+  "defaultName": "Texte fin",
+  "defaultColors": [
+    "000011",
+    "AAAAAA",
+    "555555",
+    "FFFFFF"
+  ]
+}

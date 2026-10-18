@@ -1,0 +1,127 @@
+{
+  "_resourceType": "actorPrefab",
+  "id": "65a14902-b5eb-425c-a181-884a311bb538",
+  "name": "Ennemis/Ninja ennemi",
+  "frame": 0,
+  "animate": true,
+  "spriteSheetId": "d35ff00e-680e-55a1-aaea-5e7ebe3de085",
+  "paletteId": "",
+  "moveSpeed": 1,
+  "animSpeed": 7,
+  "persistent": false,
+  "collisionGroup": "1",
+  "collisionExtraFlags": [],
+  "script": [],
+  "startScript": [],
+  "updateScript": [
+    {
+      "command": "EVENT_WAIT",
+      "args": {
+        "time": {
+          "type": "number",
+          "value": 1
+        },
+        "frames": {
+          "type": "number",
+          "value": 60
+        }
+      },
+      "id": "7c3b5816-988f-45e2-b9c2-e16936b45349"
+    },
+    {
+      "command": "EVENT_ACTOR_SET_STATE",
+      "args": {
+        "actorId": "$self$",
+        "spriteStateId": "Lance"
+      },
+      "id": "2f6cb6f5-e7e0-43aa-9651-193ca9672867"
+    },
+    {
+      "command": "EVENT_LAUNCH_PROJECTILE",
+      "args": {
+        "spriteSheetId": "de2559cb-4292-5037-83d5-d807336a0370",
+        "spriteStateId": "",
+        "actorId": "$self$",
+        "x": 0,
+        "y": 8,
+        "directionType": "direction",
+        "direction": "left",
+        "angle": 0,
+        "angleVariable": "0",
+        "otherActorId": "$self$",
+        "targetActorId": "player",
+        "speed": 3,
+        "animSpeed": 3,
+        "loopAnim": true,
+        "lifeTime": 1.6,
+        "initialOffset": 8,
+        "destroyOnHit": true,
+        "collisionGroup": "1",
+        "collisionMask": [
+          "player"
+        ]
+      },
+      "id": "4647903b-d0a1-4477-a185-cc782a7bc5b2"
+    },
+    {
+      "command": "EVENT_SOUND_PLAY_EFFECT",
+      "args": {
+        "type": "tone",
+        "pitch": 4,
+        "frequency": 1300,
+        "duration": 0.04,
+        "wait": false
+      },
+      "id": "865dc402-99d7-4d74-99be-2444f0c5fd0d"
+    },
+    {
+      "command": "EVENT_WAIT",
+      "args": {
+        "time": {
+          "type": "number",
+          "value": 0.25
+        },
+        "frames": {
+          "type": "number",
+          "value": 15
+        }
+      },
+      "id": "c15bb046-270f-45cc-b792-3e7c31dd1151"
+    },
+    {
+      "command": "EVENT_ACTOR_SET_STATE",
+      "args": {
+        "actorId": "$self$",
+        "spriteStateId": ""
+      },
+      "id": "2c06a01c-a807-47d5-8fe5-cca269f690f2"
+    },
+    {
+      "command": "EVENT_WAIT",
+      "args": {
+        "time": {
+          "type": "number",
+          "value": 0.35
+        },
+        "frames": {
+          "type": "number",
+          "value": 21
+        }
+      },
+      "id": "dfc2b444-20f4-4fbd-8592-e25759f6d098"
+    }
+  ],
+  "hit1Script": [],
+  "hit2Script": [
+    {
+      "command": "EVENT_CALL_CUSTOM_EVENT",
+      "args": {
+        "customEventId": "07379b05-80a0-5391-bead-ae342d12181c",
+        "__name": "Course/Ennemi touche",
+        "$actor[0]$": "$self$"
+      },
+      "id": "73e9d65e-4230-438f-8de1-5421f0705ffd"
+    }
+  ],
+  "hit3Script": []
+}

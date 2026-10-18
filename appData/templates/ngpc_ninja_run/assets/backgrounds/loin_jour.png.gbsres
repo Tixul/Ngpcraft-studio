@@ -1,0 +1,13 @@
+{
+  "_resourceType": "background",
+  "id": "f477827f-df32-58a0-b542-3a90f27e9a08",
+  "name": "loin_jour",
+  "symbol": "bg_loin_jour",
+  "tileColors": "",
+  "filename": "loin_jour.png",
+  "width": 40,
+  "height": 19,
+  "imageWidth": 320,
+  "imageHeight": 152,
+  "autoColor": false
+}

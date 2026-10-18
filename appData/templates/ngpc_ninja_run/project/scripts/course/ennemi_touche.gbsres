@@ -1,0 +1,118 @@
+{
+  "_resourceType": "script",
+  "id": "07379b05-80a0-5391-bead-ae342d12181c",
+  "name": "Course/Ennemi touche",
+  "symbol": "script_ennemi_touche",
+  "description": "Un shuriken du joueur (groupe 2) touche l'ennemi (parametre : garde, ninja, corbeau) : impact, fumee, +50.",
+  "variables": {},
+  "actors": {
+    "0": {
+      "id": "0",
+      "name": "Ennemi"
+    }
+  },
+  "script": [
+    {
+      "command": "EVENT_ACTOR_COLLISIONS_DISABLE",
+      "args": {
+        "actorId": "0"
+      },
+      "id": "a85aae14-f8b6-5a54-b8e9-9b9116a6594b"
+    },
+    {
+      "command": "EVENT_ACTOR_STOP_UPDATE",
+      "args": {
+        "actorId": "0"
+      },
+      "id": "93eb9806-db05-556c-85e0-30d3c491aa07"
+    },
+    {
+      "command": "EVENT_ACTOR_SET_SPRITE",
+      "args": {
+        "actorId": "0",
+        "spriteSheetId": "1c0f4601-2d92-5641-a2d2-a47a3895e1dd"
+      },
+      "id": "982e3daa-c7cc-5f2b-a891-316a149e5446"
+    },
+    {
+      "command": "EVENT_SOUND_PLAY_EFFECT",
+      "args": {
+        "type": "crash",
+        "pitch": 4,
+        "frequency": 200,
+        "duration": 0.15,
+        "wait": false
+      },
+      "id": "1f9417b2-fecb-56c9-9c5f-637f0d486b11"
+    },
+    {
+      "command": "EVENT_SET_VALUE",
+      "args": {
+        "variable": "0",
+        "value": {
+          "type": "add",
+          "valueA": {
+            "type": "variable",
+            "value": "0"
+          },
+          "valueB": {
+            "type": "number",
+            "value": 50
+          }
+        }
+      },
+      "id": "edef829a-6fb0-5486-b67b-354d8961e371"
+    },
+    {
+      "command": "EVENT_CALL_CUSTOM_EVENT",
+      "args": {
+        "customEventId": "66c00fd3-d11e-5f35-b5a6-462b6d5322c6",
+        "__name": "Course/HUD"
+      },
+      "id": "a8e8290b-5264-55b9-94e3-6b75a3fd2784"
+    },
+    {
+      "command": "EVENT_WAIT",
+      "args": {
+        "time": {
+          "type": "number",
+          "value": 0.15
+        },
+        "frames": {
+          "type": "number",
+          "value": 9
+        }
+      },
+      "id": "34cfe826-a64b-5f8c-8f33-6911b62015ea"
+    },
+    {
+      "command": "EVENT_ACTOR_SET_SPRITE",
+      "args": {
+        "actorId": "0",
+        "spriteSheetId": "907246b9-c718-54bb-a570-71909be8223e"
+      },
+      "id": "55bbd49c-a17b-5945-bfd2-f5d235f19617"
+    },
+    {
+      "command": "EVENT_WAIT",
+      "args": {
+        "time": {
+          "type": "number",
+          "value": 0.4
+        },
+        "frames": {
+          "type": "number",
+          "value": 24
+        }
+      },
+      "id": "c2773fe6-dead-5c72-a552-864d861236ba"
+    },
+    {
+      "command": "EVENT_ACTOR_HIDE",
+      "args": {
+        "actorId": "0"
+      },
+      "id": "879229ca-345a-50eb-b213-4ce10f2710b9"
+    }
+  ]
+}

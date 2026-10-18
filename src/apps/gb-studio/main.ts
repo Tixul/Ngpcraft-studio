@@ -295,10 +295,14 @@ if (isDevMode) {
 export const createSplash = async (forceTab?: SplashTab) => {
   // Create the browser window.
   splashWindow = new BrowserWindow({
-    width: 640,
+    // NgpCraft: wider (5 templates + the template plugins tile in one row) and
+    // resizable, never smaller than GB Studio's 640x430.
+    width: 800,
     height: 430,
+    minWidth: 640,
+    minHeight: 430,
     useContentSize: true,
-    resizable: false,
+    resizable: true,
     maximizable: false,
     titleBarStyle: "hiddenInset",
     fullscreenable: false,
