@@ -10,6 +10,7 @@ import unittest
 from ngpcraft.compiler import CompileError
 from ngpcraft.gbvm.builder import ScriptBuilder
 from ngpcraft.gbvm.events import compile_events
+from tools.demo_actor_moves import ev, num
 from tools.reference import REFERENCE
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -61,6 +62,44 @@ class CameraPropertyTests(unittest.TestCase):
                 out, stack = v3(events)
                 self.assertEqual(clean(out), clean(reference['output']))
                 self.assertEqual(stack, reference['stack'])
+
+
+class CameraPropertyLinkedScenesTests(unittest.TestCase):
+    """Camera properties in an export of several scenes with a platform one (Ninja Run, 2026-10-18): the platform
+    state's '#define camera_offset_x cam_offset_x' became a define of itself, which scene_link renamed with the
+    variable (s<k>_camera_offset_x undefined, cc900 refused the C). The corpus' Virtual BMO writes the offset from
+    a GBVM Script block in 9 platform scenes: same path."""
+    WRITES = {
+        'event': lambda k: ev(f'cam-{k}', 'EVENT_CAMERA_PROPERTY_SET', property='camera_offset_x', value=num(-40)),
+        'gbvm': lambda k: ev(f'cam-{k}', 'EVENT_GBVM_SCRIPT', script='VM_SET_CONST_INT8 _camera_offset_x, -16'),
+    }
+
+    def export(self, root, write, mixed):
+        from tools.lab_multiplatform import project_case
+        from tools.demo_gbs_scene import write_json
+        from ngpcraft.pipeline import export_project
+        project = project_case(root / 'project', mixed=mixed)
+        for k, path in enumerate(sorted((project / 'project/scenes').rglob('scene.gbsres'))):
+            scene = json.loads(path.read_text(encoding='utf-8'))
+            scene['script'].insert(0, self.WRITES[write](k))
+            write_json(path, scene)
+        manifest = export_project(project, root / 'export')
+        return manifest, (root / 'export/src/scene_actors.c').read_text(encoding='utf-8')
+
+    def test_platform_scenes_keep_the_public_camera_names(self):
+        import re
+        for write in self.WRITES:
+            for mixed in (False, True):
+                with self.subTest(write=write, mixed=mixed), tempfile.TemporaryDirectory() as tmp:
+                    manifest, source = self.export(Path(tmp), write, mixed)
+                    self.assertIn('camera_properties', manifest['features'])
+                    self.assertEqual(re.findall(r'\bs\d+_camera_(?:offset|deadzone)_[xy]\b', source), [])
+                    for name in ('camera_offset_x', 'camera_offset_y', 'camera_deadzone_x', 'camera_deadzone_y'):
+                        self.assertEqual(source.count(f'\nsigned char {name};'), 1, name)
+                    if os.environ.get('NGC_TEST_TOSHIBA'):
+                        from ngpcraft.toolchain import build_rom
+                        build_rom(Path(tmp) / 'export', os.environ['NGC_TEST_TOSHIBA'])
+                        self.assertTrue((Path(tmp) / 'export/rom/game.ngc').exists())
 
 
 ROM_ENV = [os.environ.get(k) for k in ('NGC_TEST_TOSHIBA', 'NGC_TEST_EMULATOR', 'NGC_TEST_BIOS')]

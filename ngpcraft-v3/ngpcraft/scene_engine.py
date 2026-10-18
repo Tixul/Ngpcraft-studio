@@ -140,6 +140,10 @@ def engine_files(scene, moves=None, updates=None, cancel=False, topdown=None, in
             if source.count(declaration) != 1:
                 raise CompileError(f"camera state declaration changed: {old}")
             source = re.sub(rf"\b{old}\b", new, source.replace(declaration, f"signed char {old};"))
+        # The platform state's '#define camera_offset_x cam_offset_x' has become a define of itself: harmless
+        # alone, but scene_link renames a scene's macros (s<k>_camera_offset_x) and the variable with it when
+        # several scenes are linked (Ninja Run, 2026-10-18: s2_camera_offset_x undefined).
+        source = re.sub(r"^#define (camera_(?:deadzone|offset)_[xy]) \1\n", "", source, flags=re.M)
         files["src/scene_actors.c"] = source
     if scene.projectiles is not None and scene.projectiles.definitions:
         from .scene_projectiles import attach_projectiles
