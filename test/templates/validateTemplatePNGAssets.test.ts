@@ -2,8 +2,25 @@ import { projectTemplatesRoot } from "consts";
 import glob from "glob";
 import { join, normalize, sep } from "path";
 import { PNG } from "pngjs";
-import { readFileSync } from "fs";
+import { existsSync, readFileSync } from "fs";
 import { rgb2hex } from "shared/lib/helpers/color";
+
+// NgpCraft: a template whose ngpcraft.json sets ngpc.default_color "native"
+// draws its backgrounds and sprites in NGPC colours (ngpcraft-v3
+// docs/M7_NATIVE_COLOR.md), so the Game Boy palette rules below do not apply
+// to them. Its fonts and UI keep the GB format and are still checked.
+const NATIVE_COLOR_ASSET_TYPES = ["backgrounds", "sprites"];
+
+const isNativeColorTemplate = (filePath: string) => {
+  const parts = normalize(filePath).split(sep);
+  const root = parts.slice(0, parts.lastIndexOf("assets")).join(sep);
+  const extension = join(root, "ngpcraft.json");
+  return (
+    existsSync(extension) &&
+    JSON.parse(readFileSync(extension, "utf8"))?.ngpc?.default_color ===
+      "native"
+  );
+};
 
 const COLOR_0 = "071821";
 const COLOR_1 = "306850";
@@ -16,8 +33,19 @@ const validImageColors = [COLOR_0, COLOR_1, COLOR_2, COLOR_3];
 const validSpriteColors = [COLOR_0, COLOR_2, COLOR_3, COLOR_ALPHA];
 const validFontColors = [COLOR_0, COLOR_1, COLOR_2, COLOR_3, COLOR_FONT_EDGE];
 
-const templatePNGAssets = glob
-  .sync(join(projectTemplatesRoot, "**/assets/**/*.png"))
+const allTemplatePNGAssets = glob.sync(
+  join(projectTemplatesRoot, "**/assets/**/*.png"),
+);
+
+const templatePNGAssets = allTemplatePNGAssets
+  .filter((filePath) => {
+    const parts = normalize(filePath).split(sep);
+    const assetType = parts[parts.lastIndexOf("assets") + 1] ?? "";
+    return !(
+      NATIVE_COLOR_ASSET_TYPES.includes(assetType) &&
+      isNativeColorTemplate(filePath)
+    );
+  })
   .map((filePath) => {
     const fileData = readFileSync(filePath);
     const normalizedPath = normalize(filePath);

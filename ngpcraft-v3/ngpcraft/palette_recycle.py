@@ -1,4 +1,4 @@
-"""Background palette recycling (ROADMAP "plus tard", Wilfried 2026-10-10).
+"""Background palette recycling (ROADMAP "plus tard", 2026-10-10).
 
 The K2GE shows 16 palettes per plane at a time, not 16 per scene. A streamed
 background may use more: each logical palette gets a hardware slot at

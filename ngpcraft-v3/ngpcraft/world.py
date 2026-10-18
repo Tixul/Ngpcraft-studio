@@ -25,7 +25,7 @@ GB_MAX_PX = GB_MAX_TILES * 8          # 2040
 NGPC_MAX_PX = NGPC_MAX_TILES * 8      # 32760
 # Width x height: every map index (background, collisions) stays 16-bit, no
 # 32-bit multiply (cc900 C9H_mullu is a library routine the V3 does not link)
-# and no row table: no per-frame cost (Wilfried 2026-10-12, "a sane limit").
+# and no row table: no per-frame cost (2026-10-12, "a sane limit").
 NGPC_MAX_CELLS = 65535
 
 _WIDE = ContextVar("ngpcraft_wide_world", default=False)

@@ -148,7 +148,7 @@ class BigMapRomTests(unittest.TestCase):
         self.assertEqual(r["actor_x_px_range"], [[2672, 2712]])
 
     def test_ladder_climbed_like_the_original_and_witness_differs(self):
-        # Wilfried, MegaBig 2026-10-12: X vanished at the first ladder (VEL_TO_SUBPX unsigned on 32 bits).
+        # Tixul, MegaBig 2026-10-12: X vanished at the first ladder (VEL_TO_SUBPX unsigned on 32 bits).
         r = self.lab("ladder", 420)
         self.assertEqual(r["mismatches"], 0, r["first"])
         self.assertIn(4, r["states_seen"])           # platform.c LADDER_STATE

@@ -47,6 +47,12 @@ const rendererRules = [
       },
     ],
   },
+  {
+    // NgpCraft: no build-machine path in the packaged app (see the loader).
+    test: /[\\/]appData[\\/]wasm[\\/]rgbds[\\/][^\\/]+\.js$/,
+    enforce: "pre",
+    use: [{ loader: require.resolve("../shared/loaders/scriptDirLoader") }],
+  },
   ...rules.slice(1), // Remove global ts-loader rule replaced with ReactRefreshTypeScript version defined above
   {
     test: /\.css$/,
