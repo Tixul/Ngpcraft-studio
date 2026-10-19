@@ -52,6 +52,10 @@
     {
       "id": "FEAT_PLATFORM_RUN",
       "value": 0
+    },
+    {
+      "id": "PROJECTILES_COLLISION_SPREAD",
+      "value": "EVERY_FRAME"
     }
   ]
 }

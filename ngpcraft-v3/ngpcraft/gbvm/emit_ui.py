@@ -925,8 +925,16 @@ def ui_support(font, scenes, palettes_target, *, front_scroll=False, choice=Fals
         marker = "    *(volatile UBYTE *)0x8032 = (UBYTE)(0u - win_pos_x);"
         api = api.replace(marker, """    UBYTE line;
     if (ngc_ui_shared) {
+        UBYTE y;
         line = (UBYTE)(win_pos_y + ngc_ui_offset);
-        ngc_split_arm(line, 0u, ngc_ui_map_commit(line));
+        y = ngc_ui_map_commit(line);
+        /* A commit that ran past VBlank (a long decor stream, Ninja Run: the far
+         * plane's column, 1 frame in 21): ngc_ui_vblank already armed this
+         * frame's split. Re-arming restarts Timer0 from a visible row, so the
+         * split fell below the window and the HUD vanished for one picture
+         * (measured 2026-10-20: armed at row 5, not 165). Hand over y only. */
+        if (*(volatile UBYTE *)0x8009 < 152u && split_line == line) split_y = y;
+        else ngc_split_arm(line, 0u, y);
         ngc_ui_flush();
         return;
     }
